@@ -1,6 +1,10 @@
 package main
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	"strings"
+
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type Table struct {
 	cells [][]*Cell
@@ -32,5 +36,16 @@ func (m *Table) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Table) View() string {
-	return "table"
+	var builder strings.Builder
+
+	for _, row := range m.cells {
+		builder.WriteString("| ")
+		for _, cell := range row {
+			builder.WriteString(cell.View())
+			builder.WriteString(" | ")
+		}
+		builder.WriteString("\n")
+	}
+
+	return builder.String()
 }
