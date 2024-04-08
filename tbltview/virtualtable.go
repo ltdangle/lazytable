@@ -51,9 +51,13 @@ func main() {
 		SetSelectable(true, true).
 		SetContent(data)
 
-	table.Select(0, 0).SetFixed(1, 1).SetSelectedFunc(func(row int, column int) {
-		data.Data[row][column] = "selected"
-	})
+	table.
+		SetSelectedFunc(func(row, column int) {
+			data.Data[row][column] = "changed"
+		}).
+		SetSelectionChangedFunc(func(row, column int) {
+			data.Data[row][column] = "selected"
+		})
 
 	table.SetSelectable(true, true)
 	if err := tview.NewApplication().SetRoot(table, true).EnableMouse(true).Run(); err != nil {
