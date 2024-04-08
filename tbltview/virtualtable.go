@@ -16,7 +16,7 @@ func NewTableData() *TableData {
 	return &TableData{
 		Data: [][]string{
 			{"one", "two", "three"},
-			{"one", "two", "three"},
+			{"one", "two tee\n\nto two", "three"},
 			{"one", "two", "three"},
 			{"one", "two", "three"},
 			{"one", "two", "three"},
@@ -24,13 +24,16 @@ func NewTableData() *TableData {
 	}
 }
 func (d *TableData) GetCell(row, column int) *tview.TableCell {
+	cell := tview.NewTableCell("")
+	cell.MaxWidth =10 
 	if row >= len(d.Data) {
-		return tview.NewTableCell("unchartered")
+		cell.SetText("unchartered")
+	} else if column >= len(d.Data[0]) {
+		cell.SetText("unchartered")
+	} else {
+		cell.SetText(d.Data[row][column])
 	}
-	if column >= len(d.Data[0]) {
-		return tview.NewTableCell("unchartered")
-	}
-	return tview.NewTableCell(d.Data[row][column])
+	return cell
 }
 
 func (d *TableData) SetCell(row, column int, cell *tview.TableCell) {
