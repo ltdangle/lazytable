@@ -4,6 +4,7 @@ import (
 	"math"
 	"strconv"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -25,7 +26,7 @@ func NewTableData() *TableData {
 }
 func (d *TableData) GetCell(row, column int) *tview.TableCell {
 	cell := tview.NewTableCell("")
-	cell.MaxWidth =10 
+	cell.MaxWidth = 10
 	if row >= len(d.Data) {
 		cell.SetText("unchartered")
 	} else if column >= len(d.Data[0]) {
@@ -63,6 +64,17 @@ func main() {
 		})
 
 	table.SetSelectable(true, true)
+
+	tableInputCapture := func(event *tcell.EventKey) *tcell.EventKey {
+		rune := event.Rune()
+		if rune == '1' || event.Rune() == '2' || event.Rune() == '3' || event.Rune() == '4' || event.Rune() == '5' {
+			data.Data[0][0] = string(rune)
+		}
+		return event
+	}
+
+	table.SetInputCapture(tableInputCapture)
+
 	if err := tview.NewApplication().SetRoot(table, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
