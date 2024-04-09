@@ -48,9 +48,12 @@ func (d *TableData) GetColumnCount() int {
 	return math.MaxInt64
 }
 
+var data = NewTableData()
+var table = tview.NewTable()
+var app = tview.NewApplication()
+
 func main() {
-	data := NewTableData()
-	table := tview.NewTable().
+	table.
 		SetBorders(false).
 		SetSelectable(true, true).
 		SetContent(data)
@@ -64,20 +67,66 @@ func main() {
 		})
 
 	table.SetSelectable(true, true)
-
-	tableInputCapture := func(event *tcell.EventKey) *tcell.EventKey {
-		selectedRowIndex, selectedColumnIndex := table.GetSelection()
-		rune := event.Rune()
-		if rune == '1' {
-			data.Data[0][0] = strconv.Itoa(selectedRowIndex) + ":" + strconv.Itoa(selectedColumnIndex)
-		}
-		return event
-	}
-
 	table.SetInputCapture(tableInputCapture)
 
-	if err := tview.NewApplication().SetRoot(table, true).EnableMouse(true).Run(); err != nil {
+	if err := app.SetRoot(table, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 
+}
+
+func tableInputCapture(event *tcell.EventKey) *tcell.EventKey {
+	selectedRowIndex, selectedColumnIndex := table.GetSelection()
+	rune := event.Rune()
+	if rune == '1' {
+		data.Data[0][0] = strconv.Itoa(selectedRowIndex) + ":" + strconv.Itoa(selectedColumnIndex)
+	}
+	if rune == '2' {
+		StartEditingCell(selectedRowIndex, selectedColumnIndex)
+	}
+	return event
+}
+
+func StartEditingCell(row int, col int) {
+	table.SetInputCapture(nil)
+
+	cell := table.GetCell(row, col)
+	inputField := tview.NewInputField()
+	inputField.SetText(cell.Text)
+	inputField.SetFieldBackgroundColor(tview.Styles.PrimaryTextColor)
+	inputField.SetFieldTextColor(tcell.ColorBlack)
+
+	inputField.SetDoneFunc(func(key tcell.Key) {
+		currentValue := cell.Text
+		newValue := inputField.GetText()
+		if key == tcell.KeyEnter {
+			if currentValue != newValue {
+				cell.SetText(inputField.GetText())
+			}
+		} else if key == tcell.KeyTab {
+			nextEditableColumnIndex := col + 1
+
+			if nextEditableColumnIndex <= table.GetColumnCount()-1 {
+				cell.SetText(inputField.GetText())
+				table.Select(row, nextEditableColumnIndex)
+			}
+		} else if key == tcell.KeyBacktab {
+			nextEditableColumnIndex := col - 1
+
+			if nextEditableColumnIndex >= 0 {
+				cell.SetText(inputField.GetText())
+				table.Select(row, nextEditableColumnIndex)
+			}
+		}
+
+		if key == tcell.KeyEnter || key == tcell.KeyEscape {
+			table.SetInputCapture(tableInputCapture)
+			app.SetFocus(table)
+		}
+	})
+
+	x, y, width := cell.GetLastPosition()
+	inputField.SetRect(x, y, width+1, 1)
+	// table.Page.AddPage("edit", inputField, false, true)
+	app.SetFocus(inputField)
 }
