@@ -66,10 +66,11 @@ func main() {
 
 	table.
 		SetSelectedFunc(func(row, column int) {
-			data.Data[row][column] = "changed"
+			StartEditingCell(row, column)
+			// data.Data[row][column] = fmt.Sprintf("x: %d, y: %d", x, y)
 		}).
 		SetSelectionChangedFunc(func(row, column int) {
-			data.Data[row][column] = "selected"
+			// data.Data[row][column] = "selected"
 		})
 
 	table.SetSelectable(true, true)
@@ -114,7 +115,6 @@ func StartEditingCell(row int, col int) {
 		}
 	})
 
-	// x, y, _ := cell.GetLastPosition()
 	inputField.SetRect(20, 20, 10, 1)
 	pages.AddPage("edit", inputField, false, true)
 	app.SetFocus(inputField)
