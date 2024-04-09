@@ -11,6 +11,7 @@ import (
 type TableData struct {
 	tview.TableContentReadOnly
 	Data [][]string
+	Page *tview.Pages
 }
 
 func NewTableData() *TableData {
@@ -51,8 +52,13 @@ func (d *TableData) GetColumnCount() int {
 var data = NewTableData()
 var table = tview.NewTable()
 var app = tview.NewApplication()
+var pages = tview.NewPages()
 
 func main() {
+	pages.SetRect(0, 0, 20, 20)
+	pages.AddPage("table", table, false, false)
+	pages.SwitchToPage("table")
+
 	table.
 		SetBorders(false).
 		SetSelectable(true, true).
@@ -69,7 +75,7 @@ func main() {
 	table.SetSelectable(true, true)
 	table.SetInputCapture(tableInputCapture)
 
-	if err := app.SetRoot(table, true).EnableMouse(true).Run(); err != nil {
+	if err := app.SetRoot(pages, true).EnableMouse(true).Run(); err != nil {
 		panic(err)
 	}
 
@@ -101,32 +107,15 @@ func StartEditingCell(row int, col int) {
 		newValue := inputField.GetText()
 		if key == tcell.KeyEnter {
 			if currentValue != newValue {
-				cell.SetText(inputField.GetText())
+				data.Data[row][col] = inputField.GetText()
 			}
-		} else if key == tcell.KeyTab {
-			nextEditableColumnIndex := col + 1
-
-			if nextEditableColumnIndex <= table.GetColumnCount()-1 {
-				cell.SetText(inputField.GetText())
-				table.Select(row, nextEditableColumnIndex)
-			}
-		} else if key == tcell.KeyBacktab {
-			nextEditableColumnIndex := col - 1
-
-			if nextEditableColumnIndex >= 0 {
-				cell.SetText(inputField.GetText())
-				table.Select(row, nextEditableColumnIndex)
-			}
-		}
-
-		if key == tcell.KeyEnter || key == tcell.KeyEscape {
 			table.SetInputCapture(tableInputCapture)
 			app.SetFocus(table)
 		}
 	})
 
-	x, y, width := cell.GetLastPosition()
-	inputField.SetRect(x, y, width+1, 1)
-	// table.Page.AddPage("edit", inputField, false, true)
+	x, y, _ := cell.GetLastPosition()
+	inputField.SetRect(x, y, 10, 1)
+	pages.AddPage("edit", inputField, false, true)
 	app.SetFocus(inputField)
 }
