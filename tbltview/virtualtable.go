@@ -114,8 +114,8 @@ func StartEditingCell(row int, col int) {
 		}
 	})
 
-	x, y, _ := cell.GetLastPosition()
-	inputField.SetRect(x, y, 10, 1)
+	// x, y, _ := cell.GetLastPosition()
+	inputField.SetRect(20, 20, 10, 1)
 	pages.AddPage("edit", inputField, false, true)
 	app.SetFocus(inputField)
 }
