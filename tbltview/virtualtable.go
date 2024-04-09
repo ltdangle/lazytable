@@ -66,9 +66,10 @@ func main() {
 	table.SetSelectable(true, true)
 
 	tableInputCapture := func(event *tcell.EventKey) *tcell.EventKey {
+		selectedRowIndex, selectedColumnIndex := table.GetSelection()
 		rune := event.Rune()
-		if rune == '1' || event.Rune() == '2' || event.Rune() == '3' || event.Rune() == '4' || event.Rune() == '5' {
-			data.Data[0][0] = string(rune)
+		if rune == '1' {
+			data.Data[0][0] = strconv.Itoa(selectedRowIndex) + ":" + strconv.Itoa(selectedColumnIndex)
 		}
 		return event
 	}
