@@ -32,10 +32,20 @@ func main() {
 			app.Draw()
 		}).
 		SetDoneFunc(func(key tcell.Key) {
-			pages.SwitchToPage("page-0")
+			pages.SwitchToPage("page-2")
 		})
 	textView.SetText("this is textview")
 	pages.AddPage("page-1", textView, false, false)
+
+	// input field
+	inputField := tview.NewInputField().
+		SetLabel("Enter a number: ").
+		SetFieldWidth(10).
+		SetAcceptanceFunc(tview.InputFieldInteger).
+		SetDoneFunc(func(key tcell.Key) {
+			pages.SwitchToPage("page-0")
+		})
+	pages.AddPage("page-2", inputField, false, false)
 
 	if err := app.SetRoot(pages, true).SetFocus(pages).Run(); err != nil {
 		panic(err)
