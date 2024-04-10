@@ -8,22 +8,11 @@ import (
 )
 
 var app = tview.NewApplication()
-var modal = tview.NewModal()
 var textView = tview.NewTextView()
 var inputField = tview.NewInputField()
 
 func main() {
-	// modal
-	modal.SetText(fmt.Sprintf("This is page %d. Choose where to go next.", 0)).
-		AddButtons([]string{"Next", "Quit"}).
-		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
-			if buttonIndex == 0 {
-				fmt.Fprintf(textView, "ok button on modal\n")
-			} else {
-				app.Stop()
-			}
-		})
-		// textview
+	// textview
 	textView.SetDynamicColors(true).
 		SetRegions(true).
 		SetChangedFunc(func() {
@@ -36,11 +25,11 @@ func main() {
 
 	// input field
 	inputField.SetLabel("Enter a number: ").
-		SetFieldWidth(10).
-		// SetAcceptanceFunc(tview.InputFieldInteger).
 		SetDoneFunc(func(key tcell.Key) {
 			fmt.Fprintf(textView, "DoneFunc on inputField\n")
-		})
+		}).
+		SetText("Input text")
+
 		// table
 	table.
 		SetBorders(false).
@@ -48,12 +37,13 @@ func main() {
 		SetContent(data)
 
 	table.
-		SetSelectedFunc(func(row, column int) {
-			StartEditingCell(row, column)
+		SetSelectedFunc(func(row, col int) {
+			StartEditingCell(row, col)
 			// data.Data[row][column] = fmt.Sprintf("x: %d, y: %d", x, y)
 		}).
-		SetSelectionChangedFunc(func(row, column int) {
-			// data.Data[row][column] = "selected"
+		SetSelectionChangedFunc(func(row, col int) {
+			inputField.SetLabel(fmt.Sprintf("%d:%d ", row, col))
+			inputField.SetText(data.Data[row][col])
 		})
 
 	table.SetSelectable(true, true)
