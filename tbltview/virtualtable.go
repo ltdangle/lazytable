@@ -51,36 +51,6 @@ func (d *TableData) GetColumnCount() int {
 
 var data = NewTableData()
 var table = tview.NewTable()
-// var app = tview.NewApplication()
-var pages = tview.NewPages()
-
-func mainn() {
-	pages.SetRect(0, 0, 20, 20)
-	pages.AddPage("table", table, false, false)
-	pages.SwitchToPage("table")
-
-	table.
-		SetBorders(false).
-		SetSelectable(true, true).
-		SetContent(data)
-
-	table.
-		SetSelectedFunc(func(row, column int) {
-			StartEditingCell(row, column)
-			// data.Data[row][column] = fmt.Sprintf("x: %d, y: %d", x, y)
-		}).
-		SetSelectionChangedFunc(func(row, column int) {
-			// data.Data[row][column] = "selected"
-		})
-
-	table.SetSelectable(true, true)
-	table.SetInputCapture(tableInputCapture)
-
-	if err := app.SetRoot(pages, true).EnableMouse(true).Run(); err != nil {
-		panic(err)
-	}
-
-}
 
 func tableInputCapture(event *tcell.EventKey) *tcell.EventKey {
 	selectedRowIndex, selectedColumnIndex := table.GetSelection()
@@ -95,27 +65,6 @@ func tableInputCapture(event *tcell.EventKey) *tcell.EventKey {
 }
 
 func StartEditingCell(row int, col int) {
-	table.SetInputCapture(nil)
-
-	cell := table.GetCell(row, col)
-	inputField := tview.NewInputField()
-	inputField.SetText(cell.Text)
-	inputField.SetFieldBackgroundColor(tview.Styles.PrimaryTextColor)
-	inputField.SetFieldTextColor(tcell.ColorBlack)
-
-	inputField.SetDoneFunc(func(key tcell.Key) {
-		currentValue := cell.Text
-		newValue := inputField.GetText()
-		if key == tcell.KeyEnter {
-			if currentValue != newValue {
-				data.Data[row][col] = inputField.GetText()
-			}
-			table.SetInputCapture(tableInputCapture)
-			app.SetFocus(table)
-		}
-	})
-
-	inputField.SetRect(20, 20, 10, 1)
-	pages.AddPage("edit", inputField, false, true)
 	app.SetFocus(inputField)
 }
+

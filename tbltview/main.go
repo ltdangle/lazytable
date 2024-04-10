@@ -12,7 +12,6 @@ var modal = tview.NewModal()
 var textView = tview.NewTextView()
 var inputField = tview.NewInputField()
 
-
 func main() {
 	// modal
 	modal.SetText(fmt.Sprintf("This is page %d. Choose where to go next.", 0)).
@@ -61,11 +60,16 @@ func main() {
 	table.SetInputCapture(tableInputCapture)
 
 	flex := tview.NewFlex().
+		// left
 		AddItem(textView, 0, 1, false).
-		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-			AddItem(inputField, 0, 1, false).
-			AddItem(table, 0, 3, false).
-			AddItem(tview.NewBox().SetBorder(true).SetTitle("Bottom (5 rows)"), 5, 1, false), 0, 2, false).
+		// center
+		AddItem(
+			tview.NewFlex().SetDirection(tview.FlexRow).
+				AddItem(inputField, 0, 1, false).
+				AddItem(table, 0, 3, false).
+				AddItem(tview.NewBox().SetBorder(true).SetTitle("Bottom (5 rows)"), 5, 1, false), 0, 2, false,
+		).
+		// right
 		AddItem(tview.NewBox().SetBorder(true).SetTitle("Right (20 cols)"), 20, 1, false)
 
 	if err := app.SetRoot(flex, true).SetFocus(table).Run(); err != nil {
