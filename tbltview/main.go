@@ -39,7 +39,6 @@ func main() {
 	table.
 		SetSelectedFunc(func(row, col int) {
 			StartEditingCell(row, col)
-			// data.Data[row][column] = fmt.Sprintf("x: %d, y: %d", x, y)
 		}).
 		SetSelectionChangedFunc(func(row, col int) {
 			inputField.SetLabel(fmt.Sprintf("%d:%d ", row, col))
@@ -56,8 +55,9 @@ func main() {
 		AddItem(
 			tview.NewFlex().SetDirection(tview.FlexRow).
 				AddItem(inputField, 0, 1, false).
-				AddItem(table, 0, 3, false).
-				AddItem(tview.NewBox().SetBorder(true).SetTitle("Bottom (5 rows)"), 5, 1, false), 0, 2, false,
+				AddItem(table, 0, 19, false),
+				// AddItem(tview.NewBox().SetBorder(true).SetTitle("Bottom (5 rows)"), 5, 1, false),
+			0, 2, false,
 		).
 		// right
 		AddItem(tview.NewBox().SetBorder(true).SetTitle("Right (20 cols)"), 20, 1, false)
