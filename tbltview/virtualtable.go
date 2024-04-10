@@ -51,10 +51,10 @@ func (d *TableData) GetColumnCount() int {
 
 var data = NewTableData()
 var table = tview.NewTable()
-var app = tview.NewApplication()
+// var app = tview.NewApplication()
 var pages = tview.NewPages()
 
-func main() {
+func mainn() {
 	pages.SetRect(0, 0, 20, 20)
 	pages.AddPage("table", table, false, false)
 	pages.SwitchToPage("table")
