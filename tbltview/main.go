@@ -8,23 +8,26 @@ import (
 	"github.com/rivo/tview"
 )
 
-type Cell string
+// DataCell type.
+type DataCell string
 
-func (c Cell) String() string {
+func (c DataCell) String() string {
 	return string(c)
 }
 
-type TableData struct {
+// DataTable type.
+type DataTable struct {
 	tview.TableContentReadOnly
-	Data        [][]Cell
+	Data        [][]DataCell
 	SelectedRow int
 	SelectedCol int
 }
 
-func NewTableData() *TableData {
-	return &TableData{}
+func NewTableData() *DataTable {
+	return &DataTable{}
 }
-func (d *TableData) GetCell(row, column int) *tview.TableCell {
+
+func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	cell := tview.NewTableCell("")
 	cell.MaxWidth = 10
 	if row >= len(d.Data) {
@@ -37,14 +40,14 @@ func (d *TableData) GetCell(row, column int) *tview.TableCell {
 	return cell
 }
 
-func (d *TableData) SetCell(row, column int, cell *tview.TableCell) {
+func (d *DataTable) SetCell(row, column int, cell *tview.TableCell) {
 	cell.SetText(strconv.Itoa(row) + " : " + strconv.Itoa(column))
 }
-func (d *TableData) GetRowCount() int {
+func (d *DataTable) GetRowCount() int {
 	return len(d.Data)
 }
 
-func (d *TableData) GetColumnCount() int {
+func (d *DataTable) GetColumnCount() int {
 	return len(d.Data[0])
 }
 
@@ -54,18 +57,18 @@ var app = tview.NewApplication()
 var inputField = tview.NewInputField()
 
 func main() {
-	data.Data = [][]Cell{
-		{Cell("one"), Cell("two"), Cell("three")},
-		{Cell("one"), Cell("two tee\n\nto two"), Cell("three")},
-		{Cell("one"), Cell("two"), Cell("three")},
-		{Cell("one"), Cell("two"), Cell("three")},
-		{Cell("one"), Cell("two"), Cell("three")},
+	data.Data = [][]DataCell{
+		{DataCell("one"), DataCell("two"), DataCell("three")},
+		{DataCell("one"), DataCell("two tee\n\nto two"), DataCell("three")},
+		{DataCell("one"), DataCell("two"), DataCell("three")},
+		{DataCell("one"), DataCell("two"), DataCell("three")},
+		{DataCell("one"), DataCell("two"), DataCell("three")},
 	}
 
 	// input field
 	inputField.SetLabel("Enter a number: ").
 		SetDoneFunc(func(key tcell.Key) {
-			data.Data[data.SelectedRow][data.SelectedCol] = Cell(inputField.GetText())
+			data.Data[data.SelectedRow][data.SelectedCol] = DataCell(inputField.GetText())
 			app.SetFocus(table)
 		}).
 		SetText("Input text")
