@@ -2,16 +2,66 @@ package main
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
+var data *TableData
+var table = tview.NewTable()
 var app = tview.NewApplication()
 var inputField = tview.NewInputField()
 
+type Cell string
+
+func (c Cell) String() string {
+	return string(c)
+}
+
+type TableData struct {
+	tview.TableContentReadOnly
+	Data        [][]Cell
+	SelectedRow int
+	SelectedCol int
+}
+
+func NewTableData() *TableData {
+	return &TableData{}
+}
+func (d *TableData) GetCell(row, column int) *tview.TableCell {
+	cell := tview.NewTableCell("")
+	cell.MaxWidth = 10
+	if row >= len(d.Data) {
+		cell.SetText("unchartered")
+	} else if column >= len(d.Data[0]) {
+		cell.SetText("unchartered")
+	} else {
+		cell.SetText(string(d.Data[row][column]))
+	}
+	return cell
+}
+
+func (d *TableData) SetCell(row, column int, cell *tview.TableCell) {
+	cell.SetText(strconv.Itoa(row) + " : " + strconv.Itoa(column))
+}
+func (d *TableData) GetRowCount() int {
+	return len(d.Data)
+}
+
+func (d *TableData) GetColumnCount() int {
+	return len(d.Data[0])
+}
+
 func main() {
-	// textview
+	data = NewTableData()
+	data.Data = [][]Cell{
+		{Cell("one"), Cell("two"), Cell("three")},
+		{Cell("one"), Cell("two tee\n\nto two"), Cell("three")},
+		{Cell("one"), Cell("two"), Cell("three")},
+		{Cell("one"), Cell("two"), Cell("three")},
+		{Cell("one"), Cell("two"), Cell("three")},
+	}
 
 	// input field
 	inputField.SetLabel("Enter a number: ").
@@ -21,13 +71,11 @@ func main() {
 		}).
 		SetText("Input text")
 
-		// table
+	// table
 	table.
 		SetBorders(false).
 		SetSelectable(true, true).
-		SetContent(data)
-
-	table.
+		SetContent(data).
 		SetSelectedFunc(func(row, col int) {
 			app.SetFocus(inputField)
 		}).
