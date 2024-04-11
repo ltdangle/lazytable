@@ -7,15 +7,21 @@ import (
 	"github.com/rivo/tview"
 )
 
+type Cell string
+
+func (c Cell) String() string {
+	return string(c)
+}
+
 type TableData struct {
 	tview.TableContentReadOnly
-	Data [][]string
+	Data [][]Cell
 	Page *tview.Pages
 }
 
 func NewTableData() *TableData {
 	return &TableData{
-		Data: [][]string{
+		Data: [][]Cell{
 			{"one", "two", "three"},
 			{"one", "two tee\n\nto two", "three"},
 			{"one", "two", "three"},
@@ -32,7 +38,7 @@ func (d *TableData) GetCell(row, column int) *tview.TableCell {
 	} else if column >= len(d.Data[0]) {
 		cell.SetText("unchartered")
 	} else {
-		cell.SetText(d.Data[row][column])
+		cell.SetText(string(d.Data[row][column]))
 	}
 	return cell
 }
@@ -55,7 +61,7 @@ func tableInputCapture(event *tcell.EventKey) *tcell.EventKey {
 	selectedRowIndex, selectedColumnIndex := table.GetSelection()
 	rune := event.Rune()
 	if rune == '1' {
-		data.Data[0][0] = strconv.Itoa(selectedRowIndex) + ":" + strconv.Itoa(selectedColumnIndex)
+		data.Data[0][0] = Cell(strconv.Itoa(selectedRowIndex) + ":" + strconv.Itoa(selectedColumnIndex))
 	}
 	if rune == '2' {
 		StartEditingCell(selectedRowIndex, selectedColumnIndex)

@@ -43,7 +43,7 @@ func main() {
 		}).
 		SetSelectionChangedFunc(func(row, col int) {
 			inputField.SetLabel(fmt.Sprintf("%d:%d ", row, col))
-			inputField.SetText(data.Data[row][col])
+			inputField.SetText(string(data.Data[row][col]))
 		})
 
 	table.SetSelectable(true, true)
