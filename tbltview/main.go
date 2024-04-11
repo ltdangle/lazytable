@@ -8,11 +8,6 @@ import (
 	"github.com/rivo/tview"
 )
 
-var data *TableData
-var table = tview.NewTable()
-var app = tview.NewApplication()
-var inputField = tview.NewInputField()
-
 type Cell string
 
 func (c Cell) String() string {
@@ -53,8 +48,12 @@ func (d *TableData) GetColumnCount() int {
 	return len(d.Data[0])
 }
 
+var data = NewTableData()
+var table = tview.NewTable()
+var app = tview.NewApplication()
+var inputField = tview.NewInputField()
+
 func main() {
-	data = NewTableData()
 	data.Data = [][]Cell{
 		{Cell("one"), Cell("two"), Cell("three")},
 		{Cell("one"), Cell("two tee\n\nto two"), Cell("three")},
