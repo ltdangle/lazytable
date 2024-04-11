@@ -15,8 +15,8 @@ func (c Cell) String() string {
 type TableData struct {
 	tview.TableContentReadOnly
 	Data      [][]Cell
-	SelectedY int
-	SelectedX int
+	SelectedRow int
+	SelectedCol int
 }
 
 func NewTableData() *TableData {

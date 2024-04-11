@@ -42,8 +42,10 @@ func main() {
 			app.SetFocus(inputField)
 		}).
 		SetSelectionChangedFunc(func(row, col int) {
-			inputField.SetLabel(fmt.Sprintf("%d:%d ", row, col))
-			inputField.SetText(string(data.Data[row][col]))
+			data.SelectedRow = row
+			data.SelectedCol = col
+			inputField.SetLabel(fmt.Sprintf("%d:%d ", data.SelectedRow, data.SelectedCol))
+			inputField.SetText(string(data.Data[data.SelectedRow][data.SelectedCol]))
 		})
 
 	table.SetSelectable(true, true)
