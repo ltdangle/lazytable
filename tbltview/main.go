@@ -27,6 +27,7 @@ func main() {
 	inputField.SetLabel("Enter a number: ").
 		SetDoneFunc(func(key tcell.Key) {
 			fmt.Fprintf(textView, "\ninput: "+inputField.GetText())
+			data.Data[data.SelectedRow][data.SelectedCol] = Cell(inputField.GetText())
 			app.SetFocus(table)
 		}).
 		SetText("Input text")
