@@ -1,7 +1,6 @@
 package main
 
 import (
-	"math"
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
@@ -42,11 +41,11 @@ func (d *TableData) SetCell(row, column int, cell *tview.TableCell) {
 	cell.SetText(strconv.Itoa(row) + " : " + strconv.Itoa(column))
 }
 func (d *TableData) GetRowCount() int {
-	return math.MaxInt64
+	return len(d.Data)
 }
 
 func (d *TableData) GetColumnCount() int {
-	return math.MaxInt64
+	return len(d.Data[0])
 }
 
 var data = NewTableData()
@@ -67,4 +66,3 @@ func tableInputCapture(event *tcell.EventKey) *tcell.EventKey {
 func StartEditingCell(row int, col int) {
 	app.SetFocus(inputField)
 }
-
