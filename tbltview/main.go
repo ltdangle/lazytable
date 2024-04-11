@@ -65,14 +65,17 @@ func main() {
 		{DataCell("one"), DataCell("two"), DataCell("three")},
 		{DataCell("one"), DataCell("two"), DataCell("three")},
 	}
+	data.SelectedRow = 0
+	data.SelectedCol = 0
 
 	// Configure cell input widget.
-	cellInput.SetLabel("Enter a number: ").
+	cellInput.
+		SetLabel(fmt.Sprintf("%d:%d ", data.SelectedRow, data.SelectedCol)).
+		SetText(string(data.Data[data.SelectedRow][data.SelectedCol])).
 		SetDoneFunc(func(key tcell.Key) {
 			data.Data[data.SelectedRow][data.SelectedCol] = DataCell(cellInput.GetText())
 			app.SetFocus(table)
-		}).
-		SetText("Input text")
+		})
 
 	// Configure table widget.
 	table.
