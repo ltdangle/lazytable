@@ -26,7 +26,8 @@ func main() {
 	// input field
 	inputField.SetLabel("Enter a number: ").
 		SetDoneFunc(func(key tcell.Key) {
-			fmt.Fprintf(textView, "DoneFunc on inputField\n")
+			fmt.Fprintf(textView, "\ninput: "+inputField.GetText())
+			app.SetFocus(table)
 		}).
 		SetText("Input text")
 
@@ -56,7 +57,7 @@ func main() {
 			tview.NewFlex().SetDirection(tview.FlexRow).
 				AddItem(inputField, 0, 1, false).
 				AddItem(table, 0, 19, false),
-				// AddItem(tview.NewBox().SetBorder(true).SetTitle("Bottom (5 rows)"), 5, 1, false),
+			// AddItem(tview.NewBox().SetBorder(true).SetTitle("Bottom (5 rows)"), 5, 1, false),
 			0, 2, false,
 		).
 		// right
