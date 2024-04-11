@@ -43,6 +43,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 func (d *DataTable) SetCell(row, column int, cell *tview.TableCell) {
 	cell.SetText(strconv.Itoa(row) + " : " + strconv.Itoa(column))
 }
+
 func (d *DataTable) GetRowCount() int {
 	return len(d.Data)
 }
@@ -54,7 +55,7 @@ func (d *DataTable) GetColumnCount() int {
 var data = NewTableData()
 var table = tview.NewTable()
 var app = tview.NewApplication()
-var inputField = tview.NewInputField()
+var cellInput = tview.NewInputField()
 
 func main() {
 	data.Data = [][]DataCell{
@@ -65,35 +66,36 @@ func main() {
 		{DataCell("one"), DataCell("two"), DataCell("three")},
 	}
 
-	// input field
-	inputField.SetLabel("Enter a number: ").
+	// Configure cell input widget.
+	cellInput.SetLabel("Enter a number: ").
 		SetDoneFunc(func(key tcell.Key) {
-			data.Data[data.SelectedRow][data.SelectedCol] = DataCell(inputField.GetText())
+			data.Data[data.SelectedRow][data.SelectedCol] = DataCell(cellInput.GetText())
 			app.SetFocus(table)
 		}).
 		SetText("Input text")
 
-	// table
+	// Configure table widget.
 	table.
 		SetBorders(false).
 		SetSelectable(true, true).
 		SetContent(data).
 		SetSelectedFunc(func(row, col int) {
-			app.SetFocus(inputField)
+			app.SetFocus(cellInput)
 		}).
 		SetSelectionChangedFunc(func(row, col int) {
 			data.SelectedRow = row
 			data.SelectedCol = col
-			inputField.SetLabel(fmt.Sprintf("%d:%d ", data.SelectedRow, data.SelectedCol))
-			inputField.SetText(string(data.Data[data.SelectedRow][data.SelectedCol]))
+			cellInput.SetLabel(fmt.Sprintf("%d:%d ", data.SelectedRow, data.SelectedCol))
+			cellInput.SetText(string(data.Data[data.SelectedRow][data.SelectedCol]))
 		})
 
 	table.SetSelectable(true, true)
 
+	// Configure layout.
 	flex := tview.NewFlex().
 		AddItem(
 			tview.NewFlex().SetDirection(tview.FlexRow).
-				AddItem(inputField, 0, 1, false).
+				AddItem(cellInput, 0, 1, false).
 				AddItem(table, 0, 19, false),
 			0, 2, false,
 		)
