@@ -23,7 +23,7 @@ type DataTable struct {
 	SelectedCol int
 }
 
-func NewTableData() *DataTable {
+func NewDataTable() *DataTable {
 	return &DataTable{}
 }
 
@@ -52,7 +52,7 @@ func (d *DataTable) GetColumnCount() int {
 	return len(d.Data[0])
 }
 
-var data = NewTableData()
+var data = NewDataTable()
 var table = tview.NewTable()
 var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
