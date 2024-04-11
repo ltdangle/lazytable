@@ -39,7 +39,7 @@ func main() {
 
 	table.
 		SetSelectedFunc(func(row, col int) {
-			StartEditingCell(row, col)
+			app.SetFocus(inputField)
 		}).
 		SetSelectionChangedFunc(func(row, col int) {
 			inputField.SetLabel(fmt.Sprintf("%d:%d ", row, col))

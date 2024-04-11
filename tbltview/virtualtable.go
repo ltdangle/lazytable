@@ -63,12 +63,5 @@ func tableInputCapture(event *tcell.EventKey) *tcell.EventKey {
 	if rune == '1' {
 		data.Data[0][0] = Cell(strconv.Itoa(selectedRowIndex) + ":" + strconv.Itoa(selectedColumnIndex))
 	}
-	if rune == '2' {
-		StartEditingCell(selectedRowIndex, selectedColumnIndex)
-	}
 	return event
-}
-
-func StartEditingCell(row int, col int) {
-	app.SetFocus(inputField)
 }
