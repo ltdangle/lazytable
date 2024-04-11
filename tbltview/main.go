@@ -47,7 +47,6 @@ func main() {
 		})
 
 	table.SetSelectable(true, true)
-	table.SetInputCapture(tableInputCapture)
 
 	flex := tview.NewFlex().
 		// left

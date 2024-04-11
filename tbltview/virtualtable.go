@@ -3,7 +3,6 @@ package main
 import (
 	"strconv"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
@@ -15,8 +14,9 @@ func (c Cell) String() string {
 
 type TableData struct {
 	tview.TableContentReadOnly
-	Data [][]Cell
-	Page *tview.Pages
+	Data      [][]Cell
+	SelectedY int
+	SelectedX int
 }
 
 func NewTableData() *TableData {
@@ -56,12 +56,3 @@ func (d *TableData) GetColumnCount() int {
 
 var data = NewTableData()
 var table = tview.NewTable()
-
-func tableInputCapture(event *tcell.EventKey) *tcell.EventKey {
-	selectedRowIndex, selectedColumnIndex := table.GetSelection()
-	rune := event.Rune()
-	if rune == '1' {
-		data.Data[0][0] = Cell(strconv.Itoa(selectedRowIndex) + ":" + strconv.Itoa(selectedColumnIndex))
-	}
-	return event
-}
