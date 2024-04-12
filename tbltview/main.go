@@ -1,12 +1,16 @@
 package main
 
 import (
+	"encoding/csv"
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"os"
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/k0kubun/pp/v3"
 	"github.com/rivo/tview"
 )
 
@@ -54,34 +58,62 @@ func (d *DataTable) GetColumnCount() int {
 	return len(d.Data[0])
 }
 
-var data = NewDataTable()
+func readCsvFile(fileName string, dataTbl *DataTable) {
+	file, err := os.Open(fileName)
+	if err != nil {
+		log.Fatalf("Error opening file: %s", err.Error())
+		return
+	}
+	defer file.Close()
+
+	reader := csv.NewReader(file)
+
+	for {
+		record, err := reader.Read()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			log.Fatalf("Error opening file: %s", err.Error())
+			return
+		}
+		pp.Print(record)
+	}
+}
+
+var dataTbl = NewDataTable()
 var table = tview.NewTable()
 var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
 
 func main() {
+	// Parse cli arguments.
 	csvFile := flag.String("file", "", "path to csv file")
 	flag.Parse()
 	if *csvFile == "" {
 		log.Fatal("-file not specified")
 	}
 
-	data.Data = [][]DataCell{
+	// Load csv file.
+	readCsvFile(*csvFile, dataTbl)
+	return
+
+	dataTbl.Data = [][]DataCell{
 		{DataCell("one"), DataCell("two"), DataCell("three")},
 		{DataCell("one"), DataCell("two tee\n\nto two"), DataCell("three")},
 		{DataCell("one"), DataCell("two"), DataCell("three")},
 		{DataCell("one"), DataCell("two"), DataCell("three")},
 		{DataCell("one"), DataCell("two"), DataCell("three")},
 	}
-	data.SelectedRow = 0
-	data.SelectedCol = 0
+	dataTbl.SelectedRow = 0
+	dataTbl.SelectedCol = 0
 
 	// Configure cell input widget.
 	cellInput.
-		SetLabel(fmt.Sprintf("%d:%d ", data.SelectedRow, data.SelectedCol)).
-		SetText(string(data.Data[data.SelectedRow][data.SelectedCol])).
+		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.SelectedRow, dataTbl.SelectedCol)).
+		SetText(string(dataTbl.Data[dataTbl.SelectedRow][dataTbl.SelectedCol])).
 		SetDoneFunc(func(key tcell.Key) {
-			data.Data[data.SelectedRow][data.SelectedCol] = DataCell(cellInput.GetText())
+			dataTbl.Data[dataTbl.SelectedRow][dataTbl.SelectedCol] = DataCell(cellInput.GetText())
 			app.SetFocus(table)
 		})
 
@@ -89,15 +121,15 @@ func main() {
 	table.
 		SetBorders(false).
 		SetSelectable(true, true).
-		SetContent(data).
+		SetContent(dataTbl).
 		SetSelectedFunc(func(row, col int) {
 			app.SetFocus(cellInput)
 		}).
 		SetSelectionChangedFunc(func(row, col int) {
-			data.SelectedRow = row
-			data.SelectedCol = col
-			cellInput.SetLabel(fmt.Sprintf("%d:%d ", data.SelectedRow, data.SelectedCol))
-			cellInput.SetText(string(data.Data[data.SelectedRow][data.SelectedCol]))
+			dataTbl.SelectedRow = row
+			dataTbl.SelectedCol = col
+			cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.SelectedRow, dataTbl.SelectedCol))
+			cellInput.SetText(string(dataTbl.Data[dataTbl.SelectedRow][dataTbl.SelectedCol]))
 		})
 
 	table.SetSelectable(true, true)
