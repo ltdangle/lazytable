@@ -1,7 +1,9 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"log"
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
@@ -58,6 +60,12 @@ var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
 
 func main() {
+	csvFile := flag.String("file", "", "path to csv file")
+	flag.Parse()
+	if *csvFile == "" {
+		log.Fatal("-file not specified")
+	}
+
 	data.Data = [][]DataCell{
 		{DataCell("one"), DataCell("two"), DataCell("three")},
 		{DataCell("one"), DataCell("two tee\n\nto two"), DataCell("three")},
