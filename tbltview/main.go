@@ -157,8 +157,8 @@ func main() {
 	// Configure table widget.
 	table.
 		SetBorders(false).
-		SetSelectable(true, true).
 		SetContent(dataTbl).
+		SetSelectable(true, true).
 		SetSelectedFunc(func(row, col int) {
 			app.SetFocus(cellInput)
 		}).
@@ -167,9 +167,18 @@ func main() {
 			dataTbl.SelectedCol = col
 			cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.SelectedRow, dataTbl.SelectedCol))
 			cellInput.SetText(string(dataTbl.Data[dataTbl.SelectedRow][dataTbl.SelectedCol]))
+		}).
+		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Rune() {
+			case 'r':
+				table.SetSelectable(true, false)
+			case 'c':
+				table.SetSelectable(false, true)
+			case 's':
+				table.SetSelectable(true, true)
+			}
+			return event
 		})
-
-	table.SetSelectable(true, true)
 
 	// Configure layout.
 	flex := tview.NewFlex().
