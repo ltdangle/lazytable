@@ -94,7 +94,37 @@ func addRecordToDataTable(record []string, dataTbl *DataTable) {
 
 	dataTbl.AddDataRow(dataRow)
 }
+func convertDataToArr(dataTbl *DataTable) [][]string {
+	var data [][]string
+	for _, row := range dataTbl.Data {
+		stringRow := make([]string, len(row))
+		for j, cell := range row {
+			stringRow[j] = cell.String()
+		}
+		data = append(data, stringRow)
+	}
+	return data
+}
 
+func saveDataToFile(path string, dataDataTable *DataTable) {
+	// Truncates file.
+	file, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	writer := csv.NewWriter(file)
+	defer writer.Flush()
+
+	arr := convertDataToArr(dataDataTable)
+	if err := writer.WriteAll(arr); err != nil {
+		panic(err)
+	}
+
+}
+
+var csvFile *string
 var dataTbl = NewDataTable()
 var table = tview.NewTable()
 var app = tview.NewApplication()
@@ -102,7 +132,7 @@ var cellInput = tview.NewInputField()
 
 func main() {
 	// Parse cli arguments.
-	csvFile := flag.String("file", "", "path to csv file")
+	csvFile = flag.String("file", "", "path to csv file")
 	flag.Parse()
 	if *csvFile == "" {
 		log.Fatal("-file not specified")
@@ -120,6 +150,7 @@ func main() {
 		SetText(string(dataTbl.Data[dataTbl.SelectedRow][dataTbl.SelectedCol])).
 		SetDoneFunc(func(key tcell.Key) {
 			dataTbl.Data[dataTbl.SelectedRow][dataTbl.SelectedCol] = DataCell(cellInput.GetText())
+			saveDataToFile(*csvFile, dataTbl)
 			app.SetFocus(table)
 		})
 
