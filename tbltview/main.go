@@ -10,7 +10,7 @@ import (
 	"strconv"
 
 	"github.com/gdamore/tcell/v2"
-	"github.com/k0kubun/pp/v3"
+	// "github.com/k0kubun/pp/v3"
 	"github.com/rivo/tview"
 )
 
@@ -32,7 +32,9 @@ type DataTable struct {
 func NewDataTable() *DataTable {
 	return &DataTable{}
 }
-
+func (d *DataTable) AddDataRow(dataRow []DataCell) {
+	d.Data = append(d.Data, dataRow)
+}
 func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	cell := tview.NewTableCell("")
 	cell.MaxWidth = 10
@@ -77,8 +79,20 @@ func readCsvFile(fileName string, dataTbl *DataTable) {
 			log.Fatalf("Error opening file: %s", err.Error())
 			return
 		}
-		pp.Print(record)
+
+		// Add record to data table.
+		addRecordToDataTable(record, dataTbl)
+
 	}
+}
+func addRecordToDataTable(record []string, dataTbl *DataTable) {
+	// Convert []string to []DataCell
+	var dataRow []DataCell
+	for _, strCell := range record {
+		dataRow = append(dataRow, DataCell(strCell))
+	}
+
+	dataTbl.AddDataRow(dataRow)
 }
 
 var dataTbl = NewDataTable()
@@ -94,17 +108,9 @@ func main() {
 		log.Fatal("-file not specified")
 	}
 
-	// Load csv file.
+	// Load csv file data.
 	readCsvFile(*csvFile, dataTbl)
-	return
 
-	dataTbl.Data = [][]DataCell{
-		{DataCell("one"), DataCell("two"), DataCell("three")},
-		{DataCell("one"), DataCell("two tee\n\nto two"), DataCell("three")},
-		{DataCell("one"), DataCell("two"), DataCell("three")},
-		{DataCell("one"), DataCell("two"), DataCell("three")},
-		{DataCell("one"), DataCell("two"), DataCell("three")},
-	}
 	dataTbl.SelectedRow = 0
 	dataTbl.SelectedCol = 0
 
