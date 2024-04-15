@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	// "strings"
 
 	"github.com/gdamore/tcell/v2"
 	// "github.com/k0kubun/pp/v3"
@@ -186,6 +187,8 @@ var dataTbl = NewDataTable()
 var table = tview.NewTable()
 var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
+var pages = tview.NewPages()
+var modalContents = tview.NewBox()
 
 func main() {
 	// Parse cli arguments.
@@ -234,21 +237,22 @@ func main() {
 			cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow, dataTbl.CurrentCol))
 			cellInput.SetText(string(dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol]))
 		}).
-		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-			switch event.Rune() {
-			case 'r':
-				table.SetSelectable(true, false)
-				dataTbl.selectRow(dataTbl.CurrentRow)
-			case 'c':
-				table.SetSelectable(false, true)
-				dataTbl.selectCol(dataTbl.CurrentCol)
-			case 's':
-				table.SetSelectable(true, true)
-			case 'd':
-				dataTbl.DeleteSelection()
-			}
-			return event
-		})
+		SetInputCapture(
+			func(event *tcell.EventKey) *tcell.EventKey {
+				switch event.Rune() {
+				case 'r':
+					table.SetSelectable(true, false)
+					dataTbl.selectRow(dataTbl.CurrentRow)
+				case 'c':
+					table.SetSelectable(false, true)
+					dataTbl.selectCol(dataTbl.CurrentCol)
+				case 's':
+					table.SetSelectable(true, true)
+				case 'd':
+					dataTbl.DeleteSelection()
+				}
+				return event
+			})
 
 	// Configure layout.
 	flex := tview.NewFlex().
@@ -258,8 +262,48 @@ func main() {
 				AddItem(table, 0, 19, false),
 			0, 2, false,
 		)
+	flex.SetInputCapture(
+		func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Rune() {
+			case 'm':
+				pages.ShowPage("modal")
+				modalContents.SetTitle("You pressed the m button!")
+			}
+			return event
+		})
 
-	if err := app.SetRoot(flex, true).SetFocus(table).Run(); err != nil {
+	// MODAL
+	// Returns a new primitive which puts the provided primitive in the center and
+	// sets its size to the given width and height.
+	modal := func(p tview.Primitive, width, height int) tview.Primitive {
+		return tview.NewFlex().
+			AddItem(nil, 0, 1, false).
+			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+				AddItem(nil, 0, 1, false).
+				AddItem(p, height, 1, true).
+				AddItem(nil, 0, 1, false), width, 1, true).
+			AddItem(nil, 0, 1, false)
+	}
+
+	modalContents.
+		SetBorder(true).
+		SetTitle("Modal window").
+		SetInputCapture(
+			func(event *tcell.EventKey) *tcell.EventKey {
+				switch event.Rune() {
+				case 'q':
+					pages.HidePage("modal")
+					app.SetFocus(table)
+					modalContents.SetTitle("")
+				}
+				return event
+			})
+
+	pages.
+		AddPage("background", flex, true, true).
+		AddPage("modal", modal(modalContents, 40, 10), true, false)
+
+	if err := app.SetRoot(pages, true).SetFocus(table).Run(); err != nil {
 		panic(err)
 	}
 }
