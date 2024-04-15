@@ -92,6 +92,21 @@ func (d *DataTable) DeleteColumn(col int) {
 	}
 }
 
+func (d *DataTable) AddRow() {
+	rowSize := len(d.Data[0])
+	newRow := make([]DataCell, rowSize)
+	for i := range newRow {
+		newRow[i] = DataCell("") // initialize all cells in the new row with empty strings
+	}
+	d.Data = append(d.Data, newRow)
+}
+
+func (d *DataTable) AddColumn() {
+	for i := range d.Data {
+		d.Data[i] = append(d.Data[i], DataCell("")) // add an empty string DataCell to the end of each row
+	}
+}
+
 func (d *DataTable) DeleteSelection() {
 	if d.Selection.kind == ROW_SELECTED {
 		d.DeleteRow(d.Selection.value)
@@ -268,6 +283,10 @@ func main() {
 			case 'm':
 				pages.ShowPage("modal")
 				modalContents.SetTitle("You pressed the m button!")
+			case 'R':
+				dataTbl.AddRow()
+			case 'C':
+				dataTbl.AddColumn()
 			}
 			return event
 		})
