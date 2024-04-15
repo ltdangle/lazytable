@@ -24,13 +24,14 @@ func (c DataCell) String() string {
 // DataTable type.
 type DataTable struct {
 	tview.TableContentReadOnly
-	Data        [][]DataCell
-	SelectedRow int
-	SelectedCol int
+	Data       [][]DataCell
+	Selection  *Selection
+	CurrentRow int
+	CurrentCol int
 }
 
 func NewDataTable() *DataTable {
-	return &DataTable{}
+	return &DataTable{Selection: NewSelection()}
 }
 func (d *DataTable) AddDataRow(dataRow []DataCell) {
 	d.Data = append(d.Data, dataRow)
@@ -124,6 +125,32 @@ func saveDataToFile(path string, dataDataTable *DataTable) {
 
 }
 
+// Selection.
+const (
+	ROW_SELECTED = "row selected"
+	COL_SELECTED = "col selected"
+)
+
+type Selection struct {
+	kind  string
+	value int
+}
+
+func NewSelection() *Selection {
+	return &Selection{}
+}
+func (s *Selection) SelectRow(row int) {
+	s.kind = ROW_SELECTED
+	s.value = row
+}
+func (s *Selection) SelectCol(col int) {
+	s.kind = COL_SELECTED
+	s.value = col
+}
+func (s *Selection) DeleteSelection() {
+	// TODO: delete selected row / col from data.Data
+}
+
 var csvFile *string
 var dataTbl = NewDataTable()
 var table = tview.NewTable()
@@ -141,15 +168,15 @@ func main() {
 	// Load csv file data.
 	readCsvFile(*csvFile, dataTbl)
 
-	dataTbl.SelectedRow = 0
-	dataTbl.SelectedCol = 0
+	dataTbl.CurrentRow = 0
+	dataTbl.CurrentCol = 0
 
 	// Configure cell input widget.
 	cellInput.
-		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.SelectedRow, dataTbl.SelectedCol)).
-		SetText(string(dataTbl.Data[dataTbl.SelectedRow][dataTbl.SelectedCol])).
+		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow, dataTbl.CurrentCol)).
+		SetText(string(dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol])).
 		SetDoneFunc(func(key tcell.Key) {
-			dataTbl.Data[dataTbl.SelectedRow][dataTbl.SelectedCol] = DataCell(cellInput.GetText())
+			dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol] = DataCell(cellInput.GetText())
 			saveDataToFile(*csvFile, dataTbl)
 			app.SetFocus(table)
 		})
@@ -163,10 +190,25 @@ func main() {
 			app.SetFocus(cellInput)
 		}).
 		SetSelectionChangedFunc(func(row, col int) {
-			dataTbl.SelectedRow = row
-			dataTbl.SelectedCol = col
-			cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.SelectedRow, dataTbl.SelectedCol))
-			cellInput.SetText(string(dataTbl.Data[dataTbl.SelectedRow][dataTbl.SelectedCol]))
+			selRow, selCol := table.GetSelectable()
+			if selRow && !selCol {
+				dataTbl.Selection.kind = ROW_SELECTED
+				dataTbl.Selection.value = row
+				cellInput.SetLabel("Selected row")
+				cellInput.SetText(strconv.Itoa(row))
+				return
+			}
+			if !selRow && selCol {
+				dataTbl.Selection.kind = COL_SELECTED
+				dataTbl.Selection.value = col
+				cellInput.SetLabel("Selected col")
+				cellInput.SetText(strconv.Itoa(col))
+				return
+			}
+			dataTbl.CurrentRow = row
+			dataTbl.CurrentCol = col
+			cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow, dataTbl.CurrentCol))
+			cellInput.SetText(string(dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol]))
 		}).
 		SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Rune() {
