@@ -75,6 +75,30 @@ func (d *DataTable) selectCol(col int) {
 	cellInput.SetText(strconv.Itoa(col))
 }
 
+func (d *DataTable) DeleteRow(row int) {
+	if row < 0 || row >= len(d.Data) {
+		return // Invalid row index
+	}
+	d.Data = append(d.Data[:row], d.Data[row+1:]...)
+}
+
+func (d *DataTable) DeleteColumn(col int) {
+	if col < 0 || len(d.Data) == 0 || col >= len(d.Data[0]) {
+		return // Invalid column index
+	}
+	for i := range d.Data {
+		d.Data[i] = append(d.Data[i][:col], d.Data[i][col+1:]...)
+	}
+}
+
+func (d *DataTable) DeleteSelection() {
+	if d.Selection.kind == ROW_SELECTED {
+		d.DeleteRow(d.Selection.value)
+	} else if d.Selection.kind == COL_SELECTED {
+		d.DeleteColumn(d.Selection.value)
+	}
+}
+
 func readCsvFile(fileName string, dataTbl *DataTable) {
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -220,6 +244,8 @@ func main() {
 				dataTbl.selectCol(dataTbl.CurrentCol)
 			case 's':
 				table.SetSelectable(true, true)
+			case 'd':
+				dataTbl.DeleteSelection()
 			}
 			return event
 		})
