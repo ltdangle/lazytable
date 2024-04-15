@@ -139,16 +139,22 @@ type Selection struct {
 func NewSelection() *Selection {
 	return &Selection{}
 }
-func (s *Selection) SelectRow(row int) {
-	s.kind = ROW_SELECTED
-	s.value = row
-}
-func (s *Selection) SelectCol(col int) {
-	s.kind = COL_SELECTED
-	s.value = col
-}
 func (s *Selection) DeleteSelection() {
 	// TODO: delete selected row / col from data.Data
+}
+
+func selectRow(row int) {
+	dataTbl.Selection.kind = ROW_SELECTED
+	dataTbl.Selection.value = row
+	cellInput.SetLabel("Selected row")
+	cellInput.SetText(strconv.Itoa(row))
+}
+
+func selectCol(col int) {
+	dataTbl.Selection.kind = COL_SELECTED
+	dataTbl.Selection.value = col
+	cellInput.SetLabel("Selected col")
+	cellInput.SetText(strconv.Itoa(col))
 }
 
 var csvFile *string
@@ -192,17 +198,11 @@ func main() {
 		SetSelectionChangedFunc(func(row, col int) {
 			selRow, selCol := table.GetSelectable()
 			if selRow && !selCol {
-				dataTbl.Selection.kind = ROW_SELECTED
-				dataTbl.Selection.value = row
-				cellInput.SetLabel("Selected row")
-				cellInput.SetText(strconv.Itoa(row))
+				selectRow(row)
 				return
 			}
 			if !selRow && selCol {
-				dataTbl.Selection.kind = COL_SELECTED
-				dataTbl.Selection.value = col
-				cellInput.SetLabel("Selected col")
-				cellInput.SetText(strconv.Itoa(col))
+				selectCol(col)
 				return
 			}
 			dataTbl.CurrentRow = row
@@ -214,8 +214,10 @@ func main() {
 			switch event.Rune() {
 			case 'r':
 				table.SetSelectable(true, false)
+				selectRow(dataTbl.CurrentRow)
 			case 'c':
 				table.SetSelectable(false, true)
+				selectCol(dataTbl.CurrentCol)
 			case 's':
 				table.SetSelectable(true, true)
 			}
