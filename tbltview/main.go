@@ -61,6 +61,20 @@ func (d *DataTable) GetColumnCount() int {
 	return len(d.Data[0])
 }
 
+func (d *DataTable) selectRow(row int) {
+	d.Selection.kind = ROW_SELECTED
+	d.Selection.value = row
+	cellInput.SetLabel("Selected row")
+	cellInput.SetText(strconv.Itoa(row))
+}
+
+func (d *DataTable) selectCol(col int) {
+	d.Selection.kind = COL_SELECTED
+	d.Selection.value = col
+	cellInput.SetLabel("Selected col")
+	cellInput.SetText(strconv.Itoa(col))
+}
+
 func readCsvFile(fileName string, dataTbl *DataTable) {
 	file, err := os.Open(fileName)
 	if err != nil {
@@ -143,20 +157,6 @@ func (s *Selection) DeleteSelection() {
 	// TODO: delete selected row / col from data.Data
 }
 
-func selectRow(row int) {
-	dataTbl.Selection.kind = ROW_SELECTED
-	dataTbl.Selection.value = row
-	cellInput.SetLabel("Selected row")
-	cellInput.SetText(strconv.Itoa(row))
-}
-
-func selectCol(col int) {
-	dataTbl.Selection.kind = COL_SELECTED
-	dataTbl.Selection.value = col
-	cellInput.SetLabel("Selected col")
-	cellInput.SetText(strconv.Itoa(col))
-}
-
 var csvFile *string
 var dataTbl = NewDataTable()
 var table = tview.NewTable()
@@ -198,11 +198,11 @@ func main() {
 		SetSelectionChangedFunc(func(row, col int) {
 			selRow, selCol := table.GetSelectable()
 			if selRow && !selCol {
-				selectRow(row)
+				dataTbl.selectRow(row)
 				return
 			}
 			if !selRow && selCol {
-				selectCol(col)
+				dataTbl.selectCol(col)
 				return
 			}
 			dataTbl.CurrentRow = row
@@ -214,10 +214,10 @@ func main() {
 			switch event.Rune() {
 			case 'r':
 				table.SetSelectable(true, false)
-				selectRow(dataTbl.CurrentRow)
+				dataTbl.selectRow(dataTbl.CurrentRow)
 			case 'c':
 				table.SetSelectable(false, true)
-				selectCol(dataTbl.CurrentCol)
+				dataTbl.selectCol(dataTbl.CurrentCol)
 			case 's':
 				table.SetSelectable(true, true)
 			}
