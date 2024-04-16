@@ -249,6 +249,8 @@ func main() {
 		SetBorders(false).
 		SetContent(dataTbl).
 		SetSelectable(true, true).
+		SetFixed(1,1).
+		Select(1,1).
 		SetSelectedFunc(func(row, col int) {
 			app.SetFocus(cellInput)
 		}).
