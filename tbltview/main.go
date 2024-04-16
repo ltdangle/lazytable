@@ -43,11 +43,15 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 
 	// Draw table coordinates.
 	if row == 0 {
-		cell.SetText(strconv.Itoa(column))
+		if column == 0 {
+			cell.SetText("")
+			return cell
+		}
+		cell.SetText(strconv.Itoa(column ))
 		return cell
 	}
 	if column == 0 {
-		cell.SetText(strconv.Itoa(row))
+		cell.SetText(strconv.Itoa(row ))
 		return cell
 	}
 
@@ -281,7 +285,7 @@ func main() {
 			// Select individual cell.
 			dataTbl.CurrentRow = row - 1 // account for top coordinate row
 			dataTbl.CurrentCol = col - 1 // account for leftmost coordinates col
-			cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow, dataTbl.CurrentCol))
+			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row, col))
 			cellInput.SetText(string(dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol]))
 		}).
 		SetInputCapture(
