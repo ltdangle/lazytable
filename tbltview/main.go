@@ -44,7 +44,6 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	// Draw table coordinates.
 	if row == 0 {
 		if column == 0 {
-			cell.SetText("")
 			return cell
 		}
 		cell.SetText(strconv.Itoa(column))
