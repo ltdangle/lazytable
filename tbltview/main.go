@@ -46,10 +46,13 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 		if column == 0 {
 			return cell
 		}
+		cell.SetAttributes(tcell.AttrDim)
+		cell.SetAlign(1) //AlignCenter
 		cell.SetText(strconv.Itoa(column))
 		return cell
 	}
 	if column == 0 {
+		cell.SetAttributes(tcell.AttrDim)
 		cell.SetText(strconv.Itoa(row))
 		return cell
 	}
