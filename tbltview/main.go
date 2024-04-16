@@ -249,12 +249,24 @@ func main() {
 		SetBorders(false).
 		SetContent(dataTbl).
 		SetSelectable(true, true).
-		SetFixed(1,1).
-		Select(1,1).
+		SetFixed(1, 1).
+		Select(1, 1).
 		SetSelectedFunc(func(row, col int) {
 			app.SetFocus(cellInput)
 		}).
 		SetSelectionChangedFunc(func(row, col int) {
+			// Don't select x,y coordinates.
+			if row == 0 {
+				dataTbl.CurrentRow = 1
+				table.Select(dataTbl.CurrentRow, col)
+				return
+			}
+			if col == 0 {
+				dataTbl.CurrentCol = 1
+				table.Select(row, dataTbl.CurrentCol)
+				return
+			}
+
 			selRow, selCol := table.GetSelectable()
 			if selRow && !selCol {
 				dataTbl.selectRow(row)
