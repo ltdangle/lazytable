@@ -47,11 +47,11 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 			cell.SetText("")
 			return cell
 		}
-		cell.SetText(strconv.Itoa(column ))
+		cell.SetText(strconv.Itoa(column))
 		return cell
 	}
 	if column == 0 {
-		cell.SetText(strconv.Itoa(row ))
+		cell.SetText(strconv.Itoa(row))
 		return cell
 	}
 
@@ -285,6 +285,7 @@ func main() {
 			// Select individual cell.
 			dataTbl.CurrentRow = row - 1 // account for top coordinate row
 			dataTbl.CurrentCol = col - 1 // account for leftmost coordinates col
+			// TODO: encapsulate, somehow
 			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row, col))
 			cellInput.SetText(string(dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol]))
 		}).
@@ -305,6 +306,8 @@ func main() {
 				return event
 			})
 
+	// TODO: encapsulate, somehow
+	cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow+1, dataTbl.CurrentCol+1))
 	// Configure layout.
 	flex := tview.NewFlex().
 		AddItem(
