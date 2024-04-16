@@ -267,6 +267,7 @@ func main() {
 				return
 			}
 
+			// Check if the whole row or column is selected.
 			selRow, selCol := table.GetSelectable()
 			if selRow && !selCol {
 				dataTbl.selectRow(row)
@@ -276,8 +277,10 @@ func main() {
 				dataTbl.selectCol(col)
 				return
 			}
-			dataTbl.CurrentRow = row
-			dataTbl.CurrentCol = col
+
+			// Select individual cell.
+			dataTbl.CurrentRow = row - 1 // account for top coordinate row
+			dataTbl.CurrentCol = col - 1 // account for leftmost coordinates col
 			cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow, dataTbl.CurrentCol))
 			cellInput.SetText(string(dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol]))
 		}).
