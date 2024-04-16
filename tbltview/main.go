@@ -40,13 +40,28 @@ func (d *DataTable) AddDataRow(dataRow []DataCell) {
 func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	cell := tview.NewTableCell("")
 	cell.MaxWidth = 10
+
+	// Draw table coordinates.
+	if row == 0 {
+		cell.SetText(strconv.Itoa(column))
+		return cell
+	}
+	if column == 0 {
+		cell.SetText(strconv.Itoa(row))
+		return cell
+	}
+
+	// There no data in these coordinates.
 	if row >= len(d.Data) {
 		cell.SetText("unchartered")
-	} else if column >= len(d.Data[0]) {
-		cell.SetText("unchartered")
-	} else {
-		cell.SetText(string(d.Data[row][column]))
+		return cell
 	}
+	if column >= len(d.Data[0]) {
+		cell.SetText("unchartered")
+		return cell
+	}
+
+	cell.SetText(string(d.Data[row-1][column-1]))
 	return cell
 }
 
