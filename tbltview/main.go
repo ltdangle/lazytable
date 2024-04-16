@@ -51,6 +51,7 @@ func (d *DataTable) AddDataRow(dataRow []DataCell) {
 }
 func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	cell := tview.NewTableCell("")
+	// TODO:
 	cell.MaxWidth = 10
 
 	// Draw table coordinates.
@@ -73,7 +74,6 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	}
 
 	if column == 0 { // This is leftmost row with row numbers.
-		// TODO: highlight col header cell for current selection
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetText(strconv.Itoa(row))
 
@@ -243,44 +243,9 @@ type Selection struct {
 func NewSelection() *Selection {
 	return &Selection{}
 }
-func (s *Selection) DeleteSelection() {
-	// TODO: delete selected row / col from data.Data
-}
 
-var csvFile *string
-var dataTbl = NewDataTable()
-var table = tview.NewTable()
-var app = tview.NewApplication()
-var cellInput = tview.NewInputField()
-var pages = tview.NewPages()
-var modalContents = tview.NewBox()
-var bottomBar = tview.NewTextView()
-
-func main() {
-	// Parse cli arguments.
-	csvFile = flag.String("file", "", "path to csv file")
-	flag.Parse()
-	if *csvFile == "" {
-		log.Fatal("-file not specified")
-	}
-
-	// Load csv file data.
-	readCsvFile(*csvFile, dataTbl)
-
-	dataTbl.SetCurrentRow(0)
-	dataTbl.SetCurrentCol(0)
-
-	// Configure cell input widget.
-	cellInput.
-		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow(), dataTbl.CurrentCol())).
-		SetText(string(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()])).
-		SetDoneFunc(func(key tcell.Key) {
-			dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()] = DataCell(cellInput.GetText())
-			saveDataToFile(*csvFile, dataTbl)
-			app.SetFocus(table)
-		})
-
-	// Configure table widget.
+// Configure ui elements.
+func buildTableWidget() {
 	table.
 		SetBorders(false).
 		SetContent(dataTbl).
@@ -337,9 +302,48 @@ func main() {
 				}
 				return event
 			})
+}
+
+func buildCellInput() {
+	cellInput.
+		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow(), dataTbl.CurrentCol())).
+		SetText(string(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()])).
+		SetDoneFunc(func(key tcell.Key) {
+			dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()] = DataCell(cellInput.GetText())
+			saveDataToFile(*csvFile, dataTbl)
+			app.SetFocus(table)
+		})
 
 	// TODO: encapsulate, somehow
 	cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow()+1, dataTbl.CurrentCol()+1))
+}
+
+var csvFile *string
+var dataTbl = NewDataTable()
+var table = tview.NewTable()
+var app = tview.NewApplication()
+var cellInput = tview.NewInputField()
+var pages = tview.NewPages()
+var modalContents = tview.NewBox()
+var bottomBar = tview.NewTextView()
+
+func main() {
+	// Parse cli arguments.
+	csvFile = flag.String("file", "", "path to csv file")
+	flag.Parse()
+	if *csvFile == "" {
+		log.Fatal("-file not specified")
+	}
+
+	// Load csv file data.
+	readCsvFile(*csvFile, dataTbl)
+
+	dataTbl.SetCurrentRow(0)
+	dataTbl.SetCurrentCol(0)
+
+	buildCellInput()
+	buildTableWidget()
+
 	// Configure layout.
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
