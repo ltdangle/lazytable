@@ -43,6 +43,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 
 	// Draw table coordinates.
 	if row == 0 {
+		// TODO: highlight row header cell for current selection
 		if column == 0 {
 			return cell
 		}
@@ -52,6 +53,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 		return cell
 	}
 	if column == 0 {
+		// TODO: highlight col header cell for current selection
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetText(strconv.Itoa(row))
 		return cell
@@ -225,6 +227,7 @@ var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
 var pages = tview.NewPages()
 var modalContents = tview.NewBox()
+var bottomBar = tview.NewTextView()
 
 func main() {
 	// Parse cli arguments.
@@ -312,12 +315,11 @@ func main() {
 	cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow+1, dataTbl.CurrentCol+1))
 	// Configure layout.
 	flex := tview.NewFlex().
-		AddItem(
-			tview.NewFlex().SetDirection(tview.FlexRow).
-				AddItem(cellInput, 0, 1, false).
-				AddItem(table, 0, 19, false),
-			0, 2, false,
-		)
+		SetDirection(tview.FlexRow).
+		AddItem(cellInput, 0, 1, false).
+		AddItem(table, 0, 25, false).
+		AddItem(bottomBar, 0, 1, false)
+
 	flex.SetInputCapture(
 		func(event *tcell.EventKey) *tcell.EventKey {
 			switch event.Rune() {
@@ -363,6 +365,7 @@ func main() {
 		AddPage("background", flex, true, true).
 		AddPage("modal", modal(modalContents, 40, 10), true, false)
 
+	bottomBar.SetText("> ")
 	if err := app.SetRoot(pages, true).SetFocus(table).Run(); err != nil {
 		panic(err)
 	}
