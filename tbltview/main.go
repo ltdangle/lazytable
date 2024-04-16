@@ -54,20 +54,35 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	cell.MaxWidth = 10
 
 	// Draw table coordinates.
-	if row == 0 {
-		// TODO: highlight row header cell for current selection
+	if row == 0 { // This is top row with col numbers.
 		if column == 0 {
 			return cell
 		}
+
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetAlign(1) //AlignCenter
 		cell.SetText(strconv.Itoa(column))
+
+		// Highlight row header cell for current selection.
+		if column == dataTbl.currentCol+1 {
+			cell.SetAttributes(tcell.AttrBold)
+			cell.SetAttributes(tcell.AttrUnderline)
+			return cell
+		}
 		return cell
 	}
-	if column == 0 {
+
+	if column == 0 { // This is leftmost row with row numbers.
 		// TODO: highlight col header cell for current selection
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetText(strconv.Itoa(row))
+
+		// Highlight col header cell for current selection.
+		if row == dataTbl.currentRow+1 {
+			cell.SetAttributes(tcell.AttrBold)
+			cell.SetAttributes(tcell.AttrUnderline)
+			return cell
+		}
 		return cell
 	}
 
