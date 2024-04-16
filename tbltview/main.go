@@ -27,12 +27,24 @@ type DataTable struct {
 	tview.TableContentReadOnly
 	Data       [][]DataCell
 	Selection  *Selection
-	CurrentRow int
-	CurrentCol int
+	currentRow int
+	currentCol int
 }
 
 func NewDataTable() *DataTable {
 	return &DataTable{Selection: NewSelection()}
+}
+func (d *DataTable) SetCurrentRow(row int) {
+	d.currentRow = row
+}
+func (d *DataTable) SetCurrentCol(col int) {
+	d.currentCol = col
+}
+func (d *DataTable) CurrentRow() int {
+	return d.currentRow
+}
+func (d *DataTable) CurrentCol() int {
+	return d.currentCol
 }
 func (d *DataTable) AddDataRow(dataRow []DataCell) {
 	d.Data = append(d.Data, dataRow)
@@ -240,15 +252,15 @@ func main() {
 	// Load csv file data.
 	readCsvFile(*csvFile, dataTbl)
 
-	dataTbl.CurrentRow = 0
-	dataTbl.CurrentCol = 0
+	dataTbl.SetCurrentRow(0)
+	dataTbl.SetCurrentCol(0)
 
 	// Configure cell input widget.
 	cellInput.
-		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow, dataTbl.CurrentCol)).
-		SetText(string(dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol])).
+		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow(), dataTbl.CurrentCol())).
+		SetText(string(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()])).
 		SetDoneFunc(func(key tcell.Key) {
-			dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol] = DataCell(cellInput.GetText())
+			dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()] = DataCell(cellInput.GetText())
 			saveDataToFile(*csvFile, dataTbl)
 			app.SetFocus(table)
 		})
@@ -266,13 +278,13 @@ func main() {
 		SetSelectionChangedFunc(func(row, col int) {
 			// Don't select x,y coordinates.
 			if row == 0 {
-				dataTbl.CurrentRow = 1
-				table.Select(dataTbl.CurrentRow, col)
+				dataTbl.SetCurrentRow(1)
+				table.Select(dataTbl.CurrentRow(), col)
 				return
 			}
 			if col == 0 {
-				dataTbl.CurrentCol = 1
-				table.Select(row, dataTbl.CurrentCol)
+				dataTbl.SetCurrentCol(1)
+				table.Select(row, dataTbl.CurrentCol())
 				return
 			}
 
@@ -288,21 +300,21 @@ func main() {
 			}
 
 			// Select individual cell.
-			dataTbl.CurrentRow = row - 1 // account for top coordinate row
-			dataTbl.CurrentCol = col - 1 // account for leftmost coordinates col
+			dataTbl.SetCurrentRow(row - 1) // account for top coordinate row
+			dataTbl.SetCurrentCol(col - 1) // account for leftmost coordinates col
 			// TODO: encapsulate, somehow
 			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row, col))
-			cellInput.SetText(string(dataTbl.Data[dataTbl.CurrentRow][dataTbl.CurrentCol]))
+			cellInput.SetText(string(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()]))
 		}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
 				switch event.Rune() {
 				case 'r':
 					table.SetSelectable(true, false)
-					dataTbl.selectRow(dataTbl.CurrentRow)
+					dataTbl.selectRow(dataTbl.CurrentRow())
 				case 'c':
 					table.SetSelectable(false, true)
-					dataTbl.selectCol(dataTbl.CurrentCol)
+					dataTbl.selectCol(dataTbl.CurrentCol())
 				case 's':
 					table.SetSelectable(true, true)
 				case 'd':
@@ -312,7 +324,7 @@ func main() {
 			})
 
 	// TODO: encapsulate, somehow
-	cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow+1, dataTbl.CurrentCol+1))
+	cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow()+1, dataTbl.CurrentCol()+1))
 	// Configure layout.
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
