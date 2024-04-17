@@ -166,6 +166,11 @@ func (d *DataTable) GetCurrentCell() *tview.TableCell {
 	return d.Data[d.CurrentRow()][d.CurrentCol()]
 }
 
+// Sort column by string values.
+func (d *DataTable) SortStr(col int) {
+	// TODO:
+}
+
 func NewCell() *tview.TableCell {
 	return tview.NewTableCell("")
 }
@@ -322,6 +327,9 @@ func buildTableWidget() {
 						}
 						cell.SetMaxWidth(cell.MaxWidth - 1)
 					}
+				case 'f': // sort string values
+					dataTbl.SortStr(dataTbl.CurrentCol())
+					bottomBar.SetText("lets sort col " + strconv.Itoa(dataTbl.currentCol))
 				}
 				return event
 			})
