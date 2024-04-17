@@ -53,9 +53,9 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	// Draw table coordinates.
 	if row == 0 { // This is top row with col numbers.
 		if column == 0 {
-			return tview.NewTableCell("")
+			return NewCell()
 		}
-		cell := tview.NewTableCell("")
+		cell := NewCell()
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetAlign(1) //AlignCenter
 		cell.SetText(strconv.Itoa(column))
@@ -70,7 +70,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	}
 
 	if column == 0 { // This is leftmost row with row numbers.
-		cell := tview.NewTableCell("")
+		cell := NewCell()
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetText(strconv.Itoa(row))
 
@@ -85,12 +85,12 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 
 	// There no data in these coordinates.
 	if row >= len(d.Data) {
-		cell := tview.NewTableCell("")
+		cell := NewCell()
 		cell.SetText("unchartered")
 		return cell
 	}
 	if column >= len(d.Data[0]) {
-		cell := tview.NewTableCell("")
+		cell := NewCell()
 		cell.SetText("unchartered")
 		return cell
 	}
@@ -144,14 +144,14 @@ func (d *DataTable) AddRow() {
 	rowSize := len(d.Data[0])
 	newRow := make([]*tview.TableCell, rowSize)
 	for i := range newRow {
-		newRow[i] = tview.NewTableCell("") // initialize all cells in the new row with empty strings
+		newRow[i] = NewCell() // initialize all cells in the new row with empty strings
 	}
 	d.Data = append(d.Data, newRow)
 }
 
 func (d *DataTable) AddColumn() {
 	for i := range d.Data {
-		d.Data[i] = append(d.Data[i], tview.NewTableCell("")) // add an empty string DataCell to the end of each row
+		d.Data[i] = append(d.Data[i], NewCell()) // add an empty string DataCell to the end of each row
 	}
 }
 
@@ -164,6 +164,10 @@ func (d *DataTable) DeleteSelection() {
 }
 func (d *DataTable) GetCurrentCell() *tview.TableCell {
 	return d.Data[d.CurrentRow()][d.CurrentCol()]
+}
+
+func NewCell() *tview.TableCell {
+	return tview.NewTableCell("")
 }
 
 func readCsvFile(fileName string, dataTbl *DataTable) {
@@ -195,8 +199,9 @@ func readCsvFile(fileName string, dataTbl *DataTable) {
 func addRecordToDataTable(record []string, dataTbl *DataTable) {
 	// Convert string values to cells.
 	var dataRow []*tview.TableCell
-	for _, strCell := range record {
-		cell := tview.NewTableCell(strCell)
+	for _, val := range record {
+		cell := NewCell()
+		cell.SetText(val)
 		cell.SetMaxWidth(10)
 		dataRow = append(dataRow, cell)
 	}
