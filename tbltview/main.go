@@ -162,6 +162,9 @@ func (d *DataTable) DeleteSelection() {
 		d.DeleteColumn(d.Selection.value)
 	}
 }
+func (d *DataTable) GetCurrentCell() *tview.TableCell {
+	return d.Data[d.CurrentRow()][d.CurrentCol()]
+}
 
 func readCsvFile(fileName string, dataTbl *DataTable) {
 	file, err := os.Open(fileName)
@@ -286,7 +289,7 @@ func buildTableWidget() {
 			dataTbl.SetCurrentCol(col - 1) // account for leftmost coordinates col
 			// TODO: encapsulate, somehow
 			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row, col))
-			cellInput.SetText(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()].Text)
+			cellInput.SetText(dataTbl.GetCurrentCell().Text)
 		}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
@@ -301,12 +304,12 @@ func buildTableWidget() {
 					table.SetSelectable(true, true)
 				case 'd':
 					dataTbl.DeleteSelection()
-				case '>':
+				case '>': // inclrease column width
 					for rowIdx := range dataTbl.Data {
 						cell := dataTbl.Data[rowIdx][dataTbl.CurrentCol()]
 						cell.SetMaxWidth(cell.MaxWidth + 1)
 					}
-				case '<':
+				case '<': // decrease column width
 					for rowIdx := range dataTbl.Data {
 						cell := dataTbl.Data[rowIdx][dataTbl.CurrentCol()]
 						if cell.MaxWidth == 1 {
@@ -322,9 +325,9 @@ func buildTableWidget() {
 func buildCellInput() {
 	cellInput.
 		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow(), dataTbl.CurrentCol())).
-		SetText(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()].Text).
+		SetText(dataTbl.GetCurrentCell().Text).
 		SetDoneFunc(func(key tcell.Key) {
-			dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()].SetText(cellInput.GetText())
+			dataTbl.GetCurrentCell().SetText(cellInput.GetText())
 			saveDataToFile(*csvFile, dataTbl)
 			app.SetFocus(table)
 		})
