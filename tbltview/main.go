@@ -260,7 +260,7 @@ func buildTableWidget() {
 		SetBorders(false).
 		SetContent(dataTbl).
 		SetSelectable(true, true).
-		SetFixed(1, 1).
+		SetFixed(2, 1).
 		Select(1, 1).
 		SetSelectedFunc(func(row, col int) {
 			app.SetFocus(cellInput)
