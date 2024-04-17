@@ -50,16 +50,12 @@ func (d *DataTable) AddDataRow(dataRow []*tview.TableCell) {
 	d.Data = append(d.Data, dataRow)
 }
 func (d *DataTable) GetCell(row, column int) *tview.TableCell {
-	cell := tview.NewTableCell("")
-	// TODO:
-	cell.MaxWidth = 10
-
 	// Draw table coordinates.
 	if row == 0 { // This is top row with col numbers.
 		if column == 0 {
-			return cell
+			return tview.NewTableCell("")
 		}
-
+		cell := tview.NewTableCell("")
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetAlign(1) //AlignCenter
 		cell.SetText(strconv.Itoa(column))
@@ -74,6 +70,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	}
 
 	if column == 0 { // This is leftmost row with row numbers.
+		cell := tview.NewTableCell("")
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetText(strconv.Itoa(row))
 
@@ -88,15 +85,17 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 
 	// There no data in these coordinates.
 	if row >= len(d.Data) {
+		cell := tview.NewTableCell("")
 		cell.SetText("unchartered")
 		return cell
 	}
 	if column >= len(d.Data[0]) {
+		cell := tview.NewTableCell("")
 		cell.SetText("unchartered")
 		return cell
 	}
-	cell.SetText(d.Data[row-1][column-1].Text)
-	return cell
+
+	return d.Data[row-1][column-1]
 }
 
 func (d *DataTable) SetCell(row, column int, cell *tview.TableCell) {
@@ -194,7 +193,9 @@ func addRecordToDataTable(record []string, dataTbl *DataTable) {
 	// Convert string values to cells.
 	var dataRow []*tview.TableCell
 	for _, strCell := range record {
-		dataRow = append(dataRow, tview.NewTableCell(strCell))
+		cell := tview.NewTableCell(strCell)
+		cell.SetMaxWidth(10)
+		dataRow = append(dataRow, cell)
 	}
 
 	dataTbl.AddDataRow(dataRow)
@@ -301,6 +302,18 @@ func buildTableWidget() {
 				case 'd':
 					dataTbl.DeleteSelection()
 				case '>':
+					for rowIdx := range dataTbl.Data {
+						cell := dataTbl.Data[rowIdx][dataTbl.CurrentCol()]
+						cell.SetMaxWidth(cell.MaxWidth + 1)
+					}
+				case '<':
+					for rowIdx := range dataTbl.Data {
+						cell := dataTbl.Data[rowIdx][dataTbl.CurrentCol()]
+						if cell.MaxWidth == 1 {
+							break
+						}
+						cell.SetMaxWidth(cell.MaxWidth - 1)
+					}
 				}
 				return event
 			})
