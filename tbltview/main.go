@@ -16,13 +16,6 @@ import (
 	"github.com/rivo/tview"
 )
 
-// DataCell type.
-type DataCell string
-
-func (c DataCell) String() string {
-	return string(c)
-}
-
 // Column type. (Column settings).
 type Column struct {
 	width int
@@ -31,7 +24,7 @@ type Column struct {
 // DataTable type.
 type DataTable struct {
 	tview.TableContentReadOnly
-	Data       [][]DataCell
+	Data       [][]*tview.TableCell
 	Columns    []Column
 	Selection  *Selection
 	currentRow int
@@ -53,7 +46,7 @@ func (d *DataTable) CurrentRow() int {
 func (d *DataTable) CurrentCol() int {
 	return d.currentCol
 }
-func (d *DataTable) AddDataRow(dataRow []DataCell) {
+func (d *DataTable) AddDataRow(dataRow []*tview.TableCell) {
 	d.Data = append(d.Data, dataRow)
 }
 func (d *DataTable) GetCell(row, column int) *tview.TableCell {
@@ -102,8 +95,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 		cell.SetText("unchartered")
 		return cell
 	}
-
-	cell.SetText(string(d.Data[row-1][column-1]))
+	cell.SetText(d.Data[row-1][column-1].Text)
 	return cell
 }
 
@@ -151,16 +143,16 @@ func (d *DataTable) DeleteColumn(col int) {
 
 func (d *DataTable) AddRow() {
 	rowSize := len(d.Data[0])
-	newRow := make([]DataCell, rowSize)
+	newRow := make([]*tview.TableCell, rowSize)
 	for i := range newRow {
-		newRow[i] = DataCell("") // initialize all cells in the new row with empty strings
+		newRow[i] = tview.NewTableCell("") // initialize all cells in the new row with empty strings
 	}
 	d.Data = append(d.Data, newRow)
 }
 
 func (d *DataTable) AddColumn() {
 	for i := range d.Data {
-		d.Data[i] = append(d.Data[i], DataCell("")) // add an empty string DataCell to the end of each row
+		d.Data[i] = append(d.Data[i], tview.NewTableCell("")) // add an empty string DataCell to the end of each row
 	}
 }
 
@@ -199,10 +191,10 @@ func readCsvFile(fileName string, dataTbl *DataTable) {
 }
 
 func addRecordToDataTable(record []string, dataTbl *DataTable) {
-	// Convert []string to []DataCell
-	var dataRow []DataCell
+	// Convert string values to cells.
+	var dataRow []*tview.TableCell
 	for _, strCell := range record {
-		dataRow = append(dataRow, DataCell(strCell))
+		dataRow = append(dataRow, tview.NewTableCell(strCell))
 	}
 
 	dataTbl.AddDataRow(dataRow)
@@ -213,7 +205,7 @@ func convertDataToArr(dataTbl *DataTable) [][]string {
 	for _, row := range dataTbl.Data {
 		stringRow := make([]string, len(row))
 		for j, cell := range row {
-			stringRow[j] = cell.String()
+			stringRow[j] = cell.Text
 		}
 		data = append(data, stringRow)
 	}
@@ -293,7 +285,7 @@ func buildTableWidget() {
 			dataTbl.SetCurrentCol(col - 1) // account for leftmost coordinates col
 			// TODO: encapsulate, somehow
 			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row, col))
-			cellInput.SetText(string(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()]))
+			cellInput.SetText(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()].Text)
 		}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
@@ -317,9 +309,9 @@ func buildTableWidget() {
 func buildCellInput() {
 	cellInput.
 		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow(), dataTbl.CurrentCol())).
-		SetText(string(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()])).
+		SetText(dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()].Text).
 		SetDoneFunc(func(key tcell.Key) {
-			dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()] = DataCell(cellInput.GetText())
+			dataTbl.Data[dataTbl.CurrentRow()][dataTbl.CurrentCol()].SetText(cellInput.GetText())
 			saveDataToFile(*csvFile, dataTbl)
 			app.SetFocus(table)
 		})
