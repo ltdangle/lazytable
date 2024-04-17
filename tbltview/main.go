@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+
 	// "strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -22,10 +23,16 @@ func (c DataCell) String() string {
 	return string(c)
 }
 
+// Column type. (Column settings).
+type Column struct {
+	width int
+}
+
 // DataTable type.
 type DataTable struct {
 	tview.TableContentReadOnly
 	Data       [][]DataCell
+	Columns    []Column
 	Selection  *Selection
 	currentRow int
 	currentCol int
@@ -190,6 +197,7 @@ func readCsvFile(fileName string, dataTbl *DataTable) {
 
 	}
 }
+
 func addRecordToDataTable(record []string, dataTbl *DataTable) {
 	// Convert []string to []DataCell
 	var dataRow []DataCell
@@ -199,6 +207,7 @@ func addRecordToDataTable(record []string, dataTbl *DataTable) {
 
 	dataTbl.AddDataRow(dataRow)
 }
+
 func convertDataToArr(dataTbl *DataTable) [][]string {
 	var data [][]string
 	for _, row := range dataTbl.Data {
@@ -299,6 +308,7 @@ func buildTableWidget() {
 					table.SetSelectable(true, true)
 				case 'd':
 					dataTbl.DeleteSelection()
+				case '>':
 				}
 				return event
 			})
