@@ -51,15 +51,14 @@ func (d *DataTable) AddDataRow(dataRow []*tview.TableCell) {
 	d.Data = append(d.Data, dataRow)
 }
 func (d *DataTable) GetCell(row, column int) *tview.TableCell {
+	cell := d.Data[row][column]
 	// Draw table coordinates.
 	if row == 0 { // This is top row with col numbers.
 		if column == 0 {
-			return NewCell()
+			return cell
 		}
-		cell := NewCell()
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetAlign(1) //AlignCenter
-		cell.SetText(strconv.Itoa(column))
 
 		// Highlight row header cell for current selection.
 		if column == dataTbl.currentCol+1 {
@@ -71,9 +70,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	}
 
 	if column == 0 { // This is leftmost row with row numbers.
-		cell := NewCell()
 		cell.SetAttributes(tcell.AttrDim)
-		cell.SetText(strconv.Itoa(row))
 
 		// Highlight col header cell for current selection.
 		if row == dataTbl.currentRow+1 {
@@ -84,19 +81,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 		return cell
 	}
 
-	// There no data in these coordinates.
-	if row >= len(d.Data) {
-		cell := NewCell()
-		cell.SetText("unchartered")
-		return cell
-	}
-	if column >= len(d.Data[0]) {
-		cell := NewCell()
-		cell.SetText("unchartered")
-		return cell
-	}
-
-	return d.Data[row-1][column-1]
+	return cell
 }
 
 func (d *DataTable) SetCell(row, column int, cell *tview.TableCell) {
@@ -203,7 +188,7 @@ func readCsvFile(fileName string, dataTbl *DataTable) {
 	defer file.Close()
 
 	reader := csv.NewReader(file)
-
+	recordCounter := 0
 	for {
 		record, err := reader.Read()
 		if err == io.EOF {
@@ -214,15 +199,31 @@ func readCsvFile(fileName string, dataTbl *DataTable) {
 			return
 		}
 
-		// Add record to data table.
-		addRecordToDataTable(record, dataTbl)
+		// Add row header.
+		if recordCounter == 0 {
+			var header []string
+			for colCount := range record {
+				header = append(header, fmt.Sprintf("%d", colCount))
+			}
+			addRecordToDataTable(recordCounter, header, dataTbl)
+		}
 
+		// Add record to data table.
+		addRecordToDataTable(recordCounter, record, dataTbl)
+
+		recordCounter++
 	}
 }
 
-func addRecordToDataTable(record []string, dataTbl *DataTable) {
-	// Convert string values to cells.
+func addRecordToDataTable(recordCount int, record []string, dataTbl *DataTable) {
 	var dataRow []*tview.TableCell
+
+	// Set col header.
+	colHead := NewCell()
+	colHead.SetText(fmt.Sprintf("%d", recordCount))
+	dataRow = append(dataRow, colHead)
+
+	// Add row (record) data.
 	for _, val := range record {
 		cell := NewCell()
 		cell.SetText(val)
@@ -314,8 +315,8 @@ func buildTableWidget() {
 			}
 
 			// Select individual cell.
-			dataTbl.SetCurrentRow(row - 1) // account for top coordinate row
-			dataTbl.SetCurrentCol(col - 1) // account for leftmost coordinates col
+			dataTbl.SetCurrentRow(row) // account for top coordinate row
+			dataTbl.SetCurrentCol(col) // account for leftmost coordinates col
 			// TODO: encapsulate, somehow
 			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row, col))
 			cellInput.SetText(dataTbl.GetCurrentCell().Text)
