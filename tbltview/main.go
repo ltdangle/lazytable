@@ -170,8 +170,9 @@ func (d *DataTable) SortColStrDesc(col int) {
 // takes slice of vertical column cells as an argument.
 func (d *DataTable) sortColumn(col int, sorter func(a, b *tview.TableCell) bool) {
 	// Perform a stable sort to maintain the relative order of other elements.
-	sort.SliceStable(d.Data[1:], func(i, j int) bool {
-		return sorter(d.Data[i+1][col], d.Data[j+1][col])
+	// Account for cols row and header row (+2)
+	sort.SliceStable(d.Data[2:], func(i, j int) bool {
+		return sorter(d.Data[i+2][col], d.Data[j+2][col])
 	})
 }
 
