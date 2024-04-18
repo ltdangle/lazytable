@@ -236,7 +236,8 @@ func addRecordToDataTable(recordCount int, record []string, dataTbl *DataTable) 
 
 func convertDataToArr(dataTbl *DataTable) [][]string {
 	var data [][]string
-	for _, row := range dataTbl.Data {
+	for _, row := range dataTbl.Data[1:] { // account for top col numbers row
+		row = row[1:] // account for row numbers col
 		stringRow := make([]string, len(row))
 		for j, cell := range row {
 			stringRow[j] = cell.Text
@@ -390,8 +391,8 @@ func main() {
 	// Load csv file data.
 	readCsvFile(*csvFile, dataTbl)
 
-	dataTbl.SetCurrentRow(0)
-	dataTbl.SetCurrentCol(0)
+	dataTbl.SetCurrentRow(1)
+	dataTbl.SetCurrentCol(1)
 
 	buildCellInput()
 	buildTableWidget()
