@@ -213,6 +213,9 @@ func readCsvFile(fileName string, dataTbl *DataTable) {
 
 		recordCounter++
 	}
+
+	// Pretty-print top left cell (empty it).
+	dataTbl.Data[0][0].SetText("")
 }
 
 func addRecordToDataTable(recordCount int, record []string, dataTbl *DataTable) {
