@@ -61,7 +61,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 		cell.SetAlign(1) //AlignCenter
 
 		// Highlight row header cell for current selection.
-		if column == dataTbl.currentCol+1 {
+		if column == dataTbl.currentCol {
 			cell.SetAttributes(tcell.AttrBold)
 			cell.SetAttributes(tcell.AttrUnderline)
 			return cell
@@ -73,7 +73,7 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 		cell.SetAttributes(tcell.AttrDim)
 
 		// Highlight col header cell for current selection.
-		if row == dataTbl.currentRow+1 {
+		if row == dataTbl.currentRow {
 			cell.SetAttributes(tcell.AttrBold)
 			cell.SetAttributes(tcell.AttrUnderline)
 			return cell
