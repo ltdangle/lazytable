@@ -167,11 +167,19 @@ func (d *DataTable) GetCurrentCell() *tview.TableCell {
 	return d.Data[d.CurrentRow()][d.CurrentCol()]
 }
 
-// Sort column by string values.
-func (d *DataTable) SortStr(col int) {
+// Sort column  string values.
+func (d *DataTable) SortColStrAsc(col int) {
 	d.sortColumn(col, func(colSlice []*tview.TableCell) {
 		sort.SliceStable(colSlice, func(i, j int) bool {
 			return colSlice[i].Text < colSlice[j].Text
+		})
+	})
+}
+
+func (d *DataTable) SortColStrDesc(col int) {
+	d.sortColumn(col, func(colSlice []*tview.TableCell) {
+		sort.SliceStable(colSlice, func(i, j int) bool {
+			return colSlice[i].Text > colSlice[j].Text
 		})
 	})
 }
@@ -349,9 +357,10 @@ func buildTableWidget() {
 						}
 						cell.SetMaxWidth(cell.MaxWidth - 1)
 					}
-				case 'f': // sort string values
-					dataTbl.SortStr(dataTbl.CurrentCol())
-					bottomBar.SetText("lets sort col " + strconv.Itoa(dataTbl.currentCol))
+				case 'f': // sort string values asc
+					dataTbl.SortColStrAsc(dataTbl.CurrentCol())
+				case 'F': // sort string values desc
+					dataTbl.SortColStrDesc(dataTbl.CurrentCol())
 				}
 				return event
 			})
