@@ -168,39 +168,28 @@ func (d *DataTable) GetCurrentCell() *tview.TableCell {
 }
 
 // Sort column  string values.
+
 func (d *DataTable) SortColStrAsc(col int) {
-	d.sortColumn(col, func(colSlice []*tview.TableCell) {
-		sort.SliceStable(colSlice, func(i, j int) bool {
-			return colSlice[i].Text < colSlice[j].Text
-		})
+	d.sortColumn(col, func(a, b *tview.TableCell) bool {
+		return a.Text < b.Text // Compare the text of the cells for ascending order.
 	})
 }
 
 func (d *DataTable) SortColStrDesc(col int) {
-	d.sortColumn(col, func(colSlice []*tview.TableCell) {
-		sort.SliceStable(colSlice, func(i, j int) bool {
-			return colSlice[i].Text > colSlice[j].Text
-		})
+	d.sortColumn(col, func(a, b *tview.TableCell) bool {
+		return a.Text > b.Text // Compare the text of the cells for descending order.
 	})
 }
 
 // Sorts column. Accept column index and a sorter function that
 // takes slice of vertical column cells as an argument.
-func (d *DataTable) sortColumn(col int, sorter func(colSlice []*tview.TableCell)) {
-	// Extract column values into a (vertical) slice.
-	var colSlice []*tview.TableCell
-	for _, row := range d.Data {
-		colSlice = append(colSlice, row[col])
-	}
-
-	// Sort vertical slice.
-	sorter(colSlice)
-
-	// Replace original column with sorted (vertical) slice.
-	for r := range d.Data {
-		d.Data[r][col] = colSlice[r]
-	}
+func (d *DataTable) sortColumn(col int, sorter func(a, b *tview.TableCell) bool) {
+	// Perform a stable sort to maintain the relative order of other elements.
+	sort.SliceStable(d.Data, func(i, j int) bool {
+		return sorter(d.Data[i][col], d.Data[j][col])
+	})
 }
+
 func NewCell() *tview.TableCell {
 	return tview.NewTableCell("")
 }
