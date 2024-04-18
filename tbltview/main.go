@@ -217,6 +217,11 @@ func readCsvFile(fileName string, dataTbl *DataTable) {
 
 	// Pretty-print top left cell (empty it).
 	dataTbl.Data[0][0].SetText("")
+
+	// Pretty-print table header.
+	for _, headerCell := range dataTbl.Data[1] {
+		headerCell.SetAttributes(tcell.AttrBold)
+	}
 }
 
 func addRecordToDataTable(recordCount int, record []string, dataTbl *DataTable) {
