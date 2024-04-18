@@ -169,6 +169,16 @@ func (d *DataTable) GetCurrentCell() *tview.TableCell {
 
 // Sort column by string values.
 func (d *DataTable) SortStr(col int) {
+	d.sortColumn(col, func(colSlice []*tview.TableCell) {
+		sort.SliceStable(colSlice, func(i, j int) bool {
+			return colSlice[i].Text < colSlice[j].Text
+		})
+	})
+}
+
+// Sorts column. Accept column index and a sorter function that
+// takes slice of vertical column cells as an argument.
+func (d *DataTable) sortColumn(col int, sorter func(colSlice []*tview.TableCell)) {
 	// Extract column values into a (vertical) slice.
 	var colSlice []*tview.TableCell
 	for _, row := range d.Data {
@@ -176,17 +186,13 @@ func (d *DataTable) SortStr(col int) {
 	}
 
 	// Sort vertical slice.
-	sort.SliceStable(colSlice, func(i, j int) bool {
-		return colSlice[i].Text < colSlice[j].Text
-	})
+	sorter(colSlice)
 
 	// Replace original column with sorted (vertical) slice.
 	for r := range d.Data {
 		d.Data[r][col] = colSlice[r]
 	}
-
 }
-
 func NewCell() *tview.TableCell {
 	return tview.NewTableCell("")
 }
