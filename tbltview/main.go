@@ -7,6 +7,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 
 	// "strings"
@@ -168,7 +169,22 @@ func (d *DataTable) GetCurrentCell() *tview.TableCell {
 
 // Sort column by string values.
 func (d *DataTable) SortStr(col int) {
-	// TODO:
+	// Extract column values into a (vertical) slice.
+	var colSlice []*tview.TableCell
+	for _, row := range d.Data {
+		colSlice = append(colSlice, row[col])
+	}
+
+	// Sort vertical slice.
+	sort.SliceStable(colSlice, func(i, j int) bool {
+		return colSlice[i].Text < colSlice[j].Text
+	})
+
+	// Replace original column with sorted (vertical) slice.
+	for r := range d.Data {
+		d.Data[r][col] = colSlice[r]
+	}
+
 }
 
 func NewCell() *tview.TableCell {
