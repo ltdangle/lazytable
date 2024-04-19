@@ -126,16 +126,19 @@ func (d *DataTable) DeleteColumn(col int) {
 	}
 }
 
-func (d *DataTable) AddRow() {
-	rowSize := len(d.Data[0])
-	newRow := make([]*tview.TableCell, rowSize)
-	for i := range newRow {
-		newRow[i] = NewCell() // initialize all cells in the new row with empty strings
+func (d *DataTable) AddEmptyRow() {
+	var row []*tview.TableCell
+	for i := 0; i < d.GetColumnCount(); i++ {
+		row = append(row, NewCell())
 	}
-	d.Data = append(d.Data, newRow)
+
+	d.Data = append(d.Data, row)
+
+	// Add col header.
+	row[0].SetText(fmt.Sprintf("%d", d.GetRowCount()-2))
 }
 
-func (d *DataTable) AddColumn() {
+func (d *DataTable) AddEmptyColumn() {
 	for i := range d.Data {
 		d.Data[i] = append(d.Data[i], NewCell()) // add an empty string DataCell to the end of each row
 	}
@@ -176,6 +179,7 @@ func (d *DataTable) sortColumn(col int, sorter func(a, b *tview.TableCell) bool)
 	})
 }
 
+// Factory functions.
 func NewCell() *tview.TableCell {
 	return tview.NewTableCell("")
 }
@@ -420,9 +424,9 @@ func main() {
 				pages.ShowPage("modal")
 				modalContents.SetTitle("You pressed the m button!")
 			case 'R':
-				dataTbl.AddRow()
+				dataTbl.AddEmptyRow()
 			case 'C':
-				dataTbl.AddColumn()
+				dataTbl.AddEmptyColumn()
 			}
 			return event
 		})
