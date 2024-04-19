@@ -139,9 +139,14 @@ func (d *DataTable) AddEmptyRow() {
 }
 
 func (d *DataTable) AddEmptyColumn() {
+	counter := 0
 	for i := range d.Data {
 		d.Data[i] = append(d.Data[i], NewCell()) // add an empty string DataCell to the end of each row
+		counter++
 	}
+
+	// Set column header.
+	d.Data[0][d.GetColumnCount()-1].SetText(fmt.Sprintf("%d", d.GetColumnCount()-2))
 }
 
 func (d *DataTable) DeleteSelection() {
@@ -181,7 +186,9 @@ func (d *DataTable) sortColumn(col int, sorter func(a, b *tview.TableCell) bool)
 
 // Factory functions.
 func NewCell() *tview.TableCell {
-	return tview.NewTableCell("")
+	cell := tview.NewTableCell("")
+	cell.SetMaxWidth(10)
+	return cell
 }
 
 func readCsvFile(fileName string, dataTbl *DataTable) {
