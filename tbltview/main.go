@@ -123,14 +123,20 @@ func (d *Data) GetColumnCount() int {
 }
 
 func (d *Data) RemoveRow(row int) {
-	if row < 0 || row >= len(d.cells) {
+	if d.GetRowCount() == 2 {
+		return
+	}
+	if row <= 0 || row >= d.GetRowCount() {
 		return // Invalid row index
 	}
 	d.cells = append(d.cells[:row], d.cells[row+1:]...)
 }
 
 func (d *Data) RemoveColumn(col int) {
-	if col < 0 || len(d.cells) == 0 || col >= len(d.cells[0]) {
+	if d.GetColumnCount() == 2 {
+		return
+	}
+	if col <= 0 || col >= d.GetColumnCount() {
 		return // Invalid column index
 	}
 	for i := range d.cells {
