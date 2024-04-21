@@ -410,7 +410,6 @@ func buildCellInput() {
 		SetText(dataTbl.GetCurrentCell().Text).
 		SetDoneFunc(func(key tcell.Key) {
 			dataTbl.GetCurrentCell().SetText(cellInput.GetText())
-			saveDataToFile(*csvFile, dataTbl)
 			app.SetFocus(table)
 		})
 
