@@ -90,6 +90,11 @@ func (d *Data) AddDataRow(dataRow []*tview.TableCell) {
 	d.cells = append(d.cells, dataRow)
 }
 func (d *Data) GetCell(row, column int) *tview.TableCell {
+	// Coordinates are outside our table. 
+	if row > d.GetRowCount()-1 || column > d.GetColumnCount()-1 {
+		return nil
+	}
+
 	cell := d.cells[row][column]
 	// Draw table coordinates.
 	if row == 0 { // This is top row with col numbers.
