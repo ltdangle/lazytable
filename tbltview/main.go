@@ -337,9 +337,14 @@ func buildTableWidget() {
 					colSelected := !rowSelctbl && colSelectbl
 					if rowSelected {
 						dataTbl.RemoveRow(row)
-						table.Select(row, 0)
+						if row == dataTbl.GetRowCount() { // last row deleted, shift selection up
+							table.Select(dataTbl.GetRowCount()-1, col)
+						}
 					} else if colSelected {
 						dataTbl.RemoveColumn(col)
+						if col == dataTbl.GetColumnCount() { // last col deleted, shift selection left
+							table.Select(row, dataTbl.GetColumnCount()-1)
+						}
 					}
 				case '>': // inclrease column width
 					for rowIdx := range dataTbl.cells {
