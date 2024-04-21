@@ -130,6 +130,7 @@ func (d *Data) RemoveRow(row int) {
 		return // Invalid row index
 	}
 	d.cells = append(d.cells[:row], d.cells[row+1:]...)
+	d.drawXYCoordinates()
 }
 
 func (d *Data) RemoveColumn(col int) {
@@ -142,6 +143,7 @@ func (d *Data) RemoveColumn(col int) {
 	for i := range d.cells {
 		d.cells[i] = append(d.cells[i][:col], d.cells[i][col+1:]...)
 	}
+	d.drawXYCoordinates()
 }
 
 func (d *Data) AddEmptyRow() {
@@ -201,6 +203,14 @@ func (d *Data) sortColumn(col int, sorter func(a, b *tview.TableCell) bool) {
 	sort.SliceStable(d.cells[2:], func(i, j int) bool {
 		return sorter(d.cells[i+2][col], d.cells[j+2][col])
 	})
+}
+func (d *Data) drawXYCoordinates() {
+	for rowIdx := range d.cells {
+		d.cells[rowIdx][0].SetText(fmt.Sprintf("%d", rowIdx))
+	}
+	for colIdx, col := range d.cells[0] {
+		col.SetText(fmt.Sprintf("%d", colIdx))
+	}
 }
 
 // Factory functions.
