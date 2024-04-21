@@ -57,23 +57,6 @@ func (t *Data) InsertRow(row int) {
 	copy(t.cells[row+1:], t.cells[row:]) // Shift down.
 	t.cells[row] = nil                   // New row is uninitialized.
 }
-func (t *Data) RemoveColumn(column int) {
-	for row := range t.cells {
-		if column < 0 || column >= len(t.cells[row]) {
-			continue
-		}
-		t.cells[row] = append(t.cells[row][:column], t.cells[row][column+1:]...)
-	}
-	if column >= 0 && column <= t.lastColumn {
-		t.lastColumn--
-	}
-}
-func (t *Data) RemoveRow(row int) {
-	if row < 0 || row >= len(t.cells) {
-		return
-	}
-	t.cells = append(t.cells[:row], t.cells[row+1:]...)
-}
 func (d *Data) SetCurrentRow(row int) {
 	d.currentRow = row
 }
@@ -90,7 +73,7 @@ func (d *Data) AddDataRow(dataRow []*tview.TableCell) {
 	d.cells = append(d.cells, dataRow)
 }
 func (d *Data) GetCell(row, column int) *tview.TableCell {
-	// Coordinates are outside our table. 
+	// Coordinates are outside our table.
 	if row > d.GetRowCount()-1 || column > d.GetColumnCount()-1 {
 		return nil
 	}
@@ -154,14 +137,14 @@ func (d *Data) selectCol(col int) {
 	cellInput.SetText(strconv.Itoa(col))
 }
 
-func (d *Data) DeleteRow(row int) {
+func (d *Data) RemoveRow(row int) {
 	if row < 0 || row >= len(d.cells) {
 		return // Invalid row index
 	}
 	d.cells = append(d.cells[:row], d.cells[row+1:]...)
 }
 
-func (d *Data) DeleteColumn(col int) {
+func (d *Data) RemoveColumn(col int) {
 	if col < 0 || len(d.cells) == 0 || col >= len(d.cells[0]) {
 		return // Invalid column index
 	}
@@ -195,9 +178,9 @@ func (d *Data) AddEmptyColumn() {
 
 func (d *Data) DeleteSelection() {
 	if d.Selection.kind == ROW_SELECTED {
-		d.DeleteRow(d.Selection.value)
+		d.RemoveRow(d.Selection.value)
 	} else if d.Selection.kind == COL_SELECTED {
-		d.DeleteColumn(d.Selection.value)
+		d.RemoveColumn(d.Selection.value)
 	}
 }
 func (d *Data) GetCurrentCell() *tview.TableCell {
