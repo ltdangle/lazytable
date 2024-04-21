@@ -206,11 +206,13 @@ func (d *Data) sortColumn(col int, sorter func(a, b *tview.TableCell) bool) {
 }
 func (d *Data) drawXYCoordinates() {
 	for rowIdx := range d.cells {
-		d.cells[rowIdx][0].SetText(fmt.Sprintf("%d", rowIdx))
+		d.cells[rowIdx][0].SetText(fmt.Sprintf("%d", rowIdx-1))
 	}
 	for colIdx, col := range d.cells[0] {
-		col.SetText(fmt.Sprintf("%d", colIdx))
+		col.SetText(fmt.Sprintf("%d", colIdx-1))
 	}
+
+	d.cells[0][0].SetText("")
 }
 
 // Factory functions.
