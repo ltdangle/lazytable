@@ -22,36 +22,75 @@ type Column struct {
 	width int
 }
 
-// DataTable type.
-type DataTable struct {
-	tview.TableContentReadOnly
-	Data       [][]*tview.TableCell
+// Data type.
+type Data struct {
+	cells      [][]*tview.TableCell
+	lastColumn int
+
 	Columns    []Column
 	Selection  *Selection
 	currentRow int
 	currentCol int
 }
 
-func NewDataTable() *DataTable {
-	return &DataTable{Selection: NewSelection()}
+func NewDataTable() *Data {
+	return &Data{Selection: NewSelection()}
 }
-func (d *DataTable) SetCurrentRow(row int) {
+func (t *Data) Clear() {
+	t.cells = nil
+}
+func (t *Data) InsertColumn(column int) {
+	for row := range t.cells {
+		if column >= len(t.cells[row]) {
+			continue
+		}
+		t.cells[row] = append(t.cells[row], nil)             // Extend by one.
+		copy(t.cells[row][column+1:], t.cells[row][column:]) // Shift to the right.
+		t.cells[row][column] = &tview.TableCell{}            // New element is an uninitialized table cell.
+	}
+}
+func (t *Data) InsertRow(row int) {
+	if row >= len(t.cells) {
+		return
+	}
+	t.cells = append(t.cells, nil)       // Extend by one.
+	copy(t.cells[row+1:], t.cells[row:]) // Shift down.
+	t.cells[row] = nil                   // New row is uninitialized.
+}
+func (t *Data) RemoveColumn(column int) {
+	for row := range t.cells {
+		if column < 0 || column >= len(t.cells[row]) {
+			continue
+		}
+		t.cells[row] = append(t.cells[row][:column], t.cells[row][column+1:]...)
+	}
+	if column >= 0 && column <= t.lastColumn {
+		t.lastColumn--
+	}
+}
+func (t *Data) RemoveRow(row int) {
+	if row < 0 || row >= len(t.cells) {
+		return
+	}
+	t.cells = append(t.cells[:row], t.cells[row+1:]...)
+}
+func (d *Data) SetCurrentRow(row int) {
 	d.currentRow = row
 }
-func (d *DataTable) SetCurrentCol(col int) {
+func (d *Data) SetCurrentCol(col int) {
 	d.currentCol = col
 }
-func (d *DataTable) CurrentRow() int {
+func (d *Data) CurrentRow() int {
 	return d.currentRow
 }
-func (d *DataTable) CurrentCol() int {
+func (d *Data) CurrentCol() int {
 	return d.currentCol
 }
-func (d *DataTable) AddDataRow(dataRow []*tview.TableCell) {
-	d.Data = append(d.Data, dataRow)
+func (d *Data) AddDataRow(dataRow []*tview.TableCell) {
+	d.cells = append(d.cells, dataRow)
 }
-func (d *DataTable) GetCell(row, column int) *tview.TableCell {
-	cell := d.Data[row][column]
+func (d *Data) GetCell(row, column int) *tview.TableCell {
+	cell := d.cells[row][column]
 	// Draw table coordinates.
 	if row == 0 { // This is top row with col numbers.
 		if column == 0 {
@@ -84,91 +123,91 @@ func (d *DataTable) GetCell(row, column int) *tview.TableCell {
 	return cell
 }
 
-func (d *DataTable) SetCell(row, column int, cell *tview.TableCell) {
+func (d *Data) SetCell(row, column int, cell *tview.TableCell) {
 	cell.SetText(strconv.Itoa(row) + " : " + strconv.Itoa(column))
 }
 
-func (d *DataTable) GetRowCount() int {
-	return len(d.Data)
+func (d *Data) GetRowCount() int {
+	return len(d.cells)
 }
 
-func (d *DataTable) GetColumnCount() int {
-	return len(d.Data[0])
+func (d *Data) GetColumnCount() int {
+	return len(d.cells[0])
 }
 
-func (d *DataTable) selectRow(row int) {
+func (d *Data) selectRow(row int) {
 	d.Selection.kind = ROW_SELECTED
 	d.Selection.value = row
 	cellInput.SetLabel("Selected row")
 	cellInput.SetText(strconv.Itoa(row))
 }
 
-func (d *DataTable) selectCol(col int) {
+func (d *Data) selectCol(col int) {
 	d.Selection.kind = COL_SELECTED
 	d.Selection.value = col
 	cellInput.SetLabel("Selected col")
 	cellInput.SetText(strconv.Itoa(col))
 }
 
-func (d *DataTable) DeleteRow(row int) {
-	if row < 0 || row >= len(d.Data) {
+func (d *Data) DeleteRow(row int) {
+	if row < 0 || row >= len(d.cells) {
 		return // Invalid row index
 	}
-	d.Data = append(d.Data[:row], d.Data[row+1:]...)
+	d.cells = append(d.cells[:row], d.cells[row+1:]...)
 }
 
-func (d *DataTable) DeleteColumn(col int) {
-	if col < 0 || len(d.Data) == 0 || col >= len(d.Data[0]) {
+func (d *Data) DeleteColumn(col int) {
+	if col < 0 || len(d.cells) == 0 || col >= len(d.cells[0]) {
 		return // Invalid column index
 	}
-	for i := range d.Data {
-		d.Data[i] = append(d.Data[i][:col], d.Data[i][col+1:]...)
+	for i := range d.cells {
+		d.cells[i] = append(d.cells[i][:col], d.cells[i][col+1:]...)
 	}
 }
 
-func (d *DataTable) AddEmptyRow() {
+func (d *Data) AddEmptyRow() {
 	var row []*tview.TableCell
 	for i := 0; i < d.GetColumnCount(); i++ {
 		row = append(row, NewCell())
 	}
 
-	d.Data = append(d.Data, row)
+	d.cells = append(d.cells, row)
 
 	// Add col header.
 	row[0].SetText(fmt.Sprintf("%d", d.GetRowCount()-2))
 }
 
-func (d *DataTable) AddEmptyColumn() {
+func (d *Data) AddEmptyColumn() {
 	counter := 0
-	for i := range d.Data {
-		d.Data[i] = append(d.Data[i], NewCell()) // add an empty string DataCell to the end of each row
+	for i := range d.cells {
+		d.cells[i] = append(d.cells[i], NewCell()) // add an empty string DataCell to the end of each row
 		counter++
 	}
 
 	// Set column header.
-	d.Data[0][d.GetColumnCount()-1].SetText(fmt.Sprintf("%d", d.GetColumnCount()-2))
+	d.cells[0][d.GetColumnCount()-1].SetText(fmt.Sprintf("%d", d.GetColumnCount()-2))
 }
 
-func (d *DataTable) DeleteSelection() {
+func (d *Data) DeleteSelection() {
 	if d.Selection.kind == ROW_SELECTED {
 		d.DeleteRow(d.Selection.value)
 	} else if d.Selection.kind == COL_SELECTED {
 		d.DeleteColumn(d.Selection.value)
 	}
 }
-func (d *DataTable) GetCurrentCell() *tview.TableCell {
-	return d.Data[d.CurrentRow()][d.CurrentCol()]
+func (d *Data) GetCurrentCell() *tview.TableCell {
+	return d.cells[d.CurrentRow()][d.CurrentCol()]
 }
 
 // Sort column  string values.
 
-func (d *DataTable) SortColStrAsc(col int) {
+func (d *Data) SortColStrAsc(col int) {
 	d.sortColumn(col, func(a, b *tview.TableCell) bool {
 		return a.Text < b.Text // Compare the text of the cells for ascending order.
 	})
 }
 
-func (d *DataTable) SortColStrDesc(col int) {
+func (d *Data) SortColStrDesc(col int) {
 	d.sortColumn(col, func(a, b *tview.TableCell) bool {
 		return a.Text > b.Text // Compare the text of the cells for descending order.
 	})
@@ -176,11 +215,11 @@ func (d *DataTable) SortColStrDesc(col int) {
 
 // Sorts column. Accept column index and a sorter function that
 // takes slice of vertical column cells as an argument.
-func (d *DataTable) sortColumn(col int, sorter func(a, b *tview.TableCell) bool) {
+func (d *Data) sortColumn(col int, sorter func(a, b *tview.TableCell) bool) {
 	// Perform a stable sort to maintain the relative order of other elements.
 	// Account for cols row and header row (+2)
-	sort.SliceStable(d.Data[2:], func(i, j int) bool {
-		return sorter(d.Data[i+2][col], d.Data[j+2][col])
+	sort.SliceStable(d.cells[2:], func(i, j int) bool {
+		return sorter(d.cells[i+2][col], d.cells[j+2][col])
 	})
 }
 
@@ -191,7 +230,7 @@ func NewCell() *tview.TableCell {
 	return cell
 }
 
-func readCsvFile(fileName string, dataTbl *DataTable) {
+func readCsvFile(fileName string, dataTbl *Data) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		log.Fatalf("Error opening file: %s", err.Error())
@@ -227,15 +266,15 @@ func readCsvFile(fileName string, dataTbl *DataTable) {
 	}
 
 	// Pretty-print top left cell (empty it).
-	dataTbl.Data[0][0].SetText("")
+	dataTbl.cells[0][0].SetText("")
 
 	// Pretty-print table header.
-	for _, headerCell := range dataTbl.Data[1] {
+	for _, headerCell := range dataTbl.cells[1] {
 		headerCell.SetAttributes(tcell.AttrBold)
 	}
 }
 
-func addRecordToDataTable(recordCount int, record []string, dataTbl *DataTable) {
+func addRecordToDataTable(recordCount int, record []string, dataTbl *Data) {
 	var dataRow []*tview.TableCell
 
 	// Set col header.
@@ -254,9 +293,9 @@ func addRecordToDataTable(recordCount int, record []string, dataTbl *DataTable) 
 	dataTbl.AddDataRow(dataRow)
 }
 
-func convertDataToArr(dataTbl *DataTable) [][]string {
+func convertDataToArr(dataTbl *Data) [][]string {
 	var data [][]string
-	for _, row := range dataTbl.Data[1:] { // account for top col numbers row
+	for _, row := range dataTbl.cells[1:] { // account for top col numbers row
 		row = row[1:] // account for row numbers col
 		stringRow := make([]string, len(row))
 		for j, cell := range row {
@@ -267,7 +306,7 @@ func convertDataToArr(dataTbl *DataTable) [][]string {
 	return data
 }
 
-func saveDataToFile(path string, dataDataTable *DataTable) {
+func saveDataToFile(path string, dataDataTable *Data) {
 	// Truncates file.
 	file, err := os.Create(path)
 	if err != nil {
@@ -356,13 +395,13 @@ func buildTableWidget() {
 				case 'd':
 					dataTbl.DeleteSelection()
 				case '>': // inclrease column width
-					for rowIdx := range dataTbl.Data {
-						cell := dataTbl.Data[rowIdx][dataTbl.CurrentCol()]
+					for rowIdx := range dataTbl.cells {
+						cell := dataTbl.cells[rowIdx][dataTbl.CurrentCol()]
 						cell.SetMaxWidth(cell.MaxWidth + 1)
 					}
 				case '<': // decrease column width
-					for rowIdx := range dataTbl.Data {
-						cell := dataTbl.Data[rowIdx][dataTbl.CurrentCol()]
+					for rowIdx := range dataTbl.cells {
+						cell := dataTbl.cells[rowIdx][dataTbl.CurrentCol()]
 						if cell.MaxWidth == 1 {
 							break
 						}
