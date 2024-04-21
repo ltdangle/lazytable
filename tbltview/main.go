@@ -162,6 +162,14 @@ func (d *Data) AddEmptyColumn() {
 }
 
 func (d *Data) GetCurrentCell() *tview.TableCell {
+	// Check of out of bounds values.
+	if d.CurrentRow() >= d.GetRowCount() {
+		return NewCell()
+	}
+	if d.CurrentCol() >= d.GetColumnCount() {
+		return NewCell()
+	}
+
 	return d.cells[d.CurrentRow()][d.CurrentCol()]
 }
 
@@ -338,12 +346,16 @@ func buildTableWidget() {
 					if rowSelected {
 						dataTbl.RemoveRow(row)
 						if row == dataTbl.GetRowCount() { // last row deleted, shift selection up
-							table.Select(dataTbl.GetRowCount()-1, col)
+							if dataTbl.GetRowCount() > 0 {
+								table.Select(dataTbl.GetRowCount()-1, col)
+							}
 						}
 					} else if colSelected {
 						dataTbl.RemoveColumn(col)
 						if col == dataTbl.GetColumnCount() { // last col deleted, shift selection left
-							table.Select(row, dataTbl.GetColumnCount()-1)
+							if dataTbl.GetColumnCount() > 0 {
+								table.Select(row, dataTbl.GetColumnCount()-1)
+							}
 						}
 					}
 				case '>': // inclrease column width
