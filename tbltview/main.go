@@ -87,7 +87,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		cell.SetAlign(1) //AlignCenter
 
 		// Highlight row header cell for current selection.
-		if column == dataTbl.currentCol {
+		if column == data.currentCol {
 			cell.SetAttributes(tcell.AttrBold)
 			cell.SetAttributes(tcell.AttrUnderline)
 			return cell
@@ -99,7 +99,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		cell.SetAttributes(tcell.AttrDim)
 
 		// Highlight col header cell for current selection.
-		if row == dataTbl.currentRow {
+		if row == data.currentRow {
 			cell.SetAttributes(tcell.AttrBold)
 			cell.SetAttributes(tcell.AttrUnderline)
 			return cell
@@ -302,7 +302,7 @@ func saveDataToFile(path string, dataDataTable *Data) {
 func buildTableWidget() {
 	table.
 		SetBorders(false).
-		SetContent(dataTbl).
+		SetContent(data).
 		SetSelectable(true, true).
 		SetFixed(2, 1).
 		Select(1, 1).
@@ -312,25 +312,30 @@ func buildTableWidget() {
 		SetSelectionChangedFunc(func(row, col int) {
 			// Don't select x,y coordinates.
 			if row == 0 {
-				dataTbl.SetCurrentRow(1)
-				table.Select(dataTbl.CurrentRow(), col)
+				data.SetCurrentRow(1)
+				table.Select(data.CurrentRow(), col)
 				return
 			}
 			if col == 0 {
-				dataTbl.SetCurrentCol(1)
-				table.Select(row, dataTbl.CurrentCol())
+				data.SetCurrentCol(1)
+				table.Select(row, data.CurrentCol())
 				return
 			}
 
 			// Select individual cell.
-			dataTbl.SetCurrentRow(row) // account for top coordinate row
-			dataTbl.SetCurrentCol(col) // account for leftmost coordinates col
+			data.SetCurrentRow(row) // account for top coordinate row
+			data.SetCurrentCol(col) // account for leftmost coordinates col
 			// TODO: encapsulate, somehow
 			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row, col))
-			cellInput.SetText(dataTbl.GetCurrentCell().Text)
+			cellInput.SetText(data.GetCurrentCell().Text)
 		}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
+				row, col := table.GetSelection()
+				rowSelctbl, colSelectbl := table.GetSelectable()
+				rowSelected := rowSelctbl && !colSelectbl
+				colSelected := !rowSelctbl && colSelectbl
+
 				switch event.Rune() {
 				case 'r':
 					table.SetSelectable(true, false)
@@ -339,42 +344,38 @@ func buildTableWidget() {
 				case 's':
 					table.SetSelectable(true, true)
 				case 'd':
-					row, col := table.GetSelection()
-					rowSelctbl, colSelectbl := table.GetSelectable()
-					rowSelected := rowSelctbl && !colSelectbl
-					colSelected := !rowSelctbl && colSelectbl
 					if rowSelected {
-						dataTbl.RemoveRow(row)
-						if row == dataTbl.GetRowCount() { // last row deleted, shift selection up
-							if dataTbl.GetRowCount() > 0 {
-								table.Select(dataTbl.GetRowCount()-1, col)
+						data.RemoveRow(row)
+						if row == data.GetRowCount() { // last row deleted, shift selection up
+							if data.GetRowCount() > 0 {
+								table.Select(data.GetRowCount()-1, col)
 							}
 						}
 					} else if colSelected {
-						dataTbl.RemoveColumn(col)
-						if col == dataTbl.GetColumnCount() { // last col deleted, shift selection left
-							if dataTbl.GetColumnCount() > 0 {
-								table.Select(row, dataTbl.GetColumnCount()-1)
+						data.RemoveColumn(col)
+						if col == data.GetColumnCount() { // last col deleted, shift selection left
+							if data.GetColumnCount() > 0 {
+								table.Select(row, data.GetColumnCount()-1)
 							}
 						}
 					}
 				case '>': // inclrease column width
-					for rowIdx := range dataTbl.cells {
-						cell := dataTbl.cells[rowIdx][dataTbl.CurrentCol()]
+					for rowIdx := range data.cells {
+						cell := data.cells[rowIdx][data.CurrentCol()]
 						cell.SetMaxWidth(cell.MaxWidth + 1)
 					}
 				case '<': // decrease column width
-					for rowIdx := range dataTbl.cells {
-						cell := dataTbl.cells[rowIdx][dataTbl.CurrentCol()]
+					for rowIdx := range data.cells {
+						cell := data.cells[rowIdx][data.CurrentCol()]
 						if cell.MaxWidth == 1 {
 							break
 						}
 						cell.SetMaxWidth(cell.MaxWidth - 1)
 					}
 				case 'f': // sort string values asc
-					dataTbl.SortColStrAsc(dataTbl.CurrentCol())
+					data.SortColStrAsc(data.CurrentCol())
 				case 'F': // sort string values desc
-					dataTbl.SortColStrDesc(dataTbl.CurrentCol())
+					data.SortColStrDesc(data.CurrentCol())
 				}
 				return event
 			})
@@ -382,19 +383,19 @@ func buildTableWidget() {
 
 func buildCellInput() {
 	cellInput.
-		SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow(), dataTbl.CurrentCol())).
-		SetText(dataTbl.GetCurrentCell().Text).
+		SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow(), data.CurrentCol())).
+		SetText(data.GetCurrentCell().Text).
 		SetDoneFunc(func(key tcell.Key) {
-			dataTbl.GetCurrentCell().SetText(cellInput.GetText())
+			data.GetCurrentCell().SetText(cellInput.GetText())
 			app.SetFocus(table)
 		})
 
 	// TODO: encapsulate, somehow
-	cellInput.SetLabel(fmt.Sprintf("%d:%d ", dataTbl.CurrentRow()+1, dataTbl.CurrentCol()+1))
+	cellInput.SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow()+1, data.CurrentCol()+1))
 }
 
 var csvFile *string
-var dataTbl = NewDataTable()
+var data = NewDataTable()
 var table = tview.NewTable()
 var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
@@ -411,10 +412,10 @@ func main() {
 	}
 
 	// Load csv file data.
-	readCsvFile(*csvFile, dataTbl)
+	readCsvFile(*csvFile, data)
 
-	dataTbl.SetCurrentRow(1)
-	dataTbl.SetCurrentCol(1)
+	data.SetCurrentRow(1)
+	data.SetCurrentCol(1)
 
 	buildCellInput()
 	buildTableWidget()
@@ -433,9 +434,9 @@ func main() {
 				pages.ShowPage("modal")
 				modalContents.SetTitle("You pressed the m button!")
 			case 'R':
-				dataTbl.AddEmptyRow()
+				data.AddEmptyRow()
 			case 'C':
-				dataTbl.AddEmptyColumn()
+				data.AddEmptyColumn()
 			}
 			return event
 		})
