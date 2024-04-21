@@ -337,6 +337,7 @@ func buildTableWidget() {
 					colSelected := !rowSelctbl && colSelectbl
 					if rowSelected {
 						dataTbl.RemoveRow(row)
+						table.Select(row, 0)
 					} else if colSelected {
 						dataTbl.RemoveColumn(col)
 					}
