@@ -28,13 +28,12 @@ type Data struct {
 	lastColumn int
 
 	Columns    []Column
-	Selection  *Selection
 	currentRow int
 	currentCol int
 }
 
 func NewDataTable() *Data {
-	return &Data{Selection: NewSelection()}
+	return &Data{}
 }
 func (t *Data) Clear() {
 	t.cells = nil
@@ -123,20 +122,6 @@ func (d *Data) GetColumnCount() int {
 	return len(d.cells[0])
 }
 
-func (d *Data) selectRow(row int) {
-	d.Selection.kind = ROW_SELECTED
-	d.Selection.value = row
-	cellInput.SetLabel("Selected row")
-	cellInput.SetText(strconv.Itoa(row))
-}
-
-func (d *Data) selectCol(col int) {
-	d.Selection.kind = COL_SELECTED
-	d.Selection.value = col
-	cellInput.SetLabel("Selected col")
-	cellInput.SetText(strconv.Itoa(col))
-}
-
 func (d *Data) RemoveRow(row int) {
 	if row < 0 || row >= len(d.cells) {
 		return // Invalid row index
@@ -176,13 +161,6 @@ func (d *Data) AddEmptyColumn() {
 	d.cells[0][d.GetColumnCount()-1].SetText(fmt.Sprintf("%d", d.GetColumnCount()-2))
 }
 
-func (d *Data) DeleteSelection() {
-	if d.Selection.kind == ROW_SELECTED {
-		d.RemoveRow(d.Selection.value)
-	} else if d.Selection.kind == COL_SELECTED {
-		d.RemoveColumn(d.Selection.value)
-	}
-}
 func (d *Data) GetCurrentCell() *tview.TableCell {
 	return d.cells[d.CurrentRow()][d.CurrentCol()]
 }
@@ -312,21 +290,6 @@ func saveDataToFile(path string, dataDataTable *Data) {
 
 }
 
-// Selection.
-const (
-	ROW_SELECTED = "row selected"
-	COL_SELECTED = "col selected"
-)
-
-type Selection struct {
-	kind  string
-	value int
-}
-
-func NewSelection() *Selection {
-	return &Selection{}
-}
-
 // Configure ui elements.
 func buildTableWidget() {
 	table.
@@ -351,17 +314,6 @@ func buildTableWidget() {
 				return
 			}
 
-			// Check if the whole row or column is selected.
-			selRow, selCol := table.GetSelectable()
-			if selRow && !selCol {
-				dataTbl.selectRow(row)
-				return
-			}
-			if !selRow && selCol {
-				dataTbl.selectCol(col)
-				return
-			}
-
 			// Select individual cell.
 			dataTbl.SetCurrentRow(row) // account for top coordinate row
 			dataTbl.SetCurrentCol(col) // account for leftmost coordinates col
@@ -374,14 +326,20 @@ func buildTableWidget() {
 				switch event.Rune() {
 				case 'r':
 					table.SetSelectable(true, false)
-					dataTbl.selectRow(dataTbl.CurrentRow())
 				case 'c':
 					table.SetSelectable(false, true)
-					dataTbl.selectCol(dataTbl.CurrentCol())
 				case 's':
 					table.SetSelectable(true, true)
 				case 'd':
-					dataTbl.DeleteSelection()
+					row, col := table.GetSelection()
+					rowSelctbl, colSelectbl := table.GetSelectable()
+					rowSelected := rowSelctbl && !colSelectbl
+					colSelected := !rowSelctbl && colSelectbl
+					if rowSelected {
+						dataTbl.RemoveRow(row)
+					} else if colSelected {
+						dataTbl.RemoveColumn(col)
+					}
 				case '>': // inclrease column width
 					for rowIdx := range dataTbl.cells {
 						cell := dataTbl.cells[rowIdx][dataTbl.CurrentCol()]
