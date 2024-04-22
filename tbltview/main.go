@@ -32,7 +32,7 @@ type Data struct {
 	currentCol int
 }
 
-func NewDataTable() *Data {
+func NewData() *Data {
 	return &Data{}
 }
 func (t *Data) Clear() {
@@ -344,7 +344,7 @@ func buildTableWidget() {
 			data.SetCurrentRow(row) // account for top coordinate row
 			data.SetCurrentCol(col) // account for leftmost coordinates col
 			// TODO: encapsulate, somehow
-			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row, col))
+			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
 			cellInput.SetText(data.GetCurrentCell().Text)
 		}).
 		SetInputCapture(
@@ -401,19 +401,16 @@ func buildTableWidget() {
 
 func buildCellInput() {
 	cellInput.
-		SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow(), data.CurrentCol())).
+		SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow()-1, data.CurrentCol()-1)).
 		SetText(data.GetCurrentCell().Text).
 		SetDoneFunc(func(key tcell.Key) {
 			data.GetCurrentCell().SetText(cellInput.GetText())
 			app.SetFocus(table)
 		})
-
-	// TODO: encapsulate, somehow
-	cellInput.SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow()+1, data.CurrentCol()+1))
 }
 
 var csvFile *string
-var data = NewDataTable()
+var data = NewData()
 var table = tview.NewTable()
 var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
