@@ -17,17 +17,9 @@ import (
 	"github.com/rivo/tview"
 )
 
-// Column type. (Column settings).
-type Column struct {
-	width int
-}
-
 // Data type.
 type Data struct {
 	cells      [][]*tview.TableCell
-	lastColumn int
-
-	Columns    []Column
 	currentRow int
 	currentCol int
 }
