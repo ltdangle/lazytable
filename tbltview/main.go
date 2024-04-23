@@ -114,15 +114,11 @@ func (d *DataTable) GetColumnCount() int {
 func (d *DataTable) selectRow(row int) {
 	d.Selection.kind = ROW_SELECTED
 	d.Selection.value = row
-	cellInput.SetLabel("Selected row")
-	cellInput.SetText(strconv.Itoa(row))
 }
 
 func (d *DataTable) selectCol(col int) {
 	d.Selection.kind = COL_SELECTED
 	d.Selection.value = col
-	cellInput.SetLabel("Selected col")
-	cellInput.SetText(strconv.Itoa(col))
 }
 
 func (d *DataTable) DeleteRow(row int) {
