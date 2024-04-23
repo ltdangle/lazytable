@@ -564,56 +564,55 @@ func (h *History) Redo() {
 
 // InsertRowBelowCommand.
 type InsertRowBelowCommand struct {
-	Data *Data
-	Row  int
+	data *Data
+	row  int
 }
 
 func NewInsertRowBelowCommand(data *Data, row int) *InsertRowBelowCommand {
-	return &InsertRowBelowCommand{Data: data, Row: row + 1}
+	return &InsertRowBelowCommand{data: data, row: row + 1}
 }
 func (cmd *InsertRowBelowCommand) Execute() {
-	cmd.Data.InsertRow(cmd.Row)
+	cmd.data.InsertRow(cmd.row)
 }
 
 func (cmd *InsertRowBelowCommand) Unexecute() {
-	cmd.Data.RemoveRow(cmd.Row)
+	cmd.data.RemoveRow(cmd.row)
 }
 
 // InsertRowAboveCommand.
 type InsertRowAboveCommand struct {
-	Data  *Data
+	data  *Data
 	Row   int
-	Table *tview.Table
+	table *tview.Table
 }
 
 func NewInsertRowAboveCommand(table *tview.Table, data *Data, row int) *InsertRowAboveCommand {
-	return &InsertRowAboveCommand{Table: table, Data: data, Row: row}
+	return &InsertRowAboveCommand{table: table, data: data, Row: row}
 }
 func (cmd *InsertRowAboveCommand) Execute() {
-	cmd.Data.InsertRow(cmd.Row)
-	cmd.Data.SetCurrentRow(cmd.Row + 1)
-	cmd.Table.Select(data.CurrentRow(), data.CurrentCol())
+	cmd.data.InsertRow(cmd.Row)
+	cmd.data.SetCurrentRow(cmd.Row + 1)
+	cmd.table.Select(data.CurrentRow(), data.CurrentCol())
 }
 
 func (cmd *InsertRowAboveCommand) Unexecute() {
-	cmd.Data.RemoveRow(cmd.Row)
+	cmd.data.RemoveRow(cmd.Row)
 }
 
 // InsertRowAboveCommand.
 type InsertColRightCommand struct {
-	Data  *Data
-	Col   int
-	Table *tview.Table
+	data  *Data
+	col   int
 }
 
 func NewInsertColRightCommand(data *Data, col int) *InsertColRightCommand {
-	return &InsertColRightCommand{Data: data, Col: col+1}
+	return &InsertColRightCommand{data: data, col: col+1}
 }
 
 func (cmd *InsertColRightCommand) Execute() {
-	cmd.Data.InsertColumn(cmd.Col )
+	cmd.data.InsertColumn(cmd.col )
 }
 
 func (cmd *InsertColRightCommand) Unexecute() {
-	cmd.Data.RemoveColumn(cmd.Col)
+	cmd.data.RemoveColumn(cmd.col)
 }
