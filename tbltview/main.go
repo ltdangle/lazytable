@@ -399,9 +399,11 @@ func buildTableWidget() {
 				case 'F': // Sort string values desc.
 					data.SortColStrDesc(data.CurrentCol())
 				case 'o': // Insert row below.
-					data.InsertRow(data.CurrentRow() + 1)
+					history.Do(&InsertRowCommand{Data: data, Row: data.CurrentRow() + 1})
+					// data.InsertRow(data.CurrentRow() + 1)
 				case 'O': // Insert row above.
-					data.InsertRow(data.CurrentRow())
+					history.Do(&InsertRowCommand{Data: data, Row: data.CurrentRow()})
+					// data.InsertRow(data.CurrentRow())
 					data.SetCurrentRow(data.CurrentRow() + 1)
 					table.Select(data.CurrentRow(), data.CurrentCol())
 				case 'i':
@@ -410,6 +412,8 @@ func buildTableWidget() {
 					data.InsertColumn(data.CurrentCol())
 					data.SetCurrentCol(data.CurrentCol() + 1)
 					table.Select(data.CurrentRow(), data.CurrentCol())
+				case 'u':
+					history.Undo()
 				}
 				return event
 			},
@@ -434,6 +438,7 @@ var cellInput = tview.NewInputField()
 var pages = tview.NewPages()
 var modalContents = tview.NewBox()
 var bottomBar = tview.NewTextView()
+var history = &History{} // TODO: create constructor function
 
 func main() {
 	// Parse cli arguments.
@@ -508,4 +513,62 @@ func main() {
 	if err := app.SetRoot(pages, true).SetFocus(table).Run(); err != nil {
 		panic(err)
 	}
+}
+
+// Undo / redo functionality.
+type Command interface {
+	Execute()
+	Unexecute()
+}
+
+type History struct {
+	UndoStack []Command
+	RedoStack []Command
+}
+
+func (h *History) Do(cmd Command) {
+	cmd.Execute()
+	h.UndoStack = append(h.UndoStack, cmd)
+	// Clear RedoStack because a new action has been taken
+	h.RedoStack = nil
+}
+
+func (h *History) Undo() {
+	if len(h.UndoStack) == 0 {
+		return
+	}
+	// Pop command from UndoStack and reverse the action
+	last := len(h.UndoStack) - 1
+	cmd := h.UndoStack[last]
+	cmd.Unexecute()
+	h.UndoStack = h.UndoStack[:last]
+	// Push the command onto RedoStack
+	h.RedoStack = append(h.RedoStack, cmd)
+}
+
+func (h *History) Redo() {
+	if len(h.RedoStack) == 0 {
+		return
+	}
+	// Pop command from RedoStack and re-apply the action
+	last := len(h.RedoStack) - 1
+	cmd := h.RedoStack[last]
+	cmd.Execute()
+	h.RedoStack = h.RedoStack[:last]
+	// Push the command back onto UndoStack
+	h.UndoStack = append(h.UndoStack, cmd)
+}
+
+// InsertRowCommand.
+type InsertRowCommand struct {
+	Data *Data
+	Row  int
+}
+
+func (cmd *InsertRowCommand) Execute() {
+	cmd.Data.InsertRow(cmd.Row)
+}
+
+func (cmd *InsertRowCommand) Unexecute() {
+	cmd.Data.RemoveRow(cmd.Row)
 }
