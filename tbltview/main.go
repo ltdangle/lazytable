@@ -401,7 +401,7 @@ func buildTableWidget() {
 				case 'o': // Insert row below.
 					history.Do(NewInsertRowBelowCommand(data, data.CurrentRow()))
 				case 'O': // Insert row above.
-					history.Do(NewInsertRowAboveCommand(table, data, data.CurrentRow()))
+					history.Do(NewInsertRowAboveCommand(table, data, data.CurrentRow(), data.CurrentCol()))
 				case 'i':
 					history.Do(NewInsertColRightCommand(data, data.CurrentCol()))
 				case 'I':
@@ -579,22 +579,25 @@ func (cmd *InsertRowBelowCommand) Unexecute() {
 
 // InsertRowAboveCommand.
 type InsertRowAboveCommand struct {
+	table *tview.Table
 	data  *Data
 	row   int
-	table *tview.Table
+	col   int
 }
 
-func NewInsertRowAboveCommand(table *tview.Table, data *Data, row int) *InsertRowAboveCommand {
-	return &InsertRowAboveCommand{table: table, data: data, row: row}
+func NewInsertRowAboveCommand(table *tview.Table, data *Data, row int, col int) *InsertRowAboveCommand {
+	return &InsertRowAboveCommand{table: table, data: data, row: row, col: col}
 }
 func (cmd *InsertRowAboveCommand) Execute() {
 	cmd.data.InsertRow(cmd.row)
 	cmd.data.SetCurrentRow(cmd.row + 1)
-	cmd.table.Select(data.CurrentRow(), data.CurrentCol())
+	cmd.table.Select(cmd.row+1, cmd.col)
 }
 
 func (cmd *InsertRowAboveCommand) Unexecute() {
 	cmd.data.RemoveRow(cmd.row)
+	cmd.data.SetCurrentRow(cmd.row)
+	cmd.table.Select(cmd.row, cmd.col)
 }
 
 // InsertColRightCommand.
@@ -635,6 +638,6 @@ func (cmd *InsertColLeftCommand) Execute() {
 
 func (cmd *InsertColLeftCommand) Unexecute() {
 	cmd.data.RemoveColumn(cmd.col)
-	cmd.data.SetCurrentCol(cmd.col )
+	cmd.data.SetCurrentCol(cmd.col)
 	cmd.table.Select(cmd.row, cmd.col)
 }
