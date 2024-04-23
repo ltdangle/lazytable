@@ -319,26 +319,27 @@ func buildTableWidget() {
 		SetSelectedFunc(func(row, col int) {
 			app.SetFocus(cellInput)
 		}).
-		SetSelectionChangedFunc(func(row, col int) {
-			// Don't select x,y coordinates.
-			if row == 0 {
-				data.SetCurrentRow(1)
-				table.Select(data.CurrentRow(), col)
-				return
-			}
-			if col == 0 {
-				data.SetCurrentCol(1)
-				table.Select(row, data.CurrentCol())
-				return
-			}
+		SetSelectionChangedFunc(
+			func(row, col int) {
+				// Don't select x,y coordinates.
+				if row == 0 {
+					data.SetCurrentRow(1)
+					table.Select(data.CurrentRow(), col)
+					return
+				}
+				if col == 0 {
+					data.SetCurrentCol(1)
+					table.Select(row, data.CurrentCol())
+					return
+				}
 
-			// Select individual cell.
-			data.SetCurrentRow(row) // account for top coordinate row
-			data.SetCurrentCol(col) // account for leftmost coordinates col
-			// TODO: encapsulate, somehow
-			cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
-			cellInput.SetText(data.GetCurrentCell().Text)
-		}).
+				// Select individual cell.
+				data.SetCurrentRow(row) // account for top coordinate row
+				data.SetCurrentCol(col) // account for leftmost coordinates col
+				// TODO: encapsulate, somehow
+				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
+				cellInput.SetText(data.GetCurrentCell().Text)
+			}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
 				// bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
@@ -348,36 +349,41 @@ func buildTableWidget() {
 				colSelected := !rowSelectable && colSelectable
 
 				rune := event.Rune()
-				eventName := event.Name()
+				key := event.Key()
 
-				if rune == 'V' { // Select row.
+				switch rune {
+				case 'V': // Select row.
 					table.SetSelectable(true, false)
-				} else if eventName == "Ctrl+V" { // Select column.
-					table.SetSelectable(false, true)
-				} else if eventName == "Esc" { // Select individual sell.
-					table.SetSelectable(true, true)
-				} else if rune == 'd' {
+				case 22:
+					if key == 22 { // Rune 22, key 22 = CTRL+V. Select column.
+						table.SetSelectable(false, true)
+					}
+				case 0:
+					if key == 27 { // Rune 0, key 27 = ESC.  Select individual cell.
+						table.SetSelectable(true, true)
+					}
+				case 'd':
 					if rowSelected {
 						data.RemoveRow(row)
-						if row == data.GetRowCount() { // last row deleted, shift selection up
+						if row == data.GetRowCount() { // Last row deleted, shift selection up.
 							if data.GetRowCount() > 0 {
 								table.Select(data.GetRowCount()-1, col)
 							}
 						}
 					} else if colSelected {
 						data.RemoveColumn(col)
-						if col == data.GetColumnCount() { // last col deleted, shift selection left
+						if col == data.GetColumnCount() { // Last column deleted, shift selection left.
 							if data.GetColumnCount() > 0 {
 								table.Select(row, data.GetColumnCount()-1)
 							}
 						}
 					}
-				} else if rune == '>' { // increase column width
+				case '>': // Increase column width.
 					for rowIdx := range data.cells {
 						cell := data.cells[rowIdx][data.CurrentCol()]
 						cell.SetMaxWidth(cell.MaxWidth + 1)
 					}
-				} else if rune == '<' { // decrease column width
+				case '<': // Decrease column width.
 					for rowIdx := range data.cells {
 						cell := data.cells[rowIdx][data.CurrentCol()]
 						if cell.MaxWidth == 1 {
@@ -385,9 +391,9 @@ func buildTableWidget() {
 						}
 						cell.SetMaxWidth(cell.MaxWidth - 1)
 					}
-				} else if rune == 'f' { // sort string values asc
+				case 'f': // Sort string values asc.
 					data.SortColStrAsc(data.CurrentCol())
-				} else if rune == 'F' { // sort string values desc
+				case 'F': // Sort string values desc.
 					data.SortColStrDesc(data.CurrentCol())
 				}
 
