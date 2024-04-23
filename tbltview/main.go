@@ -40,13 +40,15 @@ func (t *Data) InsertColumn(column int) {
 		t.cells[row][column] = &tview.TableCell{}            // New element is an uninitialized table cell.
 	}
 }
-func (t *Data) InsertRow(row int) {
-	if row >= len(t.cells) {
+func (d *Data) InsertRow(row int) {
+	if row >= d.GetRowCount() {
 		return
 	}
-	t.cells = append(t.cells, nil)       // Extend by one.
-	copy(t.cells[row+1:], t.cells[row:]) // Shift down.
-	t.cells[row] = nil                   // New row is uninitialized.
+
+	d.cells = append(d.cells, nil)       // Extend by one.
+	copy(d.cells[row+1:], d.cells[row:]) // Shift down.
+	d.cells[row] = d.createRow()         // New row is initialized.
+	d.drawXYCoordinates()
 }
 func (d *Data) SetCurrentRow(row int) {
 	d.currentRow = row
@@ -139,15 +141,18 @@ func (d *Data) RemoveColumn(col int) {
 }
 
 func (d *Data) AddEmptyRow() {
-	var row []*tview.TableCell
-	for i := 0; i < d.GetColumnCount(); i++ {
-		row = append(row, NewCell())
-	}
-
+	row := d.createRow()
 	d.cells = append(d.cells, row)
 
 	// Add col header.
 	row[0].SetText(fmt.Sprintf("%d", d.GetRowCount()-2))
+}
+func (d *Data) createRow() []*tview.TableCell {
+	var row []*tview.TableCell
+	for i := 0; i < d.GetColumnCount(); i++ {
+		row = append(row, NewCell())
+	}
+	return row
 }
 
 func (d *Data) AddEmptyColumn() {
@@ -395,8 +400,13 @@ func buildTableWidget() {
 					data.SortColStrAsc(data.CurrentCol())
 				case 'F': // Sort string values desc.
 					data.SortColStrDesc(data.CurrentCol())
+				case 'o': // Insert row below.
+					data.InsertRow(data.CurrentRow() + 1)
+				case 'O': // Insert row above.
+					data.InsertRow(data.CurrentRow())
+					data.SetCurrentRow(data.CurrentRow() + 1)
+					table.Select(data.CurrentRow(), data.CurrentCol())
 				}
-
 				return event
 			},
 		)
