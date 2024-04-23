@@ -1,3 +1,4 @@
+// This is simple tui spreadsheet program with vim keybindings.
 package main
 
 import (
