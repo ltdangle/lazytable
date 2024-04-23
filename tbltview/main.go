@@ -395,7 +395,7 @@ func buildTableWidget() {
 						cell.SetMaxWidth(cell.MaxWidth - 1)
 					}
 				case 'f': // Sort string values asc.
-					data.SortColStrAsc(data.CurrentCol())
+					history.Do(NewSortColStrAscCommand(data.CurrentCol()))
 				case 'F': // Sort string values desc.
 					history.Do(NewSortColStrDescCommand(data.CurrentCol()))
 				case 'o': // Insert row below.
@@ -667,6 +667,47 @@ func (cmd *SortColStrDescCommand) Execute() {
 
 // Unexecute restores the column to the original order before sorting.
 func (cmd *SortColStrDescCommand) Unexecute() {
+	if cmd.originalOrder != nil {
+		// Restore the original cell order
+		for i, row := range cmd.originalOrder {
+			for j, cell := range row {
+				data.cells[i][j] = cell
+			}
+		}
+	}
+}
+
+// SortColStrAscCommand is the command used to sort a column in ascending string order.
+type SortColStrAscCommand struct {
+	col           int
+	originalOrder [][]*tview.TableCell // to remember the order before sorting
+}
+
+// NewSortColStrAscCommand creates a new SortColStrAscCommand with the given column.
+func NewSortColStrAscCommand(col int) *SortColStrAscCommand {
+	return &SortColStrAscCommand{
+		col:           col,
+		originalOrder: nil, // will be set during the first execution
+	}
+}
+
+// Execute executes the SortColStrAscCommand, sorting the column in ascending order.
+func (cmd *SortColStrAscCommand) Execute() {
+	if cmd.originalOrder == nil {
+		// Capture the current order before sorting
+		cmd.originalOrder = make([][]*tview.TableCell, len(data.cells))
+		for i, row := range data.cells {
+			cmd.originalOrder[i] = make([]*tview.TableCell, len(row))
+			copy(cmd.originalOrder[i], row)
+		}
+	}
+
+	// Now sort the column in ascending order
+	data.SortColStrAsc(cmd.col)
+}
+
+// Unexecute restores the column to the original order before sorting.
+func (cmd *SortColStrAscCommand) Unexecute() {
 	if cmd.originalOrder != nil {
 		// Restore the original cell order
 		for i, row := range cmd.originalOrder {
