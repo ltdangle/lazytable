@@ -593,4 +593,6 @@ func (cmd *InsertRowAboveCommand) Execute() {
 
 func (cmd *InsertRowAboveCommand) Unexecute() {
 	cmd.Data.RemoveRow(cmd.Row)
+	cmd.Data.SetCurrentRow(cmd.Row)
+	cmd.Table.Select(data.CurrentRow(), data.CurrentCol())
 }
