@@ -345,7 +345,7 @@ func buildTableWidget() {
 			}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
-				// bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
+				bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
 				row, col := table.GetSelection()
 				rowSelectable, colSelectable := table.GetSelectable()
 				rowSelected := rowSelectable && !colSelectable
@@ -410,6 +410,10 @@ func buildTableWidget() {
 					table.Select(data.CurrentRow(), data.CurrentCol())
 				case 'u':
 					history.Undo()
+				case 18:
+					if key == 18 { // CTRL+R, redo.
+						history.Redo()
+					}
 				}
 				return event
 			},
