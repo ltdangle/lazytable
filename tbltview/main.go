@@ -30,14 +30,15 @@ func NewData() *Data {
 func (t *Data) Clear() {
 	t.cells = nil
 }
-func (t *Data) InsertColumn(column int) {
-	for row := range t.cells {
-		if column >= len(t.cells[row]) {
+func (d *Data) InsertColumn(column int) {
+	for row := range d.cells {
+		if column >= len(d.cells[row]) {
 			continue
 		}
-		t.cells[row] = append(t.cells[row], nil)             // Extend by one.
-		copy(t.cells[row][column+1:], t.cells[row][column:]) // Shift to the right.
-		t.cells[row][column] = &tview.TableCell{}            // New element is an uninitialized table cell.
+		d.cells[row] = append(d.cells[row], nil)             // Extend by one.
+		copy(d.cells[row][column+1:], d.cells[row][column:]) // Shift to the right.
+		d.cells[row][column] = NewCell()
+		d.drawXYCoordinates()
 	}
 }
 func (d *Data) InsertRow(row int) {
@@ -143,9 +144,7 @@ func (d *Data) RemoveColumn(col int) {
 func (d *Data) AddEmptyRow() {
 	row := d.createRow()
 	d.cells = append(d.cells, row)
-
-	// Add col header.
-	row[0].SetText(fmt.Sprintf("%d", d.GetRowCount()-2))
+	d.drawXYCoordinates()
 }
 func (d *Data) createRow() []*tview.TableCell {
 	var row []*tview.TableCell
@@ -161,9 +160,7 @@ func (d *Data) AddEmptyColumn() {
 		d.cells[i] = append(d.cells[i], NewCell()) // add an empty string DataCell to the end of each row
 		counter++
 	}
-
-	// Set column header.
-	d.cells[0][d.GetColumnCount()-1].SetText(fmt.Sprintf("%d", d.GetColumnCount()-2))
+	d.drawXYCoordinates()
 }
 
 func (d *Data) GetCurrentCell() *tview.TableCell {
@@ -405,6 +402,12 @@ func buildTableWidget() {
 				case 'O': // Insert row above.
 					data.InsertRow(data.CurrentRow())
 					data.SetCurrentRow(data.CurrentRow() + 1)
+					table.Select(data.CurrentRow(), data.CurrentCol())
+				case 'i':
+					data.InsertColumn(data.CurrentCol() + 1)
+				case 'I':
+					data.InsertColumn(data.CurrentCol())
+					data.SetCurrentCol(data.CurrentCol() + 1)
 					table.Select(data.CurrentRow(), data.CurrentCol())
 				}
 				return event
