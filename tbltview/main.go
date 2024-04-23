@@ -322,15 +322,18 @@ func buildTableWidget() {
 		}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
+				// bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
 				switch event.Rune() {
-				case 'r':
+				case 'V': // Shift + v, select row.
 					table.SetSelectable(true, false)
 					dataTbl.selectRow(dataTbl.CurrentRow())
-				case 'c':
+				case 22: // CTRL+V, select column.
 					table.SetSelectable(false, true)
 					dataTbl.selectCol(dataTbl.CurrentCol())
-				case 's':
-					table.SetSelectable(true, true)
+				case 0:
+					if event.Key() == 27 { // Esc, select individual cell.
+						table.SetSelectable(true, true)
+					}
 				case 'd':
 					dataTbl.DeleteSelection()
 				case '>': // inclrease column width
