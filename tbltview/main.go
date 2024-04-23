@@ -403,7 +403,7 @@ func buildTableWidget() {
 				case 'O': // Insert row above.
 					history.Do(NewInsertRowAboveCommand(table, data, data.CurrentRow()))
 				case 'i':
-					data.InsertColumn(data.CurrentCol() + 1)
+					history.Do(NewInsertColRightCommand(data, data.CurrentCol()))
 				case 'I':
 					data.InsertColumn(data.CurrentCol())
 					data.SetCurrentCol(data.CurrentCol() + 1)
@@ -597,4 +597,23 @@ func (cmd *InsertRowAboveCommand) Execute() {
 
 func (cmd *InsertRowAboveCommand) Unexecute() {
 	cmd.Data.RemoveRow(cmd.Row)
+}
+
+// InsertRowAboveCommand.
+type InsertColRightCommand struct {
+	Data  *Data
+	Col   int
+	Table *tview.Table
+}
+
+func NewInsertColRightCommand(data *Data, col int) *InsertColRightCommand {
+	return &InsertColRightCommand{Data: data, Col: col+1}
+}
+
+func (cmd *InsertColRightCommand) Execute() {
+	cmd.Data.InsertColumn(cmd.Col )
+}
+
+func (cmd *InsertColRightCommand) Unexecute() {
+	cmd.Data.RemoveColumn(cmd.Col)
 }
