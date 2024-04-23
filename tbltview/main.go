@@ -405,9 +405,7 @@ func buildTableWidget() {
 				case 'i':
 					history.Do(NewInsertColRightCommand(data, data.CurrentCol()))
 				case 'I':
-					data.InsertColumn(data.CurrentCol())
-					data.SetCurrentCol(data.CurrentCol() + 1)
-					table.Select(data.CurrentRow(), data.CurrentCol())
+					history.Do(NewInsertColLeftCommand(table, data, data.CurrentRow(), data.CurrentCol()))
 				case 'u':
 					history.Undo()
 				case 18:
@@ -582,37 +580,59 @@ func (cmd *InsertRowBelowCommand) Unexecute() {
 // InsertRowAboveCommand.
 type InsertRowAboveCommand struct {
 	data  *Data
-	Row   int
+	row   int
 	table *tview.Table
 }
 
 func NewInsertRowAboveCommand(table *tview.Table, data *Data, row int) *InsertRowAboveCommand {
-	return &InsertRowAboveCommand{table: table, data: data, Row: row}
+	return &InsertRowAboveCommand{table: table, data: data, row: row}
 }
 func (cmd *InsertRowAboveCommand) Execute() {
-	cmd.data.InsertRow(cmd.Row)
-	cmd.data.SetCurrentRow(cmd.Row + 1)
+	cmd.data.InsertRow(cmd.row)
+	cmd.data.SetCurrentRow(cmd.row + 1)
 	cmd.table.Select(data.CurrentRow(), data.CurrentCol())
 }
 
 func (cmd *InsertRowAboveCommand) Unexecute() {
-	cmd.data.RemoveRow(cmd.Row)
+	cmd.data.RemoveRow(cmd.row)
 }
 
-// InsertRowAboveCommand.
+// InsertColRightCommand.
 type InsertColRightCommand struct {
-	data  *Data
-	col   int
+	data *Data
+	col  int
 }
 
 func NewInsertColRightCommand(data *Data, col int) *InsertColRightCommand {
-	return &InsertColRightCommand{data: data, col: col+1}
+	return &InsertColRightCommand{data: data, col: col + 1}
 }
 
 func (cmd *InsertColRightCommand) Execute() {
-	cmd.data.InsertColumn(cmd.col )
+	cmd.data.InsertColumn(cmd.col)
 }
 
 func (cmd *InsertColRightCommand) Unexecute() {
+	cmd.data.RemoveColumn(cmd.col)
+}
+
+// InsertColLeftCommand.
+type InsertColLeftCommand struct {
+	table *tview.Table
+	data  *Data
+	col   int
+	row   int
+}
+
+func NewInsertColLeftCommand(table *tview.Table, data *Data, row int, col int) *InsertColLeftCommand {
+	return &InsertColLeftCommand{table: table, data: data, row: row, col: col}
+}
+
+func (cmd *InsertColLeftCommand) Execute() {
+	cmd.data.InsertColumn(cmd.col)
+	cmd.data.SetCurrentCol(cmd.col + 1)
+	cmd.table.Select(cmd.row, cmd.col+1)
+}
+
+func (cmd *InsertColLeftCommand) Unexecute() {
 	cmd.data.RemoveColumn(cmd.col)
 }
