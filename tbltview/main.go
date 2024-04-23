@@ -635,4 +635,6 @@ func (cmd *InsertColLeftCommand) Execute() {
 
 func (cmd *InsertColLeftCommand) Unexecute() {
 	cmd.data.RemoveColumn(cmd.col)
+	cmd.data.SetCurrentCol(cmd.col )
+	cmd.table.Select(cmd.row, cmd.col)
 }
