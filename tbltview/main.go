@@ -399,11 +399,9 @@ func buildTableWidget() {
 				case 'F': // Sort string values desc.
 					data.SortColStrDesc(data.CurrentCol())
 				case 'o': // Insert row below.
-					history.Do(&InsertRowCommand{Data: data, Row: data.CurrentRow() + 1})
-					// data.InsertRow(data.CurrentRow() + 1)
+					history.Do(NewInsertRowCommand(data, data.CurrentRow()+1))
 				case 'O': // Insert row above.
-					history.Do(&InsertRowCommand{Data: data, Row: data.CurrentRow()})
-					// data.InsertRow(data.CurrentRow())
+					history.Do(NewInsertRowCommand(data, data.CurrentRow()))
 					data.SetCurrentRow(data.CurrentRow() + 1)
 					table.Select(data.CurrentRow(), data.CurrentCol())
 				case 'i':
@@ -438,7 +436,7 @@ var cellInput = tview.NewInputField()
 var pages = tview.NewPages()
 var modalContents = tview.NewBox()
 var bottomBar = tview.NewTextView()
-var history = &History{} // TODO: create constructor function
+var history = NewHistory()
 
 func main() {
 	// Parse cli arguments.
@@ -526,6 +524,9 @@ type History struct {
 	RedoStack []Command
 }
 
+func NewHistory() *History {
+	return &History{}
+}
 func (h *History) Do(cmd Command) {
 	cmd.Execute()
 	h.UndoStack = append(h.UndoStack, cmd)
@@ -565,6 +566,9 @@ type InsertRowCommand struct {
 	Row  int
 }
 
+func NewInsertRowCommand(data *Data, row int) *InsertRowCommand {
+	return &InsertRowCommand{Data: data, Row: row}
+}
 func (cmd *InsertRowCommand) Execute() {
 	cmd.Data.InsertRow(cmd.Row)
 }
