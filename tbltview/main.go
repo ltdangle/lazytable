@@ -399,11 +399,9 @@ func buildTableWidget() {
 				case 'F': // Sort string values desc.
 					data.SortColStrDesc(data.CurrentCol())
 				case 'o': // Insert row below.
-					history.Do(NewInsertRowCommand(data, data.CurrentRow()+1))
+					history.Do(NewInsertRowBelowCommand(data, data.CurrentRow()))
 				case 'O': // Insert row above.
-					history.Do(NewInsertRowCommand(data, data.CurrentRow()))
-					data.SetCurrentRow(data.CurrentRow() + 1)
-					table.Select(data.CurrentRow(), data.CurrentCol())
+					history.Do(NewInsertRowAboveCommand(table, data, data.CurrentRow()))
 				case 'i':
 					data.InsertColumn(data.CurrentCol() + 1)
 				case 'I':
@@ -560,19 +558,39 @@ func (h *History) Redo() {
 	h.UndoStack = append(h.UndoStack, cmd)
 }
 
-// InsertRowCommand.
-type InsertRowCommand struct {
+// InsertRowBelowCommand.
+type InsertRowBelowCommand struct {
 	Data *Data
 	Row  int
 }
 
-func NewInsertRowCommand(data *Data, row int) *InsertRowCommand {
-	return &InsertRowCommand{Data: data, Row: row}
+func NewInsertRowBelowCommand(data *Data, row int) *InsertRowBelowCommand {
+	return &InsertRowBelowCommand{Data: data, Row: row + 1}
 }
-func (cmd *InsertRowCommand) Execute() {
+func (cmd *InsertRowBelowCommand) Execute() {
 	cmd.Data.InsertRow(cmd.Row)
 }
 
-func (cmd *InsertRowCommand) Unexecute() {
+func (cmd *InsertRowBelowCommand) Unexecute() {
+	cmd.Data.RemoveRow(cmd.Row)
+}
+
+// InsertRowAboveCommand.
+type InsertRowAboveCommand struct {
+	Data  *Data
+	Row   int
+	Table *tview.Table
+}
+
+func NewInsertRowAboveCommand(table *tview.Table, data *Data, row int) *InsertRowAboveCommand {
+	return &InsertRowAboveCommand{Table: table, Data: data, Row: row}
+}
+func (cmd *InsertRowAboveCommand) Execute() {
+	cmd.Data.InsertRow(cmd.Row)
+	cmd.Data.SetCurrentRow(cmd.Row + 1)
+	cmd.Table.Select(data.CurrentRow(), data.CurrentCol())
+}
+
+func (cmd *InsertRowAboveCommand) Unexecute() {
 	cmd.Data.RemoveRow(cmd.Row)
 }
