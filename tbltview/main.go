@@ -341,19 +341,22 @@ func buildTableWidget() {
 		}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
+				// bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
 				row, col := table.GetSelection()
-				rowSelctbl, colSelectbl := table.GetSelectable()
-				rowSelected := rowSelctbl && !colSelectbl
-				colSelected := !rowSelctbl && colSelectbl
+				rowSelectable, colSelectable := table.GetSelectable()
+				rowSelected := rowSelectable && !colSelectable
+				colSelected := !rowSelectable && colSelectable
 
-				switch event.Rune() {
-				case 'r':
+				rune := event.Rune()
+				eventName := event.Name()
+
+				if rune == 'V' { // Select row.
 					table.SetSelectable(true, false)
-				case 'c':
+				} else if eventName == "Ctrl+V" { // Select column.
 					table.SetSelectable(false, true)
-				case 's':
+				} else if eventName == "Esc" { // Select individual sell.
 					table.SetSelectable(true, true)
-				case 'd':
+				} else if rune == 'd' {
 					if rowSelected {
 						data.RemoveRow(row)
 						if row == data.GetRowCount() { // last row deleted, shift selection up
@@ -369,12 +372,12 @@ func buildTableWidget() {
 							}
 						}
 					}
-				case '>': // inclrease column width
+				} else if rune == '>' { // increase column width
 					for rowIdx := range data.cells {
 						cell := data.cells[rowIdx][data.CurrentCol()]
 						cell.SetMaxWidth(cell.MaxWidth + 1)
 					}
-				case '<': // decrease column width
+				} else if rune == '<' { // decrease column width
 					for rowIdx := range data.cells {
 						cell := data.cells[rowIdx][data.CurrentCol()]
 						if cell.MaxWidth == 1 {
@@ -382,13 +385,15 @@ func buildTableWidget() {
 						}
 						cell.SetMaxWidth(cell.MaxWidth - 1)
 					}
-				case 'f': // sort string values asc
+				} else if rune == 'f' { // sort string values asc
 					data.SortColStrAsc(data.CurrentCol())
-				case 'F': // sort string values desc
+				} else if rune == 'F' { // sort string values desc
 					data.SortColStrDesc(data.CurrentCol())
 				}
+
 				return event
-			})
+			},
+		)
 }
 
 func buildCellInput() {
