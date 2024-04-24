@@ -409,11 +409,12 @@ func buildCellInput() {
 		SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow()-1, data.CurrentCol()-1)).
 		SetText(data.GetCurrentCell().Text).
 		SetDoneFunc(func(key tcell.Key) {
-			history.Do(NewChangeCellValueCommand(data.CurrentRow(), data.CurrentCol(), cellInput.GetText()))
 			app.SetFocus(table)
+			data.SetCurrentRow(data.CurrentRow() + 1)
+			table.Select(data.CurrentRow(), data.CurrentCol())
 		}).
 		SetChangedFunc(func(text string) {
-			data.GetCurrentCell().SetText(text)
+			history.Do(NewChangeCellValueCommand(data.CurrentRow(), data.CurrentCol(), text))
 		},
 		)
 }
