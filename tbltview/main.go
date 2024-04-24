@@ -652,8 +652,10 @@ func (cmd *InsertColLeftCommand) Unexecute() {
 
 // SortColStrDescCommand is the command used to sort a column in descending string order.
 type SortColStrDescCommand struct {
-	col           int
-	originalOrder [][]*tview.TableCell // to remember the order before sorting
+	col               int
+	originalOrder     [][]*tview.TableCell // to remember the order before sorting
+	originalSortedCol int
+	originalSortOrder string
 }
 
 // NewSortColStrDescCommand creates a new SortColStrDescCommand with the given column.
@@ -667,6 +669,8 @@ func NewSortColStrDescCommand(col int) *SortColStrDescCommand {
 // Execute executes the SortColStrDescCommand, sorting the column in descending order.
 func (cmd *SortColStrDescCommand) Execute() {
 	if cmd.originalOrder == nil {
+		cmd.originalSortedCol = data.sortedCol
+		cmd.originalSortOrder = data.sortOrder
 		// Capture the current order before sorting
 		cmd.originalOrder = make([][]*tview.TableCell, len(data.cells))
 		for i, row := range data.cells {
@@ -689,12 +693,17 @@ func (cmd *SortColStrDescCommand) Unexecute() {
 			}
 		}
 	}
+	data.sortedCol = cmd.originalSortedCol
+	data.sortOrder = cmd.originalSortOrder
+	data.drawXYCoordinates()
 }
 
 // SortColStrAscCommand is the command used to sort a column in ascending string order.
 type SortColStrAscCommand struct {
-	col           int
-	originalOrder [][]*tview.TableCell // to remember the order before sorting
+	col               int
+	originalOrder     [][]*tview.TableCell // to remember the order before sorting
+	originalSortedCol int
+	originalSortOrder string
 }
 
 // NewSortColStrAscCommand creates a new SortColStrAscCommand with the given column.
@@ -708,6 +717,8 @@ func NewSortColStrAscCommand(col int) *SortColStrAscCommand {
 // Execute executes the SortColStrAscCommand, sorting the column in ascending order.
 func (cmd *SortColStrAscCommand) Execute() {
 	if cmd.originalOrder == nil {
+		cmd.originalSortedCol = data.sortedCol
+		cmd.originalSortOrder = data.sortOrder
 		// Capture the current order before sorting
 		cmd.originalOrder = make([][]*tview.TableCell, len(data.cells))
 		for i, row := range data.cells {
@@ -730,4 +741,7 @@ func (cmd *SortColStrAscCommand) Unexecute() {
 			}
 		}
 	}
+	data.sortedCol = cmd.originalSortedCol
+	data.sortOrder = cmd.originalSortOrder
+	data.drawXYCoordinates()
 }
