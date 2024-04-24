@@ -386,33 +386,13 @@ func buildTableWidget() {
 					}
 				case 'd':
 					if rowSelected {
-						data.RemoveRow(row)
-						if row == data.GetRowCount() { // Last row deleted, shift selection up.
-							if data.GetRowCount() > 0 {
-								table.Select(data.GetRowCount()-1, col)
-							}
-						}
 					} else if colSelected {
-						data.RemoveColumn(col)
-						if col == data.GetColumnCount() { // Last column deleted, shift selection left.
-							if data.GetColumnCount() > 0 {
-								table.Select(row, data.GetColumnCount()-1)
-							}
-						}
+						history.Do(NewDeleteColumnCommand(row, col))
 					}
 				case '>': // Increase column width.
-					for rowIdx := range data.cells {
-						cell := data.cells[rowIdx][data.CurrentCol()]
-						cell.SetMaxWidth(cell.MaxWidth + 1)
-					}
+					history.Do(NewIncreaseColWidthCommand(data.CurrentCol()))
 				case '<': // Decrease column width.
-					for rowIdx := range data.cells {
-						cell := data.cells[rowIdx][data.CurrentCol()]
-						if cell.MaxWidth == 1 {
-							break
-						}
-						cell.SetMaxWidth(cell.MaxWidth - 1)
-					}
+					history.Do(NewDecreaseColWidthCommand(data.CurrentCol()))
 				case 'f': // Sort string values asc.
 					history.Do(NewSortColStrAscCommand(data.CurrentCol()))
 				case 'F': // Sort string values desc.
@@ -750,3 +730,105 @@ func (cmd *SortColStrAscCommand) Unexecute() {
 	data.sortOrder = cmd.originalSortOrder
 	data.drawXYCoordinates()
 }
+
+type DecreaseColWidthCommand struct {
+	col int
+}
+
+func NewDecreaseColWidthCommand(col int) *DecreaseColWidthCommand {
+	return &DecreaseColWidthCommand{col: col}
+}
+
+func (cmd *DecreaseColWidthCommand) Execute() {
+	for rowIdx := range data.cells {
+		cell := data.cells[rowIdx][cmd.col]
+		if cell.MaxWidth == 1 {
+			break
+		}
+		cell.SetMaxWidth(cell.MaxWidth - 1)
+	}
+}
+
+func (cmd *DecreaseColWidthCommand) Unexecute() {
+	for rowIdx := range data.cells {
+		cell := data.cells[rowIdx][data.CurrentCol()]
+		cell.SetMaxWidth(cell.MaxWidth + 1)
+	}
+}
+
+type IncreaseColWidthCommand struct {
+	col int
+}
+
+func NewIncreaseColWidthCommand(col int) *IncreaseColWidthCommand {
+	return &IncreaseColWidthCommand{col: col}
+}
+
+func (cmd *IncreaseColWidthCommand) Execute() {
+	for rowIdx := range data.cells {
+		cell := data.cells[rowIdx][data.CurrentCol()]
+		cell.SetMaxWidth(cell.MaxWidth + 1)
+	}
+}
+
+func (cmd *IncreaseColWidthCommand) Unexecute() {
+	for rowIdx := range data.cells {
+		cell := data.cells[rowIdx][cmd.col]
+		if cell.MaxWidth == 1 {
+			break
+		}
+		cell.SetMaxWidth(cell.MaxWidth - 1)
+	}
+}
+
+type DeleteColumnCommand struct {
+	deletedCol []*tview.TableCell // to remember the order before sorting
+	row        int
+	col        int
+}
+
+func NewDeleteColumnCommand(row int, col int) *DeleteColumnCommand {
+	return &DeleteColumnCommand{row: row, col: col}
+}
+
+func (cmd *DeleteColumnCommand) Execute() {
+	// Capture the current column before deleting.
+	if cmd.deletedCol == nil {
+		for i := 0; i < data.GetRowCount(); i++ {
+			cmd.deletedCol = append(cmd.deletedCol, data.cells[i][cmd.col])
+		}
+	}
+	data.RemoveColumn(cmd.col)
+	if cmd.col == data.GetColumnCount() { // Last column deleted, shift selection left.
+		if data.GetColumnCount() > 0 {
+			table.Select(cmd.row, data.GetColumnCount()-1)
+		}
+	}
+}
+
+func (cmd *DeleteColumnCommand) Unexecute() {
+	// This is last column (special case)
+	if cmd.col == data.GetColumnCount() {
+		data.InsertColumn(data.GetColumnCount() - 1)
+		// Paste back deleted cells.
+		for row := range data.cells {
+			data.cells[row][cmd.col] = cmd.deletedCol[row]
+		}
+		table.Select(cmd.row, data.GetColumnCount()-1)
+		return
+	}
+
+	data.InsertColumn(cmd.col)
+	// Paste back deleted cells.
+	for row := range data.cells {
+		data.cells[row][cmd.col] = cmd.deletedCol[row]
+	}
+}
+
+// TODO: remove row
+// data.RemoveRow(cmd.row)
+// if cmd.row == data.GetRowCount() { // Last row deleted, shift selection up.
+// 	if data.GetRowCount() > 0 {
+// 		table.Select(data.GetRowCount()-1, cmd.col)
+// 	}
+// }
