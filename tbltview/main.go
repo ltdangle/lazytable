@@ -411,7 +411,11 @@ func buildCellInput() {
 		SetDoneFunc(func(key tcell.Key) {
 			history.Do(NewChangeCellValueCommand(data.CurrentRow(), data.CurrentCol(), cellInput.GetText()))
 			app.SetFocus(table)
-		})
+		}).
+		SetChangedFunc(func(text string) {
+			data.GetCurrentCell().SetText(text)
+		},
+		)
 }
 
 var csvFile *string
