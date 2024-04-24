@@ -409,7 +409,7 @@ func buildCellInput() {
 		SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow()-1, data.CurrentCol()-1)).
 		SetText(data.GetCurrentCell().Text).
 		SetDoneFunc(func(key tcell.Key) {
-			data.GetCurrentCell().SetText(cellInput.GetText())
+			history.Do(NewChangeCellValueCommand(data.CurrentRow(), data.CurrentCol(), cellInput.GetText()))
 			app.SetFocus(table)
 		})
 }
@@ -852,4 +852,24 @@ func (cmd *DeleteRowCommand) Unexecute() {
 	for col := 0; col < data.GetColumnCount(); col++ {
 		data.cells[cmd.row][col] = cmd.deletedRow[col]
 	}
+}
+
+type ChangeCellValueCommand struct {
+	row     int
+	col     int
+	prevVal string
+	newVal  string
+}
+
+func NewChangeCellValueCommand(row int, col int, text string) *ChangeCellValueCommand {
+	return &ChangeCellValueCommand{row: row, col: col, newVal: text}
+}
+
+func (cmd *ChangeCellValueCommand) Execute() {
+	cmd.prevVal = data.cells[cmd.row][cmd.col].Text
+	data.cells[cmd.row][cmd.col].SetText(cmd.newVal)
+}
+
+func (cmd *ChangeCellValueCommand) Unexecute() {
+	data.cells[cmd.row][cmd.col].SetText(cmd.prevVal)
 }
