@@ -149,26 +149,12 @@ func (d *Data) RemoveColumn(col int) {
 	d.drawXYCoordinates()
 }
 
-func (d *Data) AddEmptyRow() {
-	row := d.createRow()
-	d.cells = append(d.cells, row)
-	d.drawXYCoordinates()
-}
 func (d *Data) createRow() []*tview.TableCell {
 	var row []*tview.TableCell
 	for i := 0; i < d.GetColumnCount(); i++ {
 		row = append(row, NewCell())
 	}
 	return row
-}
-
-func (d *Data) AddEmptyColumn() {
-	counter := 0
-	for i := range d.cells {
-		d.cells[i] = append(d.cells[i], NewCell()) // add an empty string DataCell to the end of each row
-		counter++
-	}
-	d.drawXYCoordinates()
 }
 
 func (d *Data) GetCurrentCell() *tview.TableCell {
@@ -468,10 +454,6 @@ func main() {
 			case 'm':
 				pages.ShowPage("modal")
 				modalContents.SetTitle("You pressed the m button!")
-			case 'R':
-				data.AddEmptyRow()
-			case 'C':
-				data.AddEmptyColumn()
 			}
 			return event
 		})
