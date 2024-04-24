@@ -23,10 +23,12 @@ type Data struct {
 	cells      [][]*tview.TableCell
 	currentRow int
 	currentCol int
+	sortedCol  int
+	sortOrder  string
 }
 
 func NewData() *Data {
-	return &Data{}
+	return &Data{sortedCol: -1, sortOrder: ""}
 }
 func (t *Data) Clear() {
 	t.cells = nil
@@ -182,12 +184,18 @@ func (d *Data) SortColStrAsc(col int) {
 	d.sortColumn(col, func(a, b *tview.TableCell) bool {
 		return a.Text < b.Text // Compare the text of the cells for ascending order.
 	})
+	d.sortedCol = col
+	d.sortOrder = "asc"
+	d.drawXYCoordinates()
 }
 
 func (d *Data) SortColStrDesc(col int) {
 	d.sortColumn(col, func(a, b *tview.TableCell) bool {
 		return a.Text > b.Text // Compare the text of the cells for descending order.
 	})
+	d.sortedCol = col
+	d.sortOrder = "desc"
+	d.drawXYCoordinates()
 }
 
 // Sorts column. Accept column index and a sorter function that
@@ -204,7 +212,13 @@ func (d *Data) drawXYCoordinates() {
 		d.cells[rowIdx][0].SetText(fmt.Sprintf("%d", rowIdx-1))
 	}
 	for colIdx, col := range d.cells[0] {
-		col.SetText(fmt.Sprintf("%d", colIdx-1))
+		colText := fmt.Sprintf("%d", colIdx-1)
+		if d.sortedCol != -1 {
+			if colIdx == d.sortedCol {
+				colText = colText + " " + d.sortOrder
+			}
+		}
+		col.SetText(colText)
 	}
 
 	d.cells[0][0].SetText("")
