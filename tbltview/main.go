@@ -386,6 +386,7 @@ func buildTableWidget() {
 					}
 				case 'd':
 					if rowSelected {
+						history.Do(NewDeleteRowCommand(row, col))
 					} else if colSelected {
 						history.Do(NewDeleteColumnCommand(row, col))
 					}
@@ -825,10 +826,48 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 	}
 }
 
-// TODO: remove row
-// data.RemoveRow(cmd.row)
-// if cmd.row == data.GetRowCount() { // Last row deleted, shift selection up.
-// 	if data.GetRowCount() > 0 {
-// 		table.Select(data.GetRowCount()-1, cmd.col)
-// 	}
-// }
+type DeleteRowCommand struct {
+	deletedRow []*tview.TableCell // to remember the order before sorting
+	row        int
+	col        int
+}
+
+func NewDeleteRowCommand(row int, col int) *DeleteRowCommand {
+	return &DeleteRowCommand{row: row, col: col}
+}
+
+func (cmd *DeleteRowCommand) Execute() {
+	// Capture the current row before deleting.
+	if cmd.deletedRow == nil {
+		for i := 0; i < data.GetColumnCount(); i++ {
+			cmd.deletedRow = append(cmd.deletedRow, data.cells[cmd.row][i])
+		}
+	}
+
+	data.RemoveRow(cmd.row)
+
+	if cmd.row == data.GetRowCount() { // Last row deleted, shift selection up.
+		if data.GetRowCount() > 0 {
+			table.Select(data.GetRowCount()-1, cmd.col)
+		}
+	}
+}
+
+func (cmd *DeleteRowCommand) Unexecute() {
+	// This is last column (special case)
+	if cmd.row == data.GetRowCount() {
+		data.InsertRow(data.GetRowCount() - 1)
+		// Paste back deleted cells.
+		for col := 0; col < data.GetColumnCount(); col++ {
+			data.cells[data.GetRowCount()-1][col] = cmd.deletedRow[col]
+		}
+		table.Select(data.GetRowCount()-1, cmd.col)
+		return
+	}
+
+	data.InsertRow(cmd.row)
+	// Paste back deleted cells.
+	for col := 0; col < data.GetColumnCount(); col++ {
+		data.cells[cmd.row][col] = cmd.deletedRow[col]
+	}
+}
