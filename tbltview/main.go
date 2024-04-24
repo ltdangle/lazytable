@@ -18,6 +18,11 @@ import (
 	"github.com/rivo/tview"
 )
 
+const (
+	ascIndicator  = "↑"
+	descIndicator = "↓"
+)
+
 // Data type.
 type Data struct {
 	cells      [][]*tview.TableCell
@@ -185,7 +190,7 @@ func (d *Data) SortColStrAsc(col int) {
 		return a.Text < b.Text // Compare the text of the cells for ascending order.
 	})
 	d.sortedCol = col
-	d.sortOrder = "asc"
+	d.sortOrder = ascIndicator
 	d.drawXYCoordinates()
 }
 
@@ -194,7 +199,7 @@ func (d *Data) SortColStrDesc(col int) {
 		return a.Text > b.Text // Compare the text of the cells for descending order.
 	})
 	d.sortedCol = col
-	d.sortOrder = "desc"
+	d.sortOrder = descIndicator
 	d.drawXYCoordinates()
 }
 
