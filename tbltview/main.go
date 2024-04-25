@@ -23,9 +23,13 @@ const (
 	descIndicator = "↓"
 )
 
+type Cell struct {
+	*tview.TableCell
+}
+
 // Data type.
 type Data struct {
-	cells      [][]*tview.TableCell
+	cells      [][]*Cell
 	currentRow int
 	currentCol int
 	sortedCol  int
@@ -71,7 +75,7 @@ func (d *Data) CurrentRow() int {
 func (d *Data) CurrentCol() int {
 	return d.currentCol
 }
-func (d *Data) AddDataRow(dataRow []*tview.TableCell) {
+func (d *Data) AddDataRow(dataRow []*Cell) {
 	d.cells = append(d.cells, dataRow)
 }
 func (d *Data) GetCell(row, column int) *tview.TableCell {
@@ -84,7 +88,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	// Draw table coordinates.
 	if row == 0 { // This is top row with col numbers.
 		if column == 0 {
-			return cell
+			return cell.TableCell
 		}
 		cell.SetAttributes(tcell.AttrDim)
 		cell.SetAlign(1) //AlignCenter
@@ -93,9 +97,9 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		if column == data.currentCol {
 			cell.SetAttributes(tcell.AttrBold)
 			cell.SetAttributes(tcell.AttrUnderline)
-			return cell
+			return cell.TableCell
 		}
-		return cell
+		return cell.TableCell
 	}
 
 	if column == 0 { // This is leftmost row with row numbers.
@@ -105,12 +109,12 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		if row == data.currentRow {
 			cell.SetAttributes(tcell.AttrBold)
 			cell.SetAttributes(tcell.AttrUnderline)
-			return cell
+			return cell.TableCell
 		}
-		return cell
+		return cell.TableCell
 	}
 
-	return cell
+	return cell.TableCell
 }
 
 func (d *Data) SetCell(row, column int, cell *tview.TableCell) {
@@ -149,15 +153,15 @@ func (d *Data) RemoveColumn(col int) {
 	d.drawXYCoordinates()
 }
 
-func (d *Data) createRow() []*tview.TableCell {
-	var row []*tview.TableCell
+func (d *Data) createRow() []*Cell {
+	var row []*Cell
 	for i := 0; i < d.GetColumnCount(); i++ {
 		row = append(row, NewCell())
 	}
 	return row
 }
 
-func (d *Data) GetCurrentCell() *tview.TableCell {
+func (d *Data) GetCurrentCell() *Cell {
 	// Check of out of bounds values.
 	if d.CurrentRow() >= d.GetRowCount() {
 		return NewCell()
@@ -172,7 +176,7 @@ func (d *Data) GetCurrentCell() *tview.TableCell {
 // Sort column  string values.
 
 func (d *Data) SortColStrAsc(col int) {
-	d.sortColumn(col, func(a, b *tview.TableCell) bool {
+	d.sortColumn(col, func(a, b *Cell) bool {
 		return a.Text < b.Text // Compare the text of the cells for ascending order.
 	})
 	d.sortedCol = col
@@ -181,7 +185,7 @@ func (d *Data) SortColStrAsc(col int) {
 }
 
 func (d *Data) SortColStrDesc(col int) {
-	d.sortColumn(col, func(a, b *tview.TableCell) bool {
+	d.sortColumn(col, func(a, b *Cell) bool {
 		return a.Text > b.Text // Compare the text of the cells for descending order.
 	})
 	d.sortedCol = col
@@ -191,7 +195,7 @@ func (d *Data) SortColStrDesc(col int) {
 
 // Sorts column. Accept column index and a sorter function that
 // takes slice of vertical column cells as an argument.
-func (d *Data) sortColumn(col int, sorter func(a, b *tview.TableCell) bool) {
+func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
 	// Perform a stable sort to maintain the relative order of other elements.
 	// Account for cols row and header row (+2)
 	sort.SliceStable(d.cells[2:], func(i, j int) bool {
@@ -216,8 +220,8 @@ func (d *Data) drawXYCoordinates() {
 }
 
 // Factory functions.
-func NewCell() *tview.TableCell {
-	cell := tview.NewTableCell("")
+func NewCell() *Cell {
+	cell := &Cell{tview.NewTableCell("")}
 	cell.SetMaxWidth(10)
 	return cell
 }
@@ -267,7 +271,7 @@ func readCsvFile(fileName string, dataTbl *Data) {
 }
 
 func addRecordToDataTable(recordCount int, record []string, dataTbl *Data) {
-	var dataRow []*tview.TableCell
+	var dataRow []*Cell
 
 	// Set col header.
 	colHead := NewCell()
@@ -626,7 +630,7 @@ func (cmd *InsertColLeftCommand) Unexecute() {
 // SortColStrDescCommand is the command used to sort a column in descending string order.
 type SortColStrDescCommand struct {
 	col               int
-	originalOrder     [][]*tview.TableCell // to remember the order before sorting
+	originalOrder     [][]*Cell // to remember the order before sorting
 	originalSortedCol int
 	originalSortOrder string
 }
@@ -645,9 +649,9 @@ func (cmd *SortColStrDescCommand) Execute() {
 		cmd.originalSortedCol = data.sortedCol
 		cmd.originalSortOrder = data.sortOrder
 		// Capture the current order before sorting
-		cmd.originalOrder = make([][]*tview.TableCell, len(data.cells))
+		cmd.originalOrder = make([][]*Cell, len(data.cells))
 		for i, row := range data.cells {
-			cmd.originalOrder[i] = make([]*tview.TableCell, len(row))
+			cmd.originalOrder[i] = make([]*Cell, len(row))
 			copy(cmd.originalOrder[i], row)
 		}
 	}
@@ -674,7 +678,7 @@ func (cmd *SortColStrDescCommand) Unexecute() {
 // SortColStrAscCommand is the command used to sort a column in ascending string order.
 type SortColStrAscCommand struct {
 	col               int
-	originalOrder     [][]*tview.TableCell // to remember the order before sorting
+	originalOrder     [][]*Cell // to remember the order before sorting
 	originalSortedCol int
 	originalSortOrder string
 }
@@ -693,9 +697,9 @@ func (cmd *SortColStrAscCommand) Execute() {
 		cmd.originalSortedCol = data.sortedCol
 		cmd.originalSortOrder = data.sortOrder
 		// Capture the current order before sorting
-		cmd.originalOrder = make([][]*tview.TableCell, len(data.cells))
+		cmd.originalOrder = make([][]*Cell, len(data.cells))
 		for i, row := range data.cells {
-			cmd.originalOrder[i] = make([]*tview.TableCell, len(row))
+			cmd.originalOrder[i] = make([]*Cell, len(row))
 			copy(cmd.originalOrder[i], row)
 		}
 	}
@@ -770,7 +774,7 @@ func (cmd *IncreaseColWidthCommand) Unexecute() {
 }
 
 type DeleteColumnCommand struct {
-	deletedCol []*tview.TableCell // to remember the order before sorting
+	deletedCol []*Cell // to remember the order before sorting
 	row        int
 	col        int
 }
@@ -814,7 +818,7 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 }
 
 type DeleteRowCommand struct {
-	deletedRow []*tview.TableCell // to remember the order before sorting
+	deletedRow []*Cell // to remember the order before sorting
 	row        int
 	col        int
 }
