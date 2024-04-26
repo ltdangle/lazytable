@@ -21,8 +21,7 @@ const (
 
 type Cell struct {
 	*tview.TableCell
-	text    string
-	formula bool
+	text string
 }
 
 func NewCell() *Cell {
@@ -33,9 +32,9 @@ func NewCell() *Cell {
 
 func (cell *Cell) SetText(text string) {
 	cell.text = text
-	if strings.HasPrefix(text, "=") {
-		cell.formula = true
-		cell.TableCell.SetText("Formula")
+	if cell.IsFormula() {
+		f := NewFormula()
+		cell.TableCell.SetText(f.Calculate(cell.text))
 		return
 	}
 	cell.TableCell.SetText(text)
@@ -43,6 +42,19 @@ func (cell *Cell) SetText(text string) {
 
 func (cell *Cell) GetText() string {
 	return cell.text
+}
+
+func (cell *Cell) IsFormula() bool {
+	return strings.HasPrefix(cell.text, "=")
+}
+
+type Formula struct{}
+
+func NewFormula() *Formula {
+	return &Formula{}
+}
+func (f *Formula) Calculate(text string) string {
+	return "FORMULA"
 }
 
 // Data type.
