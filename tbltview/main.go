@@ -9,7 +9,6 @@ import (
 	"log"
 	"os"
 	"sort"
-	"strconv"
 
 	// "strings"
 
@@ -118,7 +117,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 }
 
 func (d *Data) SetCell(row, column int, cell *tview.TableCell) {
-	cell.SetText(strconv.Itoa(row) + " : " + strconv.Itoa(column))
+	// Part of the tview.TableContent interface.
 }
 
 func (d *Data) GetRowCount() int {
