@@ -5,13 +5,16 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 	"io"
 	"log"
 	"os"
+	"regexp"
 	"sort"
+	"strconv"
 	"strings"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 )
 
 const (
@@ -31,10 +34,15 @@ func NewCell() *Cell {
 }
 
 func (cell *Cell) SetText(text string) {
-	cell.text = text
+	cell.text = strings.ReplaceAll(text, " ", "") // remove spaces
 	if cell.IsFormula() {
+		fText := cell.text[1:] // strip leading =
 		f := NewFormula()
-		cell.TableCell.SetText(f.Calculate(cell.text))
+		if f.Match(fText) {
+			cell.TableCell.SetText(f.Calculate(fText))
+			return
+		}
+		cell.TableCell.SetText("formula no match")
 		return
 	}
 	cell.TableCell.SetText(text)
@@ -53,8 +61,38 @@ type Formula struct{}
 func NewFormula() *Formula {
 	return &Formula{}
 }
+func (f *Formula) Match(text string) bool {
+	pattern := `^SUM\((\d+),(\d+);(\d+),(\d+)\)$`
+	re := regexp.MustCompile(pattern)
+	matches := re.FindStringSubmatch(text)
+	if matches != nil {
+		return true
+	}
+	return false
+}
+
 func (f *Formula) Calculate(text string) string {
-	return "FORMULA"
+	pattern := `^SUM\((\d+),(\d+);(\d+),(\d+)\)$`
+	re := regexp.MustCompile(pattern)
+	matches := re.FindStringSubmatch(text)
+
+	// If the string doesn't match the pattern, return an error
+	if matches == nil {
+		return "string does not match the pattern"
+	}
+
+	// Convert the captured strings to integers
+	var results []int
+	// The first element of the matches slice is the entire match, so we skip it
+	for _, match := range matches[1:] {
+		if i, err := strconv.Atoi(match); err == nil {
+			results = append(results, i)
+		} else {
+			// In case of error during conversion, we return an error
+			return fmt.Sprintf("error converting string to integer: %v", err)
+		}
+	}
+	return fmt.Sprintf("%v", results)
 }
 
 // Data type.
