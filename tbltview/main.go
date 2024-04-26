@@ -106,7 +106,7 @@ func (f *SumFormula) Calculate(text string) (string, error) {
 	if total, err := f.sum(startX+1, startY+1, endX+1, endY+1); err != nil {
 		return "", err
 	} else {
-		return fmt.Sprintf("%f", total), nil
+		return fmt.Sprintf(floatFormat, total), nil
 	}
 }
 
@@ -568,6 +568,7 @@ var modalContents = tview.NewBox()
 var bottomBar = tview.NewTextView()
 var history = NewHistory()
 var formulas []Formula
+var floatFormat = "%.2f"
 
 func main() {
 	// Parse cli arguments.
