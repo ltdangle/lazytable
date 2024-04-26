@@ -240,7 +240,7 @@ func (d *Data) drawXYCoordinates() {
 		colText := fmt.Sprintf("%d", colIdx-1)
 		if d.sortedCol != -1 {
 			if colIdx == d.sortedCol {
-				colText = colText + " " + d.sortOrder
+				colText = colText + d.sortOrder
 			}
 		}
 		col.SetText(colText)
