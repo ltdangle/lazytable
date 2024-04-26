@@ -106,12 +106,12 @@ func (f *SumFormula) Calculate(text string) (string, error) {
 	if total, err := f.sum(startX+1, startY+1, endX+1, endY+1); err != nil {
 		return "", err
 	} else {
-		return strconv.Itoa(total), nil
+		return fmt.Sprintf("%f", total), nil
 	}
 }
 
-func (f *SumFormula) sum(startY, startX, endY, endX int) (int, error) {
-	sum := 0
+func (f *SumFormula) sum(startY, startX, endY, endX int) (float64, error) {
+	sum := 0.0
 
 	// Validate the coordinates
 	if startX > endX || startY > endY {
@@ -125,7 +125,7 @@ func (f *SumFormula) sum(startY, startX, endY, endX int) (int, error) {
 	// Sum cells in the range [startX:endX, startY:endY]
 	for y := startY; y <= endY; y++ {
 		for x := startX; x <= endX; x++ {
-			val, err := strconv.Atoi(data.cells[y][x].TableCell.Text)
+			val, err := strconv.ParseFloat(data.cells[y][x].TableCell.Text, 64)
 			if err != nil {
 				return 0, fmt.Errorf("%d,%d is not an integer", y-1, x-1)
 			}
