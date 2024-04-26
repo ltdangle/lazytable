@@ -152,7 +152,7 @@ func (t *Data) Clear() {
 }
 func (d *Data) InsertColumn(column int) {
 	for row := range d.cells {
-		if column >= len(d.cells[row]) {
+		if column > len(d.cells[row]) {
 			continue
 		}
 		d.cells[row] = append(d.cells[row], nil)             // Extend by one.
@@ -162,7 +162,7 @@ func (d *Data) InsertColumn(column int) {
 	}
 }
 func (d *Data) InsertRow(row int) {
-	if row >= d.GetRowCount() {
+	if row > d.GetRowCount() {
 		return
 	}
 
