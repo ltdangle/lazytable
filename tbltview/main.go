@@ -5,13 +5,13 @@ import (
 	"encoding/csv"
 	"flag"
 	"fmt"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
 	"io"
 	"log"
 	"os"
 	"sort"
 	"strings"
-	"github.com/gdamore/tcell/v2"
-	"github.com/rivo/tview"
 )
 
 const (
@@ -23,6 +23,12 @@ type Cell struct {
 	*tview.TableCell
 	text    string
 	formula bool
+}
+
+func NewCell() *Cell {
+	cell := &Cell{TableCell: tview.NewTableCell("")}
+	cell.SetMaxWidth(10)
+	return cell
 }
 
 func (cell *Cell) SetText(text string) {
@@ -229,13 +235,6 @@ func (d *Data) drawXYCoordinates() {
 	}
 
 	d.cells[0][0].SetText("")
-}
-
-// Factory functions.
-func NewCell() *Cell {
-	cell := &Cell{TableCell: tview.NewTableCell("")}
-	cell.SetMaxWidth(10)
-	return cell
 }
 
 func readCsvFile(fileName string, dataTbl *Data) {
