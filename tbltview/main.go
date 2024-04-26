@@ -37,12 +37,13 @@ func (cell *Cell) SetText(text string) {
 	cell.text = strings.ReplaceAll(text, " ", "") // remove spaces
 	if cell.IsFormula() {
 		fText := cell.text[1:] // strip leading =
-		f := NewFormula()
-		if f.Match(fText) {
-			cell.TableCell.SetText(f.Calculate(fText))
-			return
+		for _, formula := range formulas {
+			if formula.Match(fText) {
+				cell.TableCell.SetText(formula.Calculate(fText))
+				return
+			}
 		}
-		cell.TableCell.SetText("formula no match")
+		cell.TableCell.SetText("#ERR NO FORMULA ")
 		return
 	}
 	cell.TableCell.SetText(text)
@@ -56,29 +57,33 @@ func (cell *Cell) IsFormula() bool {
 	return strings.HasPrefix(cell.text, "=")
 }
 
-type Formula struct{}
-
-func NewFormula() *Formula {
-	return &Formula{}
+type Formula interface {
+	// Checks if provided text matches the formula.
+	Match(text string) bool
+	// Calculates the formula.
+	Calculate(text string) string
 }
-func (f *Formula) Match(text string) bool {
+
+type SumFormula struct{}
+
+func NewSumFormula() *SumFormula {
+	return &SumFormula{}
+}
+func (f *SumFormula) Match(text string) bool {
 	pattern := `^SUM\((\d+),(\d+);(\d+),(\d+)\)$`
 	re := regexp.MustCompile(pattern)
 	matches := re.FindStringSubmatch(text)
-	if matches != nil {
-		return true
-	}
-	return false
+	return matches != nil
 }
 
-func (f *Formula) Calculate(text string) string {
+func (f *SumFormula) Calculate(text string) string {
 	pattern := `^SUM\((\d+),(\d+);(\d+),(\d+)\)$`
 	re := regexp.MustCompile(pattern)
 	matches := re.FindStringSubmatch(text)
 
 	// If the string doesn't match the pattern, return an error
 	if matches == nil {
-		return "string does not match the pattern"
+		return "#ERR string does not match the pattern"
 	}
 
 	// Convert the captured strings to integers
@@ -89,7 +94,7 @@ func (f *Formula) Calculate(text string) string {
 			results = append(results, i)
 		} else {
 			// In case of error during conversion, we return an error
-			return fmt.Sprintf("error converting string to integer: %v", err)
+			return fmt.Sprintf("#ERR error converting string to integer: %v", err)
 		}
 	}
 	return fmt.Sprintf("%v", results)
@@ -483,55 +488,10 @@ func buildCellInput() {
 		},
 		)
 }
-
-var csvFile *string
-var data = NewData()
-var table = tview.NewTable()
-var app = tview.NewApplication()
-var cellInput = tview.NewInputField()
-var pages = tview.NewPages()
-var modalContents = tview.NewBox()
-var bottomBar = tview.NewTextView()
-var history = NewHistory()
-
-func main() {
-	// Parse cli arguments.
-	csvFile = flag.String("file", "", "path to csv file")
-	flag.Parse()
-	if *csvFile == "" {
-		log.Fatal("-file not specified")
-	}
-
-	// Load csv file data.
-	readCsvFile(*csvFile, data)
-
-	data.SetCurrentRow(1)
-	data.SetCurrentCol(1)
-
-	buildCellInput()
-	buildTableWidget()
-
-	// Configure layout.
-	flex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(cellInput, 0, 1, false).
-		AddItem(table, 0, 25, false).
-		AddItem(bottomBar, 0, 1, false)
-
-	flex.SetInputCapture(
-		func(event *tcell.EventKey) *tcell.EventKey {
-			switch event.Rune() {
-			case 'm':
-				pages.ShowPage("modal")
-				modalContents.SetTitle("You pressed the m button!")
-			}
-			return event
-		})
-
-	// MODAL
+func buildModal() {
 	// Returns a new primitive which puts the provided primitive in the center and
 	// sets its size to the given width and height.
-	modal := func(p tview.Primitive, width, height int) tview.Primitive {
+	modal = func(p tview.Primitive, width, height int) tview.Primitive {
 		return tview.NewFlex().
 			AddItem(nil, 0, 1, false).
 			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
@@ -554,6 +514,59 @@ func main() {
 				}
 				return event
 			})
+
+}
+
+var csvFile *string
+var data = NewData()
+var table = tview.NewTable()
+var app = tview.NewApplication()
+var cellInput = tview.NewInputField()
+var pages = tview.NewPages()
+var modal func(p tview.Primitive, width, height int) tview.Primitive
+var modalContents = tview.NewBox()
+var bottomBar = tview.NewTextView()
+var history = NewHistory()
+var formulas []Formula
+
+func main() {
+	// Parse cli arguments.
+	csvFile = flag.String("file", "", "path to csv file")
+	flag.Parse()
+	if *csvFile == "" {
+		log.Fatal("-file not specified")
+	}
+
+	// Load csv file data.
+	readCsvFile(*csvFile, data)
+
+	// Configure available formulas.
+	formulas = append(formulas, NewSumFormula())
+
+	// Set cursor to the first cell.
+	data.SetCurrentRow(1)
+	data.SetCurrentCol(1)
+
+	buildCellInput()
+	buildTableWidget()
+	buildModal()
+
+	// Configure layout.
+	flex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(cellInput, 0, 1, false).
+		AddItem(table, 0, 25, false).
+		AddItem(bottomBar, 0, 1, false)
+
+	flex.SetInputCapture(
+		func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Rune() {
+			case 'm':
+				pages.ShowPage("modal")
+				modalContents.SetTitle("You pressed the m button!")
+			}
+			return event
+		})
 
 	pages.
 		AddPage("background", flex, true, true).
