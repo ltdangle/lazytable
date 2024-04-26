@@ -42,14 +42,24 @@ func (cell *Cell) Calculate() {
 		for _, formula := range formulas {
 			isMatch, _ := formula.Match(fText)
 			if isMatch {
-				cell.TableCell.SetText(formula.Calculate(fText))
+				calculated, err := formula.Calculate(fText)
+				if err != nil {
+					// TODO: create Cell.Error(text) method
+					cell.TableCell.SetText("#ERR:" + err.Error())
+					cell.TableCell.SetTextColor(tcell.ColorRed)
+					return
+				}
+				cell.TableCell.SetText(calculated)
 				return
 			}
 		}
+		// TODO: create Cell.Error(text) method
 		cell.TableCell.SetText("#ERR: no formula")
+		cell.TableCell.SetTextColor(tcell.ColorRed)
 		return
 	}
 	cell.TableCell.SetText(cell.text)
+	cell.TableCell.SetTextColor(tcell.ColorWhite)
 }
 
 func (cell *Cell) GetText() string {
@@ -64,7 +74,7 @@ type Formula interface {
 	// Checks if provided text matches the formula.
 	Match(text string) (ok bool, matches []string)
 	// Calculates the formula.
-	Calculate(text string) string
+	Calculate(text string) (string, error)
 }
 
 type SumFormula struct{}
@@ -79,10 +89,10 @@ func (f *SumFormula) Match(text string) (ok bool, matches []string) {
 	return matches != nil, matches
 }
 
-func (f *SumFormula) Calculate(text string) string {
+func (f *SumFormula) Calculate(text string) (string, error) {
 	ok, matches := f.Match(text)
 	if !ok {
-		return "#ERR: string does not match formula"
+		return "", fmt.Errorf("string does not match formula")
 	}
 
 	// Assuming matches[1:] are {startX, startY, endX, endY}
@@ -93,9 +103,9 @@ func (f *SumFormula) Calculate(text string) string {
 
 	// Call the sum method (assuming data is accessible)
 	if total, err := f.sum(startX+1, startY+1, endX+1, endY+1); err != nil {
-		return fmt.Sprintf("#ERR: %v", err)
+		return "", err
 	} else {
-		return strconv.Itoa(total)
+		return strconv.Itoa(total), nil
 	}
 }
 
