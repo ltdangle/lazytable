@@ -452,7 +452,6 @@ func buildTableWidget() {
 				data.SetCurrentRow(row) // account for top coordinate row
 				data.SetCurrentCol(col) // account for leftmost coordinates col
 
-				// TODO: check for out of bounds
 				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
 				cellInput.SetText(data.GetCurrentCell().GetText())
 			}).
@@ -518,7 +517,10 @@ func buildCellInput() {
 		SetText(data.GetCurrentCell().GetText()).
 		SetDoneFunc(func(key tcell.Key) {
 			app.SetFocus(table)
-			data.SetCurrentRow(data.CurrentRow() + 1)
+			// Push cursor down, if possible.
+			if data.CurrentRow() < data.GetRowCount()-1 {
+				data.SetCurrentRow(data.CurrentRow() + 1)
+			}
 			table.Select(data.CurrentRow(), data.CurrentCol())
 		}).
 		SetChangedFunc(func(text string) {
