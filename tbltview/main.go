@@ -9,11 +9,8 @@ import (
 	"log"
 	"os"
 	"sort"
-
-	// "strings"
-
+	"strings"
 	"github.com/gdamore/tcell/v2"
-	// "github.com/k0kubun/pp/v3"
 	"github.com/rivo/tview"
 )
 
@@ -24,10 +21,22 @@ const (
 
 type Cell struct {
 	*tview.TableCell
+	text    string
+	formula bool
+}
+
+func (cell *Cell) SetText(text string) {
+	cell.text = text
+	if strings.HasPrefix(text, "=") {
+		cell.formula = true
+		cell.TableCell.SetText("Formula")
+		return
+	}
+	cell.TableCell.SetText(text)
 }
 
 func (cell *Cell) GetText() string {
-	return cell.TableCell.Text
+	return cell.text
 }
 
 // Data type.
@@ -180,7 +189,7 @@ func (d *Data) GetCurrentCell() *Cell {
 
 func (d *Data) SortColStrAsc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
-		return a.GetText() < b.GetText() // Compare the text of the cells for ascending order.
+		return a.TableCell.Text < b.TableCell.Text // Compare the text of the cells for ascending order.
 	})
 	d.sortedCol = col
 	d.sortOrder = ascIndicator
@@ -189,7 +198,7 @@ func (d *Data) SortColStrAsc(col int) {
 
 func (d *Data) SortColStrDesc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
-		return a.GetText() > b.GetText() // Compare the text of the cells for descending order.
+		return a.TableCell.Text > b.TableCell.Text // Compare the text of the cells for descending order.
 	})
 	d.sortedCol = col
 	d.sortOrder = descIndicator
@@ -224,7 +233,7 @@ func (d *Data) drawXYCoordinates() {
 
 // Factory functions.
 func NewCell() *Cell {
-	cell := &Cell{tview.NewTableCell("")}
+	cell := &Cell{TableCell: tview.NewTableCell("")}
 	cell.SetMaxWidth(10)
 	return cell
 }
