@@ -38,7 +38,8 @@ func (cell *Cell) SetText(text string) {
 	if cell.IsFormula() {
 		fText := cell.text[1:] // strip leading =
 		for _, formula := range formulas {
-			if formula.Match(fText) {
+			isMatch, _ := formula.Match(fText)
+			if isMatch {
 				cell.TableCell.SetText(formula.Calculate(fText))
 				return
 			}
@@ -59,7 +60,7 @@ func (cell *Cell) IsFormula() bool {
 
 type Formula interface {
 	// Checks if provided text matches the formula.
-	Match(text string) bool
+	Match(text string) (ok bool, matches []string)
 	// Calculates the formula.
 	Calculate(text string) string
 }
@@ -69,11 +70,11 @@ type SumFormula struct{}
 func NewSumFormula() *SumFormula {
 	return &SumFormula{}
 }
-func (f *SumFormula) Match(text string) bool {
+func (f *SumFormula) Match(text string) (ok bool, matches []string) {
 	pattern := `^SUM\((\d+),(\d+);(\d+),(\d+)\)$`
 	re := regexp.MustCompile(pattern)
-	matches := re.FindStringSubmatch(text)
-	return matches != nil
+	matches = re.FindStringSubmatch(text)
+	return matches != nil, matches
 }
 
 func (f *SumFormula) Calculate(text string) string {
