@@ -32,9 +32,11 @@ func NewCell() *Cell {
 	cell.SetMaxWidth(10)
 	return cell
 }
-
 func (cell *Cell) SetText(text string) {
 	cell.text = strings.ReplaceAll(text, " ", "") // remove spaces
+	cell.Calculate()
+}
+func (cell *Cell) Calculate() {
 	if cell.IsFormula() {
 		fText := cell.text[1:] // strip leading =
 		for _, formula := range formulas {
@@ -47,7 +49,7 @@ func (cell *Cell) SetText(text string) {
 		cell.TableCell.SetText("#ERR: no formula")
 		return
 	}
-	cell.TableCell.SetText(text)
+	cell.TableCell.SetText(cell.text)
 }
 
 func (cell *Cell) GetText() string {
@@ -207,6 +209,8 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		}
 		return cell.TableCell
 	}
+
+	cell.Calculate()
 
 	return cell.TableCell
 }
