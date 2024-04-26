@@ -114,10 +114,11 @@ func (f *SumFormula) sum(startY, startX, endY, endX int) (int, error) {
 	// Sum cells in the range [startX:endX, startY:endY]
 	for y := startY; y <= endY; y++ {
 		for x := startX; x <= endX; x++ {
-			// Attempt to parse each cell value as an integer. Non-integer or empty cells are counted as 0.
-			if val, err := strconv.Atoi(data.cells[y][x].TableCell.Text); err == nil {
-				sum += val
+			val, err := strconv.Atoi(data.cells[y][x].TableCell.Text)
+			if err != nil {
+				return 0, fmt.Errorf("%d,%d is not an integer", y-1, x-1)
 			}
+			sum += val
 		}
 	}
 	return sum, nil
