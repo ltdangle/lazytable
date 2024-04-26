@@ -44,7 +44,7 @@ func (cell *Cell) SetText(text string) {
 				return
 			}
 		}
-		cell.TableCell.SetText("#ERR NO FORMULA ")
+		cell.TableCell.SetText("#ERR: no formula")
 		return
 	}
 	cell.TableCell.SetText(text)
@@ -78,27 +78,47 @@ func (f *SumFormula) Match(text string) (ok bool, matches []string) {
 }
 
 func (f *SumFormula) Calculate(text string) string {
-	pattern := `^SUM\((\d+),(\d+);(\d+),(\d+)\)$`
-	re := regexp.MustCompile(pattern)
-	matches := re.FindStringSubmatch(text)
-
-	// If the string doesn't match the pattern, return an error
-	if matches == nil {
-		return "#ERR string does not match the pattern"
+	ok, matches := f.Match(text)
+	if !ok {
+		return "#ERR: string does not match formula"
 	}
 
-	// Convert the captured strings to integers
-	var results []int
-	// The first element of the matches slice is the entire match, so we skip it
-	for _, match := range matches[1:] {
-		if i, err := strconv.Atoi(match); err == nil {
-			results = append(results, i)
-		} else {
-			// In case of error during conversion, we return an error
-			return fmt.Sprintf("#ERR error converting string to integer: %v", err)
+	// Assuming matches[1:] are {startX, startY, endX, endY}
+	startX, _ := strconv.Atoi(matches[1])
+	startY, _ := strconv.Atoi(matches[2])
+	endX, _ := strconv.Atoi(matches[3])
+	endY, _ := strconv.Atoi(matches[4])
+
+	// Call the sum method (assuming data is accessible)
+	if total, err := f.sum(startX+1, startY+1, endX+1, endY+1); err != nil {
+		return fmt.Sprintf("#ERR: %v", err)
+	} else {
+		return strconv.Itoa(total)
+	}
+}
+
+func (f *SumFormula) sum(startY, startX, endY, endX int) (int, error) {
+	sum := 0
+
+	// Validate the coordinates
+	if startX > endX || startY > endY {
+		return 0, fmt.Errorf("start coordinates must be less than or equal to end coordinates")
+	}
+	if startX < 0 || startY < 0 || endY >= len(data.cells) || endX >=
+		len(data.cells[0]) {
+		return 0, fmt.Errorf("coordinates out of bounds")
+	}
+
+	// Sum cells in the range [startX:endX, startY:endY]
+	for y := startY; y <= endY; y++ {
+		for x := startX; x <= endX; x++ {
+			// Attempt to parse each cell value as an integer. Non-integer or empty cells are counted as 0.
+			if val, err := strconv.Atoi(data.cells[y][x].TableCell.Text); err == nil {
+				sum += val
+			}
 		}
 	}
-	return fmt.Sprintf("%v", results)
+	return sum, nil
 }
 
 // Data type.
