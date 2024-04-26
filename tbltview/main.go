@@ -36,6 +36,10 @@ func (cell *Cell) SetText(text string) {
 	cell.text = strings.ReplaceAll(text, " ", "") // remove spaces
 	cell.Calculate()
 }
+func (cell *Cell) ShowError(text string) {
+	cell.TableCell.SetText("#ERR:" + text)
+	cell.TableCell.SetTextColor(tcell.ColorRed)
+}
 func (cell *Cell) Calculate() {
 	if cell.IsFormula() {
 		fText := cell.text[1:] // strip leading =
@@ -44,18 +48,15 @@ func (cell *Cell) Calculate() {
 			if isMatch {
 				calculated, err := formula.Calculate(fText)
 				if err != nil {
-					// TODO: create Cell.Error(text) method
-					cell.TableCell.SetText("#ERR:" + err.Error())
-					cell.TableCell.SetTextColor(tcell.ColorRed)
+					cell.ShowError(err.Error())
 					return
 				}
 				cell.TableCell.SetText(calculated)
+				cell.SetTextColor(tcell.ColorGreen)
 				return
 			}
 		}
-		// TODO: create Cell.Error(text) method
-		cell.TableCell.SetText("#ERR: no formula")
-		cell.TableCell.SetTextColor(tcell.ColorRed)
+		cell.ShowError("no formula")
 		return
 	}
 	cell.TableCell.SetText(cell.text)
@@ -450,7 +451,8 @@ func buildTableWidget() {
 				// Select individual cell.
 				data.SetCurrentRow(row) // account for top coordinate row
 				data.SetCurrentCol(col) // account for leftmost coordinates col
-				// TODO: encapsulate, somehow
+
+				// TODO: check for out of bounds
 				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
 				cellInput.SetText(data.GetCurrentCell().GetText())
 			}).
