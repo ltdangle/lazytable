@@ -26,6 +26,10 @@ type Cell struct {
 	*tview.TableCell
 }
 
+func (cell *Cell) GetText() string {
+	return cell.TableCell.Text
+}
+
 // Data type.
 type Data struct {
 	cells      [][]*Cell
@@ -176,7 +180,7 @@ func (d *Data) GetCurrentCell() *Cell {
 
 func (d *Data) SortColStrAsc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
-		return a.Text < b.Text // Compare the text of the cells for ascending order.
+		return a.GetText() < b.GetText() // Compare the text of the cells for ascending order.
 	})
 	d.sortedCol = col
 	d.sortOrder = ascIndicator
@@ -185,7 +189,7 @@ func (d *Data) SortColStrAsc(col int) {
 
 func (d *Data) SortColStrDesc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
-		return a.Text > b.Text // Compare the text of the cells for descending order.
+		return a.GetText() > b.GetText() // Compare the text of the cells for descending order.
 	})
 	d.sortedCol = col
 	d.sortOrder = descIndicator
@@ -294,7 +298,7 @@ func convertDataToArr(dataTbl *Data) [][]string {
 		row = row[1:] // account for row numbers col
 		stringRow := make([]string, len(row))
 		for j, cell := range row {
-			stringRow[j] = cell.Text
+			stringRow[j] = cell.GetText()
 		}
 		data = append(data, stringRow)
 	}
@@ -349,7 +353,7 @@ func buildTableWidget() {
 				data.SetCurrentCol(col) // account for leftmost coordinates col
 				// TODO: encapsulate, somehow
 				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
-				cellInput.SetText(data.GetCurrentCell().Text)
+				cellInput.SetText(data.GetCurrentCell().GetText())
 			}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
@@ -410,7 +414,7 @@ func buildTableWidget() {
 func buildCellInput() {
 	cellInput.
 		SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow()-1, data.CurrentCol()-1)).
-		SetText(data.GetCurrentCell().Text).
+		SetText(data.GetCurrentCell().GetText()).
 		SetDoneFunc(func(key tcell.Key) {
 			app.SetFocus(table)
 			data.SetCurrentRow(data.CurrentRow() + 1)
@@ -874,7 +878,7 @@ func NewChangeCellValueCommand(row int, col int, text string) *ChangeCellValueCo
 }
 
 func (cmd *ChangeCellValueCommand) Execute() {
-	cmd.prevVal = data.cells[cmd.row][cmd.col].Text
+	cmd.prevVal = data.cells[cmd.row][cmd.col].GetText()
 	data.cells[cmd.row][cmd.col].SetText(cmd.newVal)
 }
 
