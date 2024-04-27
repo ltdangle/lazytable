@@ -260,10 +260,10 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	cell.Calculate()
 
 	// Highlight cell if needed.
+	// TODO: refactor
 	if d.highlight != nil && d.highlight.IsHighlighted() {
 		if row >= d.highlight.startRow+1 && column >= d.highlight.startCol+1 && row <= d.highlight.endRow+1 && column <= d.highlight.endCol+1 {
 			cell.SetTextColor(tcell.ColorGreen)
-			cell.SetAttributes(tcell.AttrReverse)
 		}
 	} else {
 		cell.SetAttributes(tcell.AttrNone)
