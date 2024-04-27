@@ -96,35 +96,40 @@ func (f *SumFormula) Calculate(text string) (string, error) {
 		return "", fmt.Errorf("string does not match formula")
 	}
 
-	// Assuming matches[1:] are {startX, startY, endX, endY}
-	startX, _ := strconv.Atoi(matches[1])
-	startY, _ := strconv.Atoi(matches[2])
-	endX, _ := strconv.Atoi(matches[3])
-	endY, _ := strconv.Atoi(matches[4])
+	// Assuming matches[1:] are {startRow, startY, endX, endY}
+	startRow, _ := strconv.Atoi(matches[1])
+	startCol, _ := strconv.Atoi(matches[2])
+	endRow, _ := strconv.Atoi(matches[3])
+	endCol, _ := strconv.Atoi(matches[4])
 
 	// Call the sum method (assuming data is accessible)
-	if total, err := f.sum(startX+1, startY+1, endX+1, endY+1); err != nil {
+	if total, err := f.sum(startRow+1, startCol+1, endRow+1, endCol+1); err != nil {
 		return "", err
 	} else {
+		// Highlight cells.
+		data.highlight.startRow = startRow
+		data.highlight.startCol = startCol
+		data.highlight.endRow = endRow
+		data.highlight.endCol = endCol
 		return fmt.Sprintf(floatFormat, total), nil
 	}
 }
 
-func (f *SumFormula) sum(startY, startX, endY, endX int) (float64, error) {
+func (f *SumFormula) sum(startRow, startCol, endRow, endCol int) (float64, error) {
 	sum := 0.0
 
 	// Validate the coordinates
-	if startX > endX || startY > endY {
+	if startCol > endCol || startRow > endRow {
 		return 0, fmt.Errorf("start coordinates must be less than or equal to end coordinates")
 	}
-	if startX < 0 || startY < 0 || endY >= len(data.cells) || endX >=
+	if startCol < 0 || startRow < 0 || endRow >= len(data.cells) || endCol >=
 		len(data.cells[0]) {
 		return 0, fmt.Errorf("coordinates out of bounds")
 	}
 
 	// Sum cells in the range [startX:endX, startY:endY]
-	for y := startY; y <= endY; y++ {
-		for x := startX; x <= endX; x++ {
+	for y := startRow; y <= endRow; y++ {
+		for x := startCol; x <= endCol; x++ {
 			val, err := strconv.ParseFloat(data.cells[y][x].TableCell.Text, 64)
 			if err != nil {
 				return 0, fmt.Errorf("%d,%d is not an integer", y-1, x-1)
@@ -135,6 +140,32 @@ func (f *SumFormula) sum(startY, startX, endY, endX int) (float64, error) {
 	return sum, nil
 }
 
+// Highlighted cells region.
+type highlight struct {
+	startRow int
+	startCol int
+	endRow   int
+	endCol   int
+}
+
+func NewHighlight() *highlight {
+	return &highlight{}
+}
+
+func (h *highlight) IsHighlighted() bool {
+	if h.startCol == 0 && h.startRow == 0 {
+		return false
+	}
+	return true
+}
+
+func (h *highlight) Clear() {
+	h.startRow = 0
+	h.startCol = 0
+	h.endRow = 0
+	h.endCol = 0
+}
+
 // Data type.
 type Data struct {
 	cells      [][]*Cell
@@ -142,10 +173,11 @@ type Data struct {
 	currentCol int
 	sortedCol  int
 	sortOrder  string
+	highlight  *highlight
 }
 
 func NewData() *Data {
-	return &Data{sortedCol: -1, sortOrder: ""}
+	return &Data{sortedCol: -1, sortOrder: "", highlight: NewHighlight()}
 }
 func (t *Data) Clear() {
 	t.cells = nil
@@ -224,6 +256,12 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 
 	cell.Calculate()
 
+	// Highlight cell if needed.
+	if data.highlight.IsHighlighted() {
+		if row >= d.highlight.startRow+1 && column >= d.highlight.startCol+1 && row <= d.highlight.endRow+1 && column <= d.highlight.endCol+1 {
+			cell.SetAttributes(tcell.AttrReverse)
+		}
+	}
 	return cell.TableCell
 }
 
@@ -457,7 +495,7 @@ func buildTableWidget() {
 			}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
-				bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
+				//bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
 				row, col := table.GetSelection()
 				rowSelectable, colSelectable := table.GetSelectable()
 				rowSelected := rowSelectable && !colSelectable
