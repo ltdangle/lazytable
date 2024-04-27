@@ -208,6 +208,8 @@ func (d *Data) CurrentCol() int {
 func (d *Data) AddDataRow(dataRow []*Cell) {
 	d.cells = append(d.cells, dataRow)
 }
+
+// TODO: manage cell attibutes (color, etc) explicitly here
 func (d *Data) GetCell(row, column int) *tview.TableCell {
 	// Coordinates are outside our table.
 	if row > d.GetRowCount()-1 || column > d.GetColumnCount()-1 {
