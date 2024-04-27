@@ -234,7 +234,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		cell.SetAlign(1) //AlignCenter
 
 		// Highlight row header cell for current selection.
-		if column == data.currentCol {
+		if column ==d.currentCol {
 			cell.SetAttributes(tcell.AttrBold)
 			cell.SetAttributes(tcell.AttrUnderline)
 			return cell.TableCell
@@ -246,7 +246,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		cell.SetAttributes(tcell.AttrDim)
 
 		// Highlight col header cell for current selection.
-		if row == data.currentRow {
+		if row == d.currentRow {
 			cell.SetAttributes(tcell.AttrBold)
 			cell.SetAttributes(tcell.AttrUnderline)
 			return cell.TableCell
@@ -257,7 +257,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	cell.Calculate()
 
 	// Highlight cell if needed.
-	if data.highlight.IsHighlighted() {
+	if d.highlight.IsHighlighted() {
 		if row >= d.highlight.startRow+1 && column >= d.highlight.startCol+1 && row <= d.highlight.endRow+1 && column <= d.highlight.endCol+1 {
 			cell.SetAttributes(tcell.AttrReverse)
 		}
