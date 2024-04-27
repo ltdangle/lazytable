@@ -40,27 +40,28 @@ func (cell *Cell) ShowError(text string) {
 	cell.TableCell.SetText("#ERR:" + text)
 	cell.TableCell.SetTextColor(tcell.ColorRed)
 }
-func (cell *Cell) Calculate() {
+func (cell *Cell) Calculate() *highlight {
 	if cell.IsFormula() {
 		fText := cell.text[1:] // strip leading =
 		for _, formula := range formulas {
 			isMatch, _ := formula.Match(fText)
 			if isMatch {
-				calculated, err := formula.Calculate(fText)
+				calculated, highlight, err := formula.Calculate(fText)
 				if err != nil {
 					cell.ShowError(err.Error())
-					return
+					return nil
 				}
 				cell.TableCell.SetText(calculated)
 				cell.SetTextColor(tcell.ColorGreen)
-				return
+				return highlight
 			}
 		}
 		cell.ShowError("no formula")
-		return
+		return nil
 	}
 	cell.TableCell.SetText(cell.text)
 	cell.TableCell.SetTextColor(tcell.ColorWhite)
+	return nil
 }
 
 func (cell *Cell) GetText() string {
@@ -75,7 +76,7 @@ type Formula interface {
 	// Checks if provided text matches the formula.
 	Match(text string) (ok bool, matches []string)
 	// Calculates the formula.
-	Calculate(text string) (string, error)
+	Calculate(text string) (string, *highlight, error)
 }
 
 type SumFormula struct{}
@@ -90,10 +91,10 @@ func (f *SumFormula) Match(text string) (ok bool, matches []string) {
 	return matches != nil, matches
 }
 
-func (f *SumFormula) Calculate(text string) (string, error) {
+func (f *SumFormula) Calculate(text string) (string, *highlight, error) {
 	ok, matches := f.Match(text)
 	if !ok {
-		return "", fmt.Errorf("string does not match formula")
+		return "", nil, fmt.Errorf("string does not match formula")
 	}
 
 	// Assuming matches[1:] are {startRow, startY, endX, endY}
@@ -103,16 +104,18 @@ func (f *SumFormula) Calculate(text string) (string, error) {
 	endCol, _ := strconv.Atoi(matches[4])
 
 	// Call the sum method (assuming data is accessible)
-	if total, err := f.sum(startRow+1, startCol+1, endRow+1, endCol+1); err != nil {
-		return "", err
-	} else {
-		// Highlight cells.
-		data.highlight.startRow = startRow
-		data.highlight.startCol = startCol
-		data.highlight.endRow = endRow
-		data.highlight.endCol = endCol
-		return fmt.Sprintf(floatFormat, total), nil
+	total, err := f.sum(startRow+1, startCol+1, endRow+1, endCol+1)
+	if err != nil {
+		return "", nil, err
 	}
+
+	highlight := NewHighlight()
+	highlight.startRow = startRow
+	highlight.startCol = startCol
+	highlight.endRow = endRow
+	highlight.endCol = endCol
+
+	return fmt.Sprintf(floatFormat, total), highlight, nil
 }
 
 func (f *SumFormula) sum(startRow, startCol, endRow, endCol int) (float64, error) {
@@ -234,7 +237,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		cell.SetAlign(1) //AlignCenter
 
 		// Highlight row header cell for current selection.
-		if column ==d.currentCol {
+		if column == d.currentCol {
 			cell.SetAttributes(tcell.AttrBold)
 			cell.SetAttributes(tcell.AttrUnderline)
 			return cell.TableCell
@@ -257,10 +260,13 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	cell.Calculate()
 
 	// Highlight cell if needed.
-	if d.highlight.IsHighlighted() {
+	if d.highlight != nil && d.highlight.IsHighlighted() {
 		if row >= d.highlight.startRow+1 && column >= d.highlight.startCol+1 && row <= d.highlight.endRow+1 && column <= d.highlight.endCol+1 {
+			cell.SetTextColor(tcell.ColorGreen)
 			cell.SetAttributes(tcell.AttrReverse)
 		}
+	} else {
+		cell.SetAttributes(tcell.AttrNone)
 	}
 	return cell.TableCell
 }
@@ -492,6 +498,8 @@ func buildTableWidget() {
 
 				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
 				cellInput.SetText(data.GetCurrentCell().GetText())
+
+				data.highlight = data.GetCurrentCell().Calculate()
 			}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
@@ -563,6 +571,7 @@ func buildCellInput() {
 		}).
 		SetChangedFunc(func(text string) {
 			history.Do(NewChangeCellValueCommand(data.CurrentRow(), data.CurrentCol(), text))
+			data.highlight = data.GetCurrentCell().Calculate()
 		},
 		)
 }
