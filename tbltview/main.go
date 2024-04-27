@@ -266,13 +266,17 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 
 // Highlight cell range.
 func (d *Data) highlightCell(row int, column int, cell *Cell) {
-	if d.highlight != nil && d.highlight.IsHighlighted() {
-		cellIsHighlighted := row >= d.highlight.startRow+1 && column >= d.highlight.startCol+1 && row <= d.highlight.endRow+1 && column <= d.highlight.endCol+1
-		if cellIsHighlighted {
-			cell.SetTextColor(tcell.ColorGreen)
-		}
-	} else {
+	if d.highlight == nil {
 		cell.SetAttributes(tcell.AttrNone)
+		return
+	}
+	if !d.highlight.IsHighlighted() {
+		cell.SetAttributes(tcell.AttrNone)
+		return
+	}
+	cellIsHighlighted := row >= d.highlight.startRow+1 && column >= d.highlight.startCol+1 && row <= d.highlight.endRow+1 && column <= d.highlight.endCol+1
+	if cellIsHighlighted {
+		cell.SetTextColor(tcell.ColorGreen)
 	}
 }
 
