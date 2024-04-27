@@ -144,6 +144,7 @@ func (f *SumFormula) sum(startRow, startCol, endRow, endCol int) (float64, error
 }
 
 // Highlighted cells region.
+// TODO: use getter and setter and check validity in setter
 type highlight struct {
 	startRow int
 	startCol int
@@ -153,20 +154,6 @@ type highlight struct {
 
 func NewHighlight() *highlight {
 	return &highlight{}
-}
-
-func (h *highlight) IsHighlighted() bool {
-	if h.startCol == 0 && h.startRow == 0 {
-		return false
-	}
-	return true
-}
-
-func (h *highlight) Clear() {
-	h.startRow = 0
-	h.startCol = 0
-	h.endRow = 0
-	h.endCol = 0
 }
 
 // Data type.
@@ -180,7 +167,7 @@ type Data struct {
 }
 
 func NewData() *Data {
-	return &Data{sortedCol: -1, sortOrder: "", highlight: NewHighlight()}
+	return &Data{sortedCol: -1, sortOrder: ""}
 }
 func (t *Data) Clear() {
 	t.cells = nil
@@ -270,10 +257,7 @@ func (d *Data) highlightCell(row int, column int, cell *Cell) {
 		cell.SetAttributes(tcell.AttrNone)
 		return
 	}
-	if !d.highlight.IsHighlighted() {
-		cell.SetAttributes(tcell.AttrNone)
-		return
-	}
+
 	cellIsHighlighted := row >= d.highlight.startRow+1 && column >= d.highlight.startCol+1 && row <= d.highlight.endRow+1 && column <= d.highlight.endCol+1
 	if cellIsHighlighted {
 		cell.SetTextColor(tcell.ColorGreen)
