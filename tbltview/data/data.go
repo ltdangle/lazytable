@@ -11,7 +11,7 @@ import (
 	"github.com/rivo/tview"
 )
 
-var data *Data
+var d *Data
 var formulas []Formula
 var floatFormat = "%.2f"
 
@@ -125,15 +125,15 @@ func (f *SumFormula) sum(startRow, startCol, endRow, endCol int) (float64, error
 	if startCol > endCol || startRow > endRow {
 		return 0, fmt.Errorf("start coordinates must be less than or equal to end coordinates")
 	}
-	if startCol < 0 || startRow < 0 || endRow >= len(data.Cells) || endCol >=
-		len(data.Cells[0]) {
+	if startCol < 0 || startRow < 0 || endRow >= len(d.Cells) || endCol >=
+		len(d.Cells[0]) {
 		return 0, fmt.Errorf("coordinates out of bounds")
 	}
 
 	// Sum cells in the range [startX:endX, startY:endY]
 	for y := startRow; y <= endRow; y++ {
 		for x := startCol; x <= endCol; x++ {
-			val, err := strconv.ParseFloat(data.Cells[y][x].TableCell.Text, 64)
+			val, err := strconv.ParseFloat(d.Cells[y][x].TableCell.Text, 64)
 			if err != nil {
 				return 0, fmt.Errorf("%d,%d is not a number", y-1, x-1)
 			}
@@ -168,8 +168,8 @@ type Data struct {
 
 func NewData(frmls []Formula) *Data {
 	formulas = frmls
-	data := &Data{SortedCol: -1, SortOrder: ""}
-	return data
+	d = &Data{SortedCol: -1, SortOrder: ""}
+	return d
 }
 func (t *Data) Clear() {
 	t.Cells = nil
