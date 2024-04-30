@@ -1047,6 +1047,7 @@ func (cmd *ChangeCellValueCommand) Execute() {
 
 func (cmd *ChangeCellValueCommand) Unexecute() {
 	data.cells[cmd.row][cmd.col].SetText(cmd.prevVal)
+	logger.Info(fmt.Sprintf("%d:%d reverted from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
 }
 
 type Logger struct {
