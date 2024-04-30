@@ -17,6 +17,211 @@ import (
 	"github.com/rivo/tview"
 )
 
+var csvFile *string
+var data = NewData()
+var table = tview.NewTable()
+var app = tview.NewApplication()
+var cellInput = tview.NewInputField()
+var pages = tview.NewPages()
+var modal func(p tview.Primitive, width, height int) tview.Primitive
+var modalContents = tview.NewBox()
+var bottomBar = tview.NewTextView()
+var history = NewHistory()
+var formulas []Formula
+var floatFormat = "%.2f"
+var logger = NewLogger("tmp/log.txt")
+
+func main() {
+
+	// Parse cli arguments.
+	csvFile = flag.String("file", "", "path to csv file")
+	flag.Parse()
+	if *csvFile == "" {
+		log.Fatal("-file not specified")
+	}
+
+	// Load csv file data.
+	readCsvFile(*csvFile, data)
+
+	// Configure available formulas.
+	formulas = append(formulas, NewSumFormula())
+
+	// Set cursor to the first cell.
+	data.SetCurrentRow(1)
+	data.SetCurrentCol(1)
+
+	buildCellInput()
+	buildTable()
+	buildModal()
+
+	// Configure layout.
+	flex := tview.NewFlex().
+		SetDirection(tview.FlexRow).
+		AddItem(cellInput, 1, 0, false).
+		AddItem(table, 0, 1, false).
+		AddItem(bottomBar, 1, 0, false)
+
+	flex.SetInputCapture(
+		func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Rune() {
+			case 'm':
+				pages.ShowPage("modal")
+				modalContents.SetTitle("You pressed the m button!")
+			}
+			return event
+		})
+
+	pages.
+		AddPage("background", flex, true, true).
+		AddPage("modal", modal(modalContents, 40, 10), true, false)
+
+	bottomBar.SetText("> ")
+	if err := app.SetRoot(pages, true).SetFocus(table).Run(); err != nil {
+		panic(err)
+	}
+}
+
+func buildTable() {
+	table.
+		SetBorders(false).
+		SetContent(data).
+		SetSelectable(true, true).
+		SetFixed(2, 1).
+		Select(1, 1).
+		SetSelectedFunc(func(row, col int) {
+			app.SetFocus(cellInput)
+		}).
+		SetSelectionChangedFunc(
+			func(row, col int) {
+				// Don't select x,y coordinates.
+				if row == 0 {
+					data.SetCurrentRow(1)
+					table.Select(data.CurrentRow(), col)
+					return
+				}
+				if col == 0 {
+					data.SetCurrentCol(1)
+					table.Select(row, data.CurrentCol())
+					return
+				}
+
+				// Select individual cell.
+				data.SetCurrentRow(row) // account for top coordinate row
+				data.SetCurrentCol(col) // account for leftmost coordinates col
+
+				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
+				cellInput.SetText(data.GetCurrentCell().GetText())
+
+				data.highlight = data.GetCurrentCell().Calculate()
+			}).
+		SetInputCapture(
+			func(event *tcell.EventKey) *tcell.EventKey {
+				//bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
+				row, col := table.GetSelection()
+				rowSelectable, colSelectable := table.GetSelectable()
+				rowSelected := rowSelectable && !colSelectable
+				colSelected := !rowSelectable && colSelectable
+
+				rune := event.Rune()
+				key := event.Key()
+
+				switch rune {
+				case 'V': // Select row.
+					table.SetSelectable(true, false)
+				case 22:
+					if key == 22 { // Rune 22, key 22 = CTRL+V. Select column.
+						table.SetSelectable(false, true)
+					}
+				case 0:
+					if key == 27 { // Rune 0, key 27 = ESC.  Select individual cell.
+						table.SetSelectable(true, true)
+					}
+				case 'd':
+					if rowSelected {
+						history.Do(NewDeleteRowCommand(row, col))
+					} else if colSelected {
+						history.Do(NewDeleteColumnCommand(row, col))
+					}
+				case '>': // Increase column width.
+					history.Do(NewIncreaseColWidthCommand(data.CurrentCol()))
+				case '<': // Decrease column width.
+					history.Do(NewDecreaseColWidthCommand(data.CurrentCol()))
+				case 'f': // Sort string values asc.
+					history.Do(NewSortColStrAscCommand(data.CurrentCol()))
+				case 'F': // Sort string values desc.
+					history.Do(NewSortColStrDescCommand(data.CurrentCol()))
+				case 'o': // Insert row below.
+					history.Do(NewInsertRowBelowCommand(data.CurrentRow()))
+				case 'O': // Insert row above.
+					history.Do(NewInsertRowAboveCommand(data.CurrentRow(), data.CurrentCol()))
+				case 'i':
+					history.Do(NewInsertColRightCommand(data.CurrentCol()))
+				case 'I':
+					history.Do(NewInsertColLeftCommand(data.CurrentRow(), data.CurrentCol()))
+				case 'u':
+					history.Undo()
+				case 18:
+					if key == 18 { // CTRL+R, redo.
+						history.Redo()
+					}
+				}
+				return event
+			},
+		)
+}
+
+func buildCellInput() {
+	cellInput.
+		SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow()-1, data.CurrentCol()-1)).
+		SetText(data.GetCurrentCell().GetText()).
+		SetDoneFunc(func(key tcell.Key) {
+			app.SetFocus(table)
+			// Push cursor down, if possible.
+			if data.CurrentRow() < data.GetRowCount()-1 {
+				data.SetCurrentRow(data.CurrentRow() + 1)
+			}
+			table.Select(data.CurrentRow(), data.CurrentCol())
+		}).
+		SetChangedFunc(func(text string) {
+			// This function is called whenever cursor changes position for some reason.
+			// So we need to check if the value actually changed.
+			prevVal := data.cells[data.CurrentRow()][data.CurrentCol()].GetText()
+			if prevVal != text {
+				history.Do(NewChangeCellValueCommand(data.CurrentRow(), data.CurrentCol(), text))
+			}
+			data.highlight = data.GetCurrentCell().Calculate()
+		},
+		)
+}
+
+func buildModal() {
+	// Returns a new primitive which puts the provided primitive in the center and
+	// sets its size to the given width and height.
+	modal = func(p tview.Primitive, width, height int) tview.Primitive {
+		return tview.NewFlex().
+			AddItem(nil, 0, 1, false).
+			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+				AddItem(nil, 0, 1, false).
+				AddItem(p, height, 1, true).
+				AddItem(nil, 0, 1, false), width, 1, true).
+			AddItem(nil, 0, 1, false)
+	}
+
+	modalContents.
+		SetBorder(true).
+		SetTitle("Modal window").
+		SetInputCapture(
+			func(event *tcell.EventKey) *tcell.EventKey {
+				switch event.Rune() {
+				case 'q':
+					pages.HidePage("modal")
+					app.SetFocus(table)
+					modalContents.SetTitle("")
+				}
+				return event
+			})
+}
+
 const (
 	ascIndicator  = "↑"
 	descIndicator = "↓"
@@ -464,205 +669,6 @@ func saveDataToFile(path string, dataDataTable *Data) {
 
 }
 
-// Configure ui elements.
-func buildTableWidget() {
-	table.
-		SetBorders(false).
-		SetContent(data).
-		SetSelectable(true, true).
-		SetFixed(2, 1).
-		Select(1, 1).
-		SetSelectedFunc(func(row, col int) {
-			app.SetFocus(cellInput)
-		}).
-		SetSelectionChangedFunc(
-			func(row, col int) {
-				// Don't select x,y coordinates.
-				if row == 0 {
-					data.SetCurrentRow(1)
-					table.Select(data.CurrentRow(), col)
-					return
-				}
-				if col == 0 {
-					data.SetCurrentCol(1)
-					table.Select(row, data.CurrentCol())
-					return
-				}
-
-				// Select individual cell.
-				data.SetCurrentRow(row) // account for top coordinate row
-				data.SetCurrentCol(col) // account for leftmost coordinates col
-
-				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
-				cellInput.SetText(data.GetCurrentCell().GetText())
-
-				data.highlight = data.GetCurrentCell().Calculate()
-			}).
-		SetInputCapture(
-			func(event *tcell.EventKey) *tcell.EventKey {
-				//bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
-				row, col := table.GetSelection()
-				rowSelectable, colSelectable := table.GetSelectable()
-				rowSelected := rowSelectable && !colSelectable
-				colSelected := !rowSelectable && colSelectable
-
-				rune := event.Rune()
-				key := event.Key()
-
-				switch rune {
-				case 'V': // Select row.
-					table.SetSelectable(true, false)
-				case 22:
-					if key == 22 { // Rune 22, key 22 = CTRL+V. Select column.
-						table.SetSelectable(false, true)
-					}
-				case 0:
-					if key == 27 { // Rune 0, key 27 = ESC.  Select individual cell.
-						table.SetSelectable(true, true)
-					}
-				case 'd':
-					if rowSelected {
-						history.Do(NewDeleteRowCommand(row, col))
-					} else if colSelected {
-						history.Do(NewDeleteColumnCommand(row, col))
-					}
-				case '>': // Increase column width.
-					history.Do(NewIncreaseColWidthCommand(data.CurrentCol()))
-				case '<': // Decrease column width.
-					history.Do(NewDecreaseColWidthCommand(data.CurrentCol()))
-				case 'f': // Sort string values asc.
-					history.Do(NewSortColStrAscCommand(data.CurrentCol()))
-				case 'F': // Sort string values desc.
-					history.Do(NewSortColStrDescCommand(data.CurrentCol()))
-				case 'o': // Insert row below.
-					history.Do(NewInsertRowBelowCommand(data.CurrentRow()))
-				case 'O': // Insert row above.
-					history.Do(NewInsertRowAboveCommand(data.CurrentRow(), data.CurrentCol()))
-				case 'i':
-					history.Do(NewInsertColRightCommand(data.CurrentCol()))
-				case 'I':
-					history.Do(NewInsertColLeftCommand(data.CurrentRow(), data.CurrentCol()))
-				case 'u':
-					history.Undo()
-				case 18:
-					if key == 18 { // CTRL+R, redo.
-						history.Redo()
-					}
-				}
-				return event
-			},
-		)
-}
-
-func buildCellInput() {
-	cellInput.
-		SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow()-1, data.CurrentCol()-1)).
-		SetText(data.GetCurrentCell().GetText()).
-		SetDoneFunc(func(key tcell.Key) {
-			app.SetFocus(table)
-			// Push cursor down, if possible.
-			if data.CurrentRow() < data.GetRowCount()-1 {
-				data.SetCurrentRow(data.CurrentRow() + 1)
-			}
-			table.Select(data.CurrentRow(), data.CurrentCol())
-		}).
-		SetChangedFunc(func(text string) {
-			history.Do(NewChangeCellValueCommand(data.CurrentRow(), data.CurrentCol(), text))
-			data.highlight = data.GetCurrentCell().Calculate()
-		},
-		)
-}
-func buildModal() {
-	// Returns a new primitive which puts the provided primitive in the center and
-	// sets its size to the given width and height.
-	modal = func(p tview.Primitive, width, height int) tview.Primitive {
-		return tview.NewFlex().
-			AddItem(nil, 0, 1, false).
-			AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
-				AddItem(nil, 0, 1, false).
-				AddItem(p, height, 1, true).
-				AddItem(nil, 0, 1, false), width, 1, true).
-			AddItem(nil, 0, 1, false)
-	}
-
-	modalContents.
-		SetBorder(true).
-		SetTitle("Modal window").
-		SetInputCapture(
-			func(event *tcell.EventKey) *tcell.EventKey {
-				switch event.Rune() {
-				case 'q':
-					pages.HidePage("modal")
-					app.SetFocus(table)
-					modalContents.SetTitle("")
-				}
-				return event
-			})
-
-}
-
-var csvFile *string
-var data = NewData()
-var table = tview.NewTable()
-var app = tview.NewApplication()
-var cellInput = tview.NewInputField()
-var pages = tview.NewPages()
-var modal func(p tview.Primitive, width, height int) tview.Primitive
-var modalContents = tview.NewBox()
-var bottomBar = tview.NewTextView()
-var history = NewHistory()
-var formulas []Formula
-var floatFormat = "%.2f"
-
-func main() {
-	// Parse cli arguments.
-	csvFile = flag.String("file", "", "path to csv file")
-	flag.Parse()
-	if *csvFile == "" {
-		log.Fatal("-file not specified")
-	}
-
-	// Load csv file data.
-	readCsvFile(*csvFile, data)
-
-	// Configure available formulas.
-	formulas = append(formulas, NewSumFormula())
-
-	// Set cursor to the first cell.
-	data.SetCurrentRow(1)
-	data.SetCurrentCol(1)
-
-	buildCellInput()
-	buildTableWidget()
-	buildModal()
-
-	// Configure layout.
-	flex := tview.NewFlex().
-		SetDirection(tview.FlexRow).
-		AddItem(cellInput, 1, 0, false).
-		AddItem(table, 0, 1, false).
-		AddItem(bottomBar, 1, 0, false)
-
-	flex.SetInputCapture(
-		func(event *tcell.EventKey) *tcell.EventKey {
-			switch event.Rune() {
-			case 'm':
-				pages.ShowPage("modal")
-				modalContents.SetTitle("You pressed the m button!")
-			}
-			return event
-		})
-
-	pages.
-		AddPage("background", flex, true, true).
-		AddPage("modal", modal(modalContents, 40, 10), true, false)
-
-	bottomBar.SetText("> ")
-	if err := app.SetRoot(pages, true).SetFocus(table).Run(); err != nil {
-		panic(err)
-	}
-}
-
 // Undo / redo functionality.
 type Command interface {
 	Execute()
@@ -1036,8 +1042,31 @@ func NewChangeCellValueCommand(row int, col int, text string) *ChangeCellValueCo
 func (cmd *ChangeCellValueCommand) Execute() {
 	cmd.prevVal = data.cells[cmd.row][cmd.col].GetText()
 	data.cells[cmd.row][cmd.col].SetText(cmd.newVal)
+	logger.Info(fmt.Sprintf("%d:%d changed from %s to %s", cmd.row, cmd.col, cmd.prevVal, cmd.newVal))
 }
 
 func (cmd *ChangeCellValueCommand) Unexecute() {
 	data.cells[cmd.row][cmd.col].SetText(cmd.prevVal)
+}
+
+type Logger struct {
+	file *os.File
+}
+
+func NewLogger(path string) *Logger {
+	logger := &Logger{}
+	file, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	logger.file = file
+	return logger
+}
+
+func (l *Logger) Info(msg string) {
+	msg = msg + "\n"
+	_, err := l.file.Write([]byte(msg))
+	if err != nil {
+		panic(err)
+	}
 }
