@@ -726,10 +726,12 @@ func NewInsertRowBelowCommand(row int) *InsertRowBelowCommand {
 }
 func (cmd *InsertRowBelowCommand) Execute() {
 	data.InsertRow(cmd.row)
+	logger.Info(fmt.Sprintf("inserted row %d below", cmd.row))
 }
 
 func (cmd *InsertRowBelowCommand) Unexecute() {
 	data.RemoveRow(cmd.row)
+	logger.Info(fmt.Sprintf("undo inserted row %d below", cmd.row))
 }
 
 // InsertRowAboveCommand.
@@ -745,12 +747,14 @@ func (cmd *InsertRowAboveCommand) Execute() {
 	data.InsertRow(cmd.row)
 	data.SetCurrentRow(cmd.row + 1)
 	table.Select(cmd.row+1, cmd.col)
+	logger.Info(fmt.Sprintf("inserted row %d above", cmd.row))
 }
 
 func (cmd *InsertRowAboveCommand) Unexecute() {
 	data.RemoveRow(cmd.row)
 	data.SetCurrentRow(cmd.row)
 	table.Select(cmd.row, cmd.col)
+	logger.Info(fmt.Sprintf("undo inserted row %d above", cmd.row))
 }
 
 // InsertColRightCommand.
@@ -764,10 +768,12 @@ func NewInsertColRightCommand(col int) *InsertColRightCommand {
 
 func (cmd *InsertColRightCommand) Execute() {
 	data.InsertColumn(cmd.col)
+	logger.Info(fmt.Sprintf("inserted col %d right", cmd.col))
 }
 
 func (cmd *InsertColRightCommand) Unexecute() {
 	data.RemoveColumn(cmd.col)
+	logger.Info(fmt.Sprintf("undo inserted col %d right", cmd.col))
 }
 
 // InsertColLeftCommand.
@@ -784,12 +790,14 @@ func (cmd *InsertColLeftCommand) Execute() {
 	data.InsertColumn(cmd.col)
 	data.SetCurrentCol(cmd.col + 1)
 	table.Select(cmd.row, cmd.col+1)
+	logger.Info(fmt.Sprintf("inserted col %d left", cmd.col))
 }
 
 func (cmd *InsertColLeftCommand) Unexecute() {
 	data.RemoveColumn(cmd.col)
 	data.SetCurrentCol(cmd.col)
 	table.Select(cmd.row, cmd.col)
+	logger.Info(fmt.Sprintf("undo inserted col %d left", cmd.col))
 }
 
 // SortColStrDescCommand is the command used to sort a column in descending string order.
@@ -823,6 +831,7 @@ func (cmd *SortColStrDescCommand) Execute() {
 
 	// Now sort the column in descending order
 	data.SortColStrDesc(cmd.col)
+	logger.Info(fmt.Sprintf("sorted %d col by string desc", cmd.col))
 }
 
 // Unexecute restores the column to the original order before sorting.
@@ -838,6 +847,7 @@ func (cmd *SortColStrDescCommand) Unexecute() {
 	data.sortedCol = cmd.originalSortedCol
 	data.sortOrder = cmd.originalSortOrder
 	data.drawXYCoordinates()
+	logger.Info(fmt.Sprintf("undo sorted %d col by string desc", cmd.col))
 }
 
 // SortColStrAscCommand is the command used to sort a column in ascending string order.
@@ -871,6 +881,7 @@ func (cmd *SortColStrAscCommand) Execute() {
 
 	// Now sort the column in ascending order
 	data.SortColStrAsc(cmd.col)
+	logger.Info(fmt.Sprintf("sorted %d col by string asc", cmd.col))
 }
 
 // Unexecute restores the column to the original order before sorting.
@@ -886,6 +897,7 @@ func (cmd *SortColStrAscCommand) Unexecute() {
 	data.sortedCol = cmd.originalSortedCol
 	data.sortOrder = cmd.originalSortOrder
 	data.drawXYCoordinates()
+	logger.Info(fmt.Sprintf("undo sorted %d col by string asc", cmd.col))
 }
 
 type DecreaseColWidthCommand struct {
@@ -904,6 +916,7 @@ func (cmd *DecreaseColWidthCommand) Execute() {
 		}
 		cell.SetMaxWidth(cell.MaxWidth - 1)
 	}
+	logger.Info(fmt.Sprintf("decreased column %d width", data.CurrentCol()))
 }
 
 func (cmd *DecreaseColWidthCommand) Unexecute() {
@@ -911,6 +924,7 @@ func (cmd *DecreaseColWidthCommand) Unexecute() {
 		cell := data.cells[rowIdx][data.CurrentCol()]
 		cell.SetMaxWidth(cell.MaxWidth + 1)
 	}
+	logger.Info(fmt.Sprintf("undo decreased column %d width", data.CurrentCol()))
 }
 
 type IncreaseColWidthCommand struct {
@@ -926,6 +940,7 @@ func (cmd *IncreaseColWidthCommand) Execute() {
 		cell := data.cells[rowIdx][data.CurrentCol()]
 		cell.SetMaxWidth(cell.MaxWidth + 1)
 	}
+	logger.Info(fmt.Sprintf("increased column %d width", data.CurrentCol()))
 }
 
 func (cmd *IncreaseColWidthCommand) Unexecute() {
@@ -936,6 +951,7 @@ func (cmd *IncreaseColWidthCommand) Unexecute() {
 		}
 		cell.SetMaxWidth(cell.MaxWidth - 1)
 	}
+	logger.Info(fmt.Sprintf("undo increased column %d width", data.CurrentCol()))
 }
 
 type DeleteColumnCommand struct {
@@ -961,6 +977,7 @@ func (cmd *DeleteColumnCommand) Execute() {
 			table.Select(cmd.row, data.GetColumnCount()-1)
 		}
 	}
+	logger.Info(fmt.Sprintf("deleted column %d", cmd.col))
 }
 
 func (cmd *DeleteColumnCommand) Unexecute() {
@@ -980,6 +997,7 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 	for row := range data.cells {
 		data.cells[row][cmd.col] = cmd.deletedCol[row]
 	}
+	logger.Info(fmt.Sprintf("undo deleted column %d", cmd.col))
 }
 
 type DeleteRowCommand struct {
@@ -1008,7 +1026,7 @@ func (cmd *DeleteRowCommand) Execute() {
 		}
 	}
 
-	logger.Info(fmt.Sprintf("deleted row %d", cmd.col))
+	logger.Info(fmt.Sprintf("deleted row %d", cmd.row))
 }
 
 func (cmd *DeleteRowCommand) Unexecute() {
@@ -1029,7 +1047,7 @@ func (cmd *DeleteRowCommand) Unexecute() {
 		data.cells[cmd.row][col] = cmd.deletedRow[col]
 	}
 
-	logger.Info(fmt.Sprintf("undo deleted row %d", cmd.col))
+	logger.Info(fmt.Sprintf("undo deleted row %d", cmd.row))
 }
 
 type ChangeCellValueCommand struct {
