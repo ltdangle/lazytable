@@ -640,7 +640,7 @@ func main() {
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(cellInput, 1, 0, false).
-		AddItem(table, 0, 8, false).
+		AddItem(table, 0, 1, false).
 		AddItem(bottomBar, 1, 0, false)
 
 	flex.SetInputCapture(
