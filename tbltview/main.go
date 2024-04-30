@@ -8,17 +8,14 @@ import (
 	"io"
 	"log"
 	"os"
-	"regexp"
-	"sort"
-	"strconv"
-	"strings"
+	"tblview/data"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
 
 var csvFile *string
-var data = NewData()
+var dta *data.Data
 var table = tview.NewTable()
 var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
@@ -27,8 +24,6 @@ var modal func(p tview.Primitive, width, height int) tview.Primitive
 var modalContents = tview.NewBox()
 var bottomBar = tview.NewTextView()
 var history = NewHistory()
-var formulas []Formula
-var floatFormat = "%.2f"
 var logger = NewLogger("tmp/log.txt")
 
 func main() {
@@ -40,15 +35,19 @@ func main() {
 		log.Fatal("-file not specified")
 	}
 
-	// Load csv file data.
-	readCsvFile(*csvFile, data)
-
 	// Configure available formulas.
-	formulas = append(formulas, NewSumFormula())
+	var formulas []data.Formula
+	formulas = append(formulas, data.NewSumFormula())
+
+	// Init Data.
+	dta = data.NewData(formulas)
+
+	// Load csv file data.
+	readCsvFile(*csvFile, dta)
 
 	// Set cursor to the first cell.
-	data.SetCurrentRow(1)
-	data.SetCurrentCol(1)
+	dta.SetCurrentRow(1)
+	dta.SetCurrentCol(1)
 
 	buildCellInput()
 	buildTable()
@@ -84,7 +83,7 @@ func main() {
 func buildTable() {
 	table.
 		SetBorders(false).
-		SetContent(data).
+		SetContent(dta).
 		SetSelectable(true, true).
 		SetFixed(2, 1).
 		Select(1, 1).
@@ -97,24 +96,24 @@ func buildTable() {
 				logger.Info(fmt.Sprintf("table.SetSelectionChangedFunc: row %d, col %d", row, col))
 				// Don't select x,y coordinates.
 				if row == 0 {
-					data.SetCurrentRow(1)
-					table.Select(data.CurrentRow(), col)
+					dta.SetCurrentRow(1)
+					table.Select(dta.CurrentRow(), col)
 					return
 				}
 				if col == 0 {
-					data.SetCurrentCol(1)
-					table.Select(row, data.CurrentCol())
+					dta.SetCurrentCol(1)
+					table.Select(row, dta.CurrentCol())
 					return
 				}
 
 				// Select individual cell.
-				data.SetCurrentRow(row) // account for top coordinate row
-				data.SetCurrentCol(col) // account for leftmost coordinates col
+				dta.SetCurrentRow(row) // account for top coordinate row
+				dta.SetCurrentCol(col) // account for leftmost coordinates col
 
 				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
-				cellInput.SetText(data.GetCurrentCell().GetText())
+				cellInput.SetText(dta.GetCurrentCell().GetText())
 
-				data.highlight = data.GetCurrentCell().Calculate()
+				dta.Highlight = dta.GetCurrentCell().Calculate()
 			}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
@@ -147,21 +146,21 @@ func buildTable() {
 						history.Do(NewDeleteColumnCommand(row, col))
 					}
 				case '>': // Increase column width.
-					history.Do(NewIncreaseColWidthCommand(data.CurrentCol()))
+					history.Do(NewIncreaseColWidthCommand(dta.CurrentCol()))
 				case '<': // Decrease column width.
-					history.Do(NewDecreaseColWidthCommand(data.CurrentCol()))
+					history.Do(NewDecreaseColWidthCommand(dta.CurrentCol()))
 				case 'f': // Sort string values asc.
-					history.Do(NewSortColStrAscCommand(data.CurrentCol()))
+					history.Do(NewSortColStrAscCommand(dta.CurrentCol()))
 				case 'F': // Sort string values desc.
-					history.Do(NewSortColStrDescCommand(data.CurrentCol()))
+					history.Do(NewSortColStrDescCommand(dta.CurrentCol()))
 				case 'o': // Insert row below.
-					history.Do(NewInsertRowBelowCommand(data.CurrentRow()))
+					history.Do(NewInsertRowBelowCommand(dta.CurrentRow()))
 				case 'O': // Insert row above.
-					history.Do(NewInsertRowAboveCommand(data.CurrentRow(), data.CurrentCol()))
+					history.Do(NewInsertRowAboveCommand(dta.CurrentRow(), dta.CurrentCol()))
 				case 'a':
-					history.Do(NewInsertColRightCommand(data.CurrentCol()))
+					history.Do(NewInsertColRightCommand(dta.CurrentCol()))
 				case 'I':
-					history.Do(NewInsertColLeftCommand(data.CurrentRow(), data.CurrentCol()))
+					history.Do(NewInsertColLeftCommand(dta.CurrentRow(), dta.CurrentCol()))
 				case 'u':
 					history.Undo()
 				case 18:
@@ -176,24 +175,24 @@ func buildTable() {
 
 func buildCellInput() {
 	cellInput.
-		SetLabel(fmt.Sprintf("%d:%d ", data.CurrentRow()-1, data.CurrentCol()-1)).
-		SetText(data.GetCurrentCell().GetText()).
+		SetLabel(fmt.Sprintf("%d:%d ", dta.CurrentRow()-1, dta.CurrentCol()-1)).
+		SetText(dta.GetCurrentCell().GetText()).
 		SetDoneFunc(func(key tcell.Key) {
 			app.SetFocus(table)
 			// Push cursor down, if possible.
-			if data.CurrentRow() < data.GetRowCount()-1 {
-				data.SetCurrentRow(data.CurrentRow() + 1)
+			if dta.CurrentRow() < dta.GetRowCount()-1 {
+				dta.SetCurrentRow(dta.CurrentRow() + 1)
 			}
-			table.Select(data.CurrentRow(), data.CurrentCol())
+			table.Select(dta.CurrentRow(), dta.CurrentCol())
 		}).
 		SetChangedFunc(func(text string) {
 			// This function is called whenever cursor changes position for some reason.
 			// So we need to check if the value actually changed.
-			prevVal := data.cells[data.CurrentRow()][data.CurrentCol()].GetText()
+			prevVal := dta.Cells[dta.CurrentRow()][dta.CurrentCol()].GetText()
 			if prevVal != text {
-				history.Do(NewChangeCellValueCommand(data.CurrentRow(), data.CurrentCol(), text))
+				history.Do(NewChangeCellValueCommand(dta.CurrentRow(), dta.CurrentCol(), text))
 			}
-			data.highlight = data.GetCurrentCell().Calculate()
+			dta.Highlight = dta.GetCurrentCell().Calculate()
 		},
 		)
 }
@@ -226,359 +225,7 @@ func buildModal() {
 			})
 }
 
-const (
-	ascIndicator  = "↑"
-	descIndicator = "↓"
-)
-
-type Cell struct {
-	*tview.TableCell
-	text string
-}
-
-func NewCell() *Cell {
-	cell := &Cell{TableCell: tview.NewTableCell("")}
-	cell.SetMaxWidth(10)
-	return cell
-}
-func (cell *Cell) SetText(text string) {
-	cell.text = text
-	cell.Calculate()
-}
-func (cell *Cell) ShowError(text string) {
-	cell.TableCell.SetText("#ERR:" + text)
-	cell.TableCell.SetTextColor(tcell.ColorRed)
-}
-func (cell *Cell) Calculate() *highlight {
-	if cell.IsFormula() {
-		cell.text = strings.ReplaceAll(cell.text, " ", "") // remove spaces
-		fText := cell.text[1:]                             // strip leading =
-		for _, formula := range formulas {
-			isMatch, _ := formula.Match(fText)
-			if isMatch {
-				calculated, highlight, err := formula.Calculate(fText)
-				if err != nil {
-					cell.ShowError(err.Error())
-					return nil
-				}
-				cell.TableCell.SetText(calculated)
-				cell.SetTextColor(tcell.ColorGreen)
-				return highlight
-			}
-		}
-		cell.ShowError("no formula")
-		return nil
-	}
-	cell.TableCell.SetText(cell.text)
-	cell.TableCell.SetTextColor(tcell.ColorWhite)
-	return nil
-}
-
-func (cell *Cell) GetText() string {
-	return cell.text
-}
-
-func (cell *Cell) IsFormula() bool {
-	return strings.HasPrefix(cell.text, "=")
-}
-
-type Formula interface {
-	// Checks if provided text matches the formula.
-	Match(text string) (ok bool, matches []string)
-	// Calculates the formula.
-	Calculate(text string) (string, *highlight, error)
-}
-
-type SumFormula struct{}
-
-func NewSumFormula() *SumFormula {
-	return &SumFormula{}
-}
-func (f *SumFormula) Match(text string) (ok bool, matches []string) {
-	pattern := `^SUM\((\d+),(\d+);(\d+),(\d+)\)$`
-	re := regexp.MustCompile(pattern)
-	matches = re.FindStringSubmatch(text)
-	return matches != nil, matches
-}
-
-func (f *SumFormula) Calculate(text string) (string, *highlight, error) {
-	ok, matches := f.Match(text)
-	if !ok {
-		return "", nil, fmt.Errorf("string does not match formula")
-	}
-
-	// Assuming matches[1:] are {startRow, startY, endX, endY}
-	startRow, _ := strconv.Atoi(matches[1])
-	startCol, _ := strconv.Atoi(matches[2])
-	endRow, _ := strconv.Atoi(matches[3])
-	endCol, _ := strconv.Atoi(matches[4])
-
-	// Call the sum method (assuming data is accessible)
-	total, err := f.sum(startRow+1, startCol+1, endRow+1, endCol+1)
-	if err != nil {
-		return "", nil, err
-	}
-
-	highlight := NewHighlight()
-	highlight.startRow = startRow
-	highlight.startCol = startCol
-	highlight.endRow = endRow
-	highlight.endCol = endCol
-
-	return fmt.Sprintf(floatFormat, total), highlight, nil
-}
-
-func (f *SumFormula) sum(startRow, startCol, endRow, endCol int) (float64, error) {
-	sum := 0.0
-
-	// Validate the coordinates
-	if startCol > endCol || startRow > endRow {
-		return 0, fmt.Errorf("start coordinates must be less than or equal to end coordinates")
-	}
-	if startCol < 0 || startRow < 0 || endRow >= len(data.cells) || endCol >=
-		len(data.cells[0]) {
-		return 0, fmt.Errorf("coordinates out of bounds")
-	}
-
-	// Sum cells in the range [startX:endX, startY:endY]
-	for y := startRow; y <= endRow; y++ {
-		for x := startCol; x <= endCol; x++ {
-			val, err := strconv.ParseFloat(data.cells[y][x].TableCell.Text, 64)
-			if err != nil {
-				return 0, fmt.Errorf("%d,%d is not a number", y-1, x-1)
-			}
-			sum += val
-		}
-	}
-	return sum, nil
-}
-
-// Highlighted cells region.
-// TODO: use getter and setter and check validity in setter
-type highlight struct {
-	startRow int
-	startCol int
-	endRow   int
-	endCol   int
-}
-
-func NewHighlight() *highlight {
-	return &highlight{}
-}
-
-// Data type.
-type Data struct {
-	cells      [][]*Cell
-	currentRow int
-	currentCol int
-	sortedCol  int
-	sortOrder  string
-	highlight  *highlight
-}
-
-func NewData() *Data {
-	return &Data{sortedCol: -1, sortOrder: ""}
-}
-func (t *Data) Clear() {
-	t.cells = nil
-}
-func (d *Data) InsertColumn(column int) {
-	for row := range d.cells {
-		if column > len(d.cells[row]) {
-			continue
-		}
-		d.cells[row] = append(d.cells[row], nil)             // Extend by one.
-		copy(d.cells[row][column+1:], d.cells[row][column:]) // Shift to the right.
-		d.cells[row][column] = NewCell()
-		d.drawXYCoordinates()
-	}
-}
-func (d *Data) InsertRow(row int) {
-	if row > d.GetRowCount() {
-		return
-	}
-
-	d.cells = append(d.cells, nil)       // Extend by one.
-	copy(d.cells[row+1:], d.cells[row:]) // Shift down.
-	d.cells[row] = d.createRow()         // New row is initialized.
-	d.drawXYCoordinates()
-}
-func (d *Data) SetCurrentRow(row int) {
-	d.currentRow = row
-}
-func (d *Data) SetCurrentCol(col int) {
-	d.currentCol = col
-}
-func (d *Data) CurrentRow() int {
-	return d.currentRow
-}
-func (d *Data) CurrentCol() int {
-	return d.currentCol
-}
-func (d *Data) AddDataRow(dataRow []*Cell) {
-	d.cells = append(d.cells, dataRow)
-}
-
-// TODO: manage cell attibutes (color, etc) explicitly here
-func (d *Data) GetCell(row, column int) *tview.TableCell {
-	// Coordinates are outside our table.
-	if row > d.GetRowCount()-1 || column > d.GetColumnCount()-1 {
-		return nil
-	}
-
-	cell := d.cells[row][column]
-	// Draw table coordinates.
-	if row == 0 { // This is top row with col numbers.
-		if column == 0 {
-			return cell.TableCell
-		}
-		cell.SetAttributes(tcell.AttrDim)
-		cell.SetAlign(1) //AlignCenter
-
-		// Highlight row header cell for current selection.
-		if column == d.currentCol {
-			cell.SetAttributes(tcell.AttrBold)
-			cell.SetAttributes(tcell.AttrUnderline)
-			return cell.TableCell
-		}
-		return cell.TableCell
-	}
-
-	if column == 0 { // This is leftmost row with row numbers.
-		cell.SetAttributes(tcell.AttrDim)
-
-		// Highlight col header cell for current selection.
-		if row == d.currentRow {
-			cell.SetAttributes(tcell.AttrBold)
-			cell.SetAttributes(tcell.AttrUnderline)
-			return cell.TableCell
-		}
-		return cell.TableCell
-	}
-
-	cell.Calculate()
-
-	d.highlightCell(row, column, cell)
-
-	return cell.TableCell
-}
-
-// Highlight cell range.
-func (d *Data) highlightCell(row int, column int, cell *Cell) {
-	if d.highlight == nil {
-		cell.SetAttributes(tcell.AttrNone)
-		return
-	}
-
-	cellIsHighlighted := row >= d.highlight.startRow+1 && column >= d.highlight.startCol+1 && row <= d.highlight.endRow+1 && column <= d.highlight.endCol+1
-	if cellIsHighlighted {
-		cell.SetTextColor(tcell.ColorGreen)
-	}
-}
-
-func (d *Data) SetCell(row, column int, cell *tview.TableCell) {
-	// Part of the tview.TableContent interface.
-}
-
-func (d *Data) GetRowCount() int {
-	return len(d.cells)
-}
-
-func (d *Data) GetColumnCount() int {
-	return len(d.cells[0])
-}
-
-func (d *Data) RemoveRow(row int) {
-	if d.GetRowCount() == 2 {
-		return
-	}
-	if row <= 0 || row >= d.GetRowCount() {
-		return // Invalid row index
-	}
-	d.cells = append(d.cells[:row], d.cells[row+1:]...)
-	d.drawXYCoordinates()
-}
-
-func (d *Data) RemoveColumn(col int) {
-	if d.GetColumnCount() == 2 {
-		return
-	}
-	if col <= 0 || col >= d.GetColumnCount() {
-		return // Invalid column index
-	}
-	for i := range d.cells {
-		d.cells[i] = append(d.cells[i][:col], d.cells[i][col+1:]...)
-	}
-	d.drawXYCoordinates()
-}
-
-func (d *Data) createRow() []*Cell {
-	var row []*Cell
-	for i := 0; i < d.GetColumnCount(); i++ {
-		row = append(row, NewCell())
-	}
-	return row
-}
-
-func (d *Data) GetCurrentCell() *Cell {
-	// Check of out of bounds values.
-	if d.CurrentRow() >= d.GetRowCount() {
-		return NewCell()
-	}
-	if d.CurrentCol() >= d.GetColumnCount() {
-		return NewCell()
-	}
-
-	return d.cells[d.CurrentRow()][d.CurrentCol()]
-}
-
-// Sort column  string values.
-
-func (d *Data) SortColStrAsc(col int) {
-	d.sortColumn(col, func(a, b *Cell) bool {
-		return a.TableCell.Text < b.TableCell.Text // Compare the text of the cells for ascending order.
-	})
-	d.sortedCol = col
-	d.sortOrder = ascIndicator
-	d.drawXYCoordinates()
-}
-
-func (d *Data) SortColStrDesc(col int) {
-	d.sortColumn(col, func(a, b *Cell) bool {
-		return a.TableCell.Text > b.TableCell.Text // Compare the text of the cells for descending order.
-	})
-	d.sortedCol = col
-	d.sortOrder = descIndicator
-	d.drawXYCoordinates()
-}
-
-// Sorts column. Accept column index and a sorter function that
-// takes slice of vertical column cells as an argument.
-func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
-	// Perform a stable sort to maintain the relative order of other elements.
-	// Account for cols row and header row (+2)
-	sort.SliceStable(d.cells[2:], func(i, j int) bool {
-		return sorter(d.cells[i+2][col], d.cells[j+2][col])
-	})
-}
-func (d *Data) drawXYCoordinates() {
-	for rowIdx := range d.cells {
-		d.cells[rowIdx][0].SetText(fmt.Sprintf("%d", rowIdx-1))
-	}
-	for colIdx, col := range d.cells[0] {
-		colText := fmt.Sprintf("%d", colIdx-1)
-		if d.sortedCol != -1 {
-			if colIdx == d.sortedCol {
-				colText = colText + d.sortOrder
-			}
-		}
-		col.SetText(colText)
-	}
-
-	d.cells[0][0].SetText("")
-}
-
-func readCsvFile(fileName string, dataTbl *Data) {
+func readCsvFile(fileName string, dataTbl *data.Data) {
 	file, err := os.Open(fileName)
 	if err != nil {
 		log.Fatalf("Error opening file: %s", err.Error())
@@ -615,25 +262,25 @@ func readCsvFile(fileName string, dataTbl *Data) {
 	}
 
 	// Pretty-print top left cell (empty it).
-	dataTbl.cells[0][0].SetText("")
+	dataTbl.Cells[0][0].SetText("")
 
 	// Pretty-print table header.
-	for _, headerCell := range dataTbl.cells[1] {
+	for _, headerCell := range dataTbl.Cells[1] {
 		headerCell.SetAttributes(tcell.AttrBold)
 	}
 }
 
-func addRecordToDataTable(recordCount int, record []string, dataTbl *Data) {
-	var dataRow []*Cell
+func addRecordToDataTable(recordCount int, record []string, dataTbl *data.Data) {
+	var dataRow []*data.Cell
 
 	// Set col header.
-	colHead := NewCell()
+	colHead := data.NewCell()
 	colHead.SetText(fmt.Sprintf("%d", recordCount))
 	dataRow = append(dataRow, colHead)
 
 	// Add row (record) data.
 	for _, val := range record {
-		cell := NewCell()
+		cell := data.NewCell()
 		cell.SetText(val)
 		cell.SetMaxWidth(10)
 		dataRow = append(dataRow, cell)
@@ -642,9 +289,9 @@ func addRecordToDataTable(recordCount int, record []string, dataTbl *Data) {
 	dataTbl.AddDataRow(dataRow)
 }
 
-func convertDataToArr(dataTbl *Data) [][]string {
+func convertDataToArr(dataTbl *data.Data) [][]string {
 	var data [][]string
-	for _, row := range dataTbl.cells[1:] { // account for top col numbers row
+	for _, row := range dataTbl.Cells[1:] { // account for top col numbers row
 		row = row[1:] // account for row numbers col
 		stringRow := make([]string, len(row))
 		for j, cell := range row {
@@ -655,7 +302,7 @@ func convertDataToArr(dataTbl *Data) [][]string {
 	return data
 }
 
-func saveDataToFile(path string, dataDataTable *Data) {
+func saveDataToFile(path string, dataDataTable *data.Data) {
 	// Truncates file.
 	file, err := os.Create(path)
 	if err != nil {
@@ -729,12 +376,12 @@ func NewInsertRowBelowCommand(row int) *InsertRowBelowCommand {
 	return &InsertRowBelowCommand{row: row + 1}
 }
 func (cmd *InsertRowBelowCommand) Execute() {
-	data.InsertRow(cmd.row)
+	dta.InsertRow(cmd.row)
 	logger.Info(fmt.Sprintf("inserted row %d below", cmd.row))
 }
 
 func (cmd *InsertRowBelowCommand) Unexecute() {
-	data.RemoveRow(cmd.row)
+	dta.RemoveRow(cmd.row)
 	logger.Info(fmt.Sprintf("undo inserted row %d below", cmd.row))
 }
 
@@ -748,15 +395,15 @@ func NewInsertRowAboveCommand(row int, col int) *InsertRowAboveCommand {
 	return &InsertRowAboveCommand{row: row, col: col}
 }
 func (cmd *InsertRowAboveCommand) Execute() {
-	data.InsertRow(cmd.row)
-	data.SetCurrentRow(cmd.row + 1)
+	dta.InsertRow(cmd.row)
+	dta.SetCurrentRow(cmd.row + 1)
 	table.Select(cmd.row+1, cmd.col)
 	logger.Info(fmt.Sprintf("inserted row %d above", cmd.row))
 }
 
 func (cmd *InsertRowAboveCommand) Unexecute() {
-	data.RemoveRow(cmd.row)
-	data.SetCurrentRow(cmd.row)
+	dta.RemoveRow(cmd.row)
+	dta.SetCurrentRow(cmd.row)
 	table.Select(cmd.row, cmd.col)
 	logger.Info(fmt.Sprintf("undo inserted row %d above", cmd.row))
 }
@@ -771,12 +418,12 @@ func NewInsertColRightCommand(col int) *InsertColRightCommand {
 }
 
 func (cmd *InsertColRightCommand) Execute() {
-	data.InsertColumn(cmd.col)
+	dta.InsertColumn(cmd.col)
 	logger.Info(fmt.Sprintf("inserted col %d right", cmd.col))
 }
 
 func (cmd *InsertColRightCommand) Unexecute() {
-	data.RemoveColumn(cmd.col)
+	dta.RemoveColumn(cmd.col)
 	logger.Info(fmt.Sprintf("undo inserted col %d right", cmd.col))
 }
 
@@ -791,15 +438,15 @@ func NewInsertColLeftCommand(row int, col int) *InsertColLeftCommand {
 }
 
 func (cmd *InsertColLeftCommand) Execute() {
-	data.InsertColumn(cmd.col)
-	data.SetCurrentCol(cmd.col + 1)
+	dta.InsertColumn(cmd.col)
+	dta.SetCurrentCol(cmd.col + 1)
 	table.Select(cmd.row, cmd.col+1)
 	logger.Info(fmt.Sprintf("inserted col %d left", cmd.col))
 }
 
 func (cmd *InsertColLeftCommand) Unexecute() {
-	data.RemoveColumn(cmd.col)
-	data.SetCurrentCol(cmd.col)
+	dta.RemoveColumn(cmd.col)
+	dta.SetCurrentCol(cmd.col)
 	table.Select(cmd.row, cmd.col)
 	logger.Info(fmt.Sprintf("undo inserted col %d left", cmd.col))
 }
@@ -807,7 +454,7 @@ func (cmd *InsertColLeftCommand) Unexecute() {
 // SortColStrDescCommand is the command used to sort a column in descending string order.
 type SortColStrDescCommand struct {
 	col               int
-	originalOrder     [][]*Cell // to remember the order before sorting
+	originalOrder     [][]*data.Cell // to remember the order before sorting
 	originalSortedCol int
 	originalSortOrder string
 }
@@ -823,18 +470,18 @@ func NewSortColStrDescCommand(col int) *SortColStrDescCommand {
 // Execute executes the SortColStrDescCommand, sorting the column in descending order.
 func (cmd *SortColStrDescCommand) Execute() {
 	if cmd.originalOrder == nil {
-		cmd.originalSortedCol = data.sortedCol
-		cmd.originalSortOrder = data.sortOrder
+		cmd.originalSortedCol = dta.SortedCol
+		cmd.originalSortOrder = dta.SortOrder
 		// Capture the current order before sorting
-		cmd.originalOrder = make([][]*Cell, len(data.cells))
-		for i, row := range data.cells {
-			cmd.originalOrder[i] = make([]*Cell, len(row))
+		cmd.originalOrder = make([][]*data.Cell, len(dta.Cells))
+		for i, row := range dta.Cells {
+			cmd.originalOrder[i] = make([]*data.Cell, len(row))
 			copy(cmd.originalOrder[i], row)
 		}
 	}
 
 	// Now sort the column in descending order
-	data.SortColStrDesc(cmd.col)
+	dta.SortColStrDesc(cmd.col)
 	logger.Info(fmt.Sprintf("sorted %d col by string desc", cmd.col))
 }
 
@@ -844,20 +491,20 @@ func (cmd *SortColStrDescCommand) Unexecute() {
 		// Restore the original cell order
 		for i, row := range cmd.originalOrder {
 			for j, cell := range row {
-				data.cells[i][j] = cell
+				dta.Cells[i][j] = cell
 			}
 		}
 	}
-	data.sortedCol = cmd.originalSortedCol
-	data.sortOrder = cmd.originalSortOrder
-	data.drawXYCoordinates()
+	dta.SortedCol = cmd.originalSortedCol
+	dta.SortOrder = cmd.originalSortOrder
+	dta.DrawXYCoordinates()
 	logger.Info(fmt.Sprintf("undo sorted %d col by string desc", cmd.col))
 }
 
 // SortColStrAscCommand is the command used to sort a column in ascending string order.
 type SortColStrAscCommand struct {
 	col               int
-	originalOrder     [][]*Cell // to remember the order before sorting
+	originalOrder     [][]*data.Cell // to remember the order before sorting
 	originalSortedCol int
 	originalSortOrder string
 }
@@ -873,18 +520,18 @@ func NewSortColStrAscCommand(col int) *SortColStrAscCommand {
 // Execute executes the SortColStrAscCommand, sorting the column in ascending order.
 func (cmd *SortColStrAscCommand) Execute() {
 	if cmd.originalOrder == nil {
-		cmd.originalSortedCol = data.sortedCol
-		cmd.originalSortOrder = data.sortOrder
+		cmd.originalSortedCol = dta.SortedCol
+		cmd.originalSortOrder = dta.SortOrder
 		// Capture the current order before sorting
-		cmd.originalOrder = make([][]*Cell, len(data.cells))
-		for i, row := range data.cells {
-			cmd.originalOrder[i] = make([]*Cell, len(row))
+		cmd.originalOrder = make([][]*data.Cell, len(dta.Cells))
+		for i, row := range dta.Cells {
+			cmd.originalOrder[i] = make([]*data.Cell, len(row))
 			copy(cmd.originalOrder[i], row)
 		}
 	}
 
 	// Now sort the column in ascending order
-	data.SortColStrAsc(cmd.col)
+	dta.SortColStrAsc(cmd.col)
 	logger.Info(fmt.Sprintf("sorted %d col by string asc", cmd.col))
 }
 
@@ -894,13 +541,13 @@ func (cmd *SortColStrAscCommand) Unexecute() {
 		// Restore the original cell order
 		for i, row := range cmd.originalOrder {
 			for j, cell := range row {
-				data.cells[i][j] = cell
+				dta.Cells[i][j] = cell
 			}
 		}
 	}
-	data.sortedCol = cmd.originalSortedCol
-	data.sortOrder = cmd.originalSortOrder
-	data.drawXYCoordinates()
+	dta.SortedCol = cmd.originalSortedCol
+	dta.SortOrder = cmd.originalSortOrder
+	dta.DrawXYCoordinates()
 	logger.Info(fmt.Sprintf("undo sorted %d col by string asc", cmd.col))
 }
 
@@ -913,22 +560,22 @@ func NewDecreaseColWidthCommand(col int) *DecreaseColWidthCommand {
 }
 
 func (cmd *DecreaseColWidthCommand) Execute() {
-	for rowIdx := range data.cells {
-		cell := data.cells[rowIdx][cmd.col]
+	for rowIdx := range dta.Cells {
+		cell := dta.Cells[rowIdx][cmd.col]
 		if cell.MaxWidth == 1 {
 			break
 		}
 		cell.SetMaxWidth(cell.MaxWidth - 1)
 	}
-	logger.Info(fmt.Sprintf("decreased column %d width", data.CurrentCol()))
+	logger.Info(fmt.Sprintf("decreased column %d width", dta.CurrentCol()))
 }
 
 func (cmd *DecreaseColWidthCommand) Unexecute() {
-	for rowIdx := range data.cells {
-		cell := data.cells[rowIdx][data.CurrentCol()]
+	for rowIdx := range dta.Cells {
+		cell := dta.Cells[rowIdx][dta.CurrentCol()]
 		cell.SetMaxWidth(cell.MaxWidth + 1)
 	}
-	logger.Info(fmt.Sprintf("undo decreased column %d width", data.CurrentCol()))
+	logger.Info(fmt.Sprintf("undo decreased column %d width", dta.CurrentCol()))
 }
 
 type IncreaseColWidthCommand struct {
@@ -940,26 +587,26 @@ func NewIncreaseColWidthCommand(col int) *IncreaseColWidthCommand {
 }
 
 func (cmd *IncreaseColWidthCommand) Execute() {
-	for rowIdx := range data.cells {
-		cell := data.cells[rowIdx][data.CurrentCol()]
+	for rowIdx := range dta.Cells {
+		cell := dta.Cells[rowIdx][dta.CurrentCol()]
 		cell.SetMaxWidth(cell.MaxWidth + 1)
 	}
-	logger.Info(fmt.Sprintf("increased column %d width", data.CurrentCol()))
+	logger.Info(fmt.Sprintf("increased column %d width", dta.CurrentCol()))
 }
 
 func (cmd *IncreaseColWidthCommand) Unexecute() {
-	for rowIdx := range data.cells {
-		cell := data.cells[rowIdx][cmd.col]
+	for rowIdx := range dta.Cells {
+		cell := dta.Cells[rowIdx][cmd.col]
 		if cell.MaxWidth == 1 {
 			break
 		}
 		cell.SetMaxWidth(cell.MaxWidth - 1)
 	}
-	logger.Info(fmt.Sprintf("undo increased column %d width", data.CurrentCol()))
+	logger.Info(fmt.Sprintf("undo increased column %d width", dta.CurrentCol()))
 }
 
 type DeleteColumnCommand struct {
-	deletedCol []*Cell // to remember the order before sorting
+	deletedCol []*data.Cell // to remember the order before sorting
 	row        int
 	col        int
 }
@@ -971,14 +618,14 @@ func NewDeleteColumnCommand(row int, col int) *DeleteColumnCommand {
 func (cmd *DeleteColumnCommand) Execute() {
 	// Capture the current column before deleting.
 	if cmd.deletedCol == nil {
-		for i := 0; i < data.GetRowCount(); i++ {
-			cmd.deletedCol = append(cmd.deletedCol, data.cells[i][cmd.col])
+		for i := 0; i < dta.GetRowCount(); i++ {
+			cmd.deletedCol = append(cmd.deletedCol, dta.Cells[i][cmd.col])
 		}
 	}
-	data.RemoveColumn(cmd.col)
-	if cmd.col == data.GetColumnCount() { // Last column deleted, shift selection left.
-		if data.GetColumnCount() > 0 {
-			table.Select(cmd.row, data.GetColumnCount()-1)
+	dta.RemoveColumn(cmd.col)
+	if cmd.col == dta.GetColumnCount() { // Last column deleted, shift selection left.
+		if dta.GetColumnCount() > 0 {
+			table.Select(cmd.row, dta.GetColumnCount()-1)
 		}
 	}
 	logger.Info(fmt.Sprintf("deleted column %d", cmd.col))
@@ -986,26 +633,26 @@ func (cmd *DeleteColumnCommand) Execute() {
 
 func (cmd *DeleteColumnCommand) Unexecute() {
 	// This is last column (special case)
-	if cmd.col == data.GetColumnCount() {
-		data.InsertColumn(data.GetColumnCount() - 1)
+	if cmd.col == dta.GetColumnCount() {
+		dta.InsertColumn(dta.GetColumnCount() - 1)
 		// Paste back deleted cells.
-		for row := range data.cells {
-			data.cells[row][cmd.col] = cmd.deletedCol[row]
+		for row := range dta.Cells {
+			dta.Cells[row][cmd.col] = cmd.deletedCol[row]
 		}
-		table.Select(cmd.row, data.GetColumnCount()-1)
+		table.Select(cmd.row, dta.GetColumnCount()-1)
 		return
 	}
 
-	data.InsertColumn(cmd.col)
+	dta.InsertColumn(cmd.col)
 	// Paste back deleted cells.
-	for row := range data.cells {
-		data.cells[row][cmd.col] = cmd.deletedCol[row]
+	for row := range dta.Cells {
+		dta.Cells[row][cmd.col] = cmd.deletedCol[row]
 	}
 	logger.Info(fmt.Sprintf("undo deleted column %d", cmd.col))
 }
 
 type DeleteRowCommand struct {
-	deletedRow []*Cell // to remember the order before sorting
+	deletedRow []*data.Cell // to remember the order before sorting
 	row        int
 	col        int
 }
@@ -1017,16 +664,16 @@ func NewDeleteRowCommand(row int, col int) *DeleteRowCommand {
 func (cmd *DeleteRowCommand) Execute() {
 	// Capture the current row before deleting.
 	if cmd.deletedRow == nil {
-		for i := 0; i < data.GetColumnCount(); i++ {
-			cmd.deletedRow = append(cmd.deletedRow, data.cells[cmd.row][i])
+		for i := 0; i < dta.GetColumnCount(); i++ {
+			cmd.deletedRow = append(cmd.deletedRow, dta.Cells[cmd.row][i])
 		}
 	}
 
-	data.RemoveRow(cmd.row)
+	dta.RemoveRow(cmd.row)
 
-	if cmd.row == data.GetRowCount() { // Last row deleted, shift selection up.
-		if data.GetRowCount() > 0 {
-			table.Select(data.GetRowCount()-1, cmd.col)
+	if cmd.row == dta.GetRowCount() { // Last row deleted, shift selection up.
+		if dta.GetRowCount() > 0 {
+			table.Select(dta.GetRowCount()-1, cmd.col)
 		}
 	}
 
@@ -1035,20 +682,20 @@ func (cmd *DeleteRowCommand) Execute() {
 
 func (cmd *DeleteRowCommand) Unexecute() {
 	// This is last column (special case)
-	if cmd.row == data.GetRowCount() {
-		data.InsertRow(data.GetRowCount() - 1)
+	if cmd.row == dta.GetRowCount() {
+		dta.InsertRow(dta.GetRowCount() - 1)
 		// Paste back deleted cells.
-		for col := 0; col < data.GetColumnCount(); col++ {
-			data.cells[data.GetRowCount()-1][col] = cmd.deletedRow[col]
+		for col := 0; col < dta.GetColumnCount(); col++ {
+			dta.Cells[dta.GetRowCount()-1][col] = cmd.deletedRow[col]
 		}
-		table.Select(data.GetRowCount()-1, cmd.col)
+		table.Select(dta.GetRowCount()-1, cmd.col)
 		return
 	}
 
-	data.InsertRow(cmd.row)
+	dta.InsertRow(cmd.row)
 	// Paste back deleted cells.
-	for col := 0; col < data.GetColumnCount(); col++ {
-		data.cells[cmd.row][col] = cmd.deletedRow[col]
+	for col := 0; col < dta.GetColumnCount(); col++ {
+		dta.Cells[cmd.row][col] = cmd.deletedRow[col]
 	}
 
 	logger.Info(fmt.Sprintf("undo deleted row %d", cmd.row))
@@ -1066,13 +713,13 @@ func NewChangeCellValueCommand(row int, col int, text string) *ChangeCellValueCo
 }
 
 func (cmd *ChangeCellValueCommand) Execute() {
-	cmd.prevVal = data.cells[cmd.row][cmd.col].GetText()
-	data.cells[cmd.row][cmd.col].SetText(cmd.newVal)
+	cmd.prevVal = dta.Cells[cmd.row][cmd.col].GetText()
+	dta.Cells[cmd.row][cmd.col].SetText(cmd.newVal)
 	logger.Info(fmt.Sprintf("%d:%d changed value from %s to %s", cmd.row, cmd.col, cmd.prevVal, cmd.newVal))
 }
 
 func (cmd *ChangeCellValueCommand) Unexecute() {
-	data.cells[cmd.row][cmd.col].SetText(cmd.prevVal)
+	dta.Cells[cmd.row][cmd.col].SetText(cmd.prevVal)
 	logger.Info(fmt.Sprintf("%d:%d undo value from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
 }
 
