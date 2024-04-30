@@ -33,7 +33,7 @@ func NewCell() *Cell {
 	return cell
 }
 func (cell *Cell) SetText(text string) {
-	cell.text = strings.ReplaceAll(text, " ", "") // remove spaces
+	cell.text = text
 	cell.Calculate()
 }
 func (cell *Cell) ShowError(text string) {
@@ -42,7 +42,8 @@ func (cell *Cell) ShowError(text string) {
 }
 func (cell *Cell) Calculate() *highlight {
 	if cell.IsFormula() {
-		fText := cell.text[1:] // strip leading =
+		cell.text = strings.ReplaceAll(cell.text, " ", "") // remove spaces
+		fText := cell.text[1:]                             // strip leading =
 		for _, formula := range formulas {
 			isMatch, _ := formula.Match(fText)
 			if isMatch {
@@ -135,7 +136,7 @@ func (f *SumFormula) sum(startRow, startCol, endRow, endCol int) (float64, error
 		for x := startCol; x <= endCol; x++ {
 			val, err := strconv.ParseFloat(data.cells[y][x].TableCell.Text, 64)
 			if err != nil {
-				return 0, fmt.Errorf("%d,%d is not an integer", y-1, x-1)
+				return 0, fmt.Errorf("%d,%d is not a number", y-1, x-1)
 			}
 			sum += val
 		}
@@ -377,6 +378,7 @@ func readCsvFile(fileName string, dataTbl *Data) {
 	defer file.Close()
 
 	reader := csv.NewReader(file)
+	reader.Comma = ';'
 	recordCounter := 0
 	for {
 		record, err := reader.Read()
@@ -637,9 +639,9 @@ func main() {
 	// Configure layout.
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
-		AddItem(cellInput, 0, 1, false).
-		AddItem(table, 0, 25, false).
-		AddItem(bottomBar, 0, 1, false)
+		AddItem(cellInput, 1, 0, false).
+		AddItem(table, 0, 8, false).
+		AddItem(bottomBar, 1, 0, false)
 
 	flex.SetInputCapture(
 		func(event *tcell.EventKey) *tcell.EventKey {
