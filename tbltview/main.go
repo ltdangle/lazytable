@@ -1007,6 +1007,8 @@ func (cmd *DeleteRowCommand) Execute() {
 			table.Select(data.GetRowCount()-1, cmd.col)
 		}
 	}
+
+	logger.Info(fmt.Sprintf("deleted row %d", cmd.col))
 }
 
 func (cmd *DeleteRowCommand) Unexecute() {
@@ -1026,6 +1028,8 @@ func (cmd *DeleteRowCommand) Unexecute() {
 	for col := 0; col < data.GetColumnCount(); col++ {
 		data.cells[cmd.row][col] = cmd.deletedRow[col]
 	}
+
+	logger.Info(fmt.Sprintf("undo deleted row %d", cmd.col))
 }
 
 type ChangeCellValueCommand struct {
@@ -1042,12 +1046,12 @@ func NewChangeCellValueCommand(row int, col int, text string) *ChangeCellValueCo
 func (cmd *ChangeCellValueCommand) Execute() {
 	cmd.prevVal = data.cells[cmd.row][cmd.col].GetText()
 	data.cells[cmd.row][cmd.col].SetText(cmd.newVal)
-	logger.Info(fmt.Sprintf("%d:%d changed from %s to %s", cmd.row, cmd.col, cmd.prevVal, cmd.newVal))
+	logger.Info(fmt.Sprintf("%d:%d changed value from %s to %s", cmd.row, cmd.col, cmd.prevVal, cmd.newVal))
 }
 
 func (cmd *ChangeCellValueCommand) Unexecute() {
 	data.cells[cmd.row][cmd.col].SetText(cmd.prevVal)
-	logger.Info(fmt.Sprintf("%d:%d reverted from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
+	logger.Info(fmt.Sprintf("%d:%d undo value from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
 }
 
 type Logger struct {
