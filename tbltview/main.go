@@ -89,10 +89,12 @@ func buildTable() {
 		SetFixed(2, 1).
 		Select(1, 1).
 		SetSelectedFunc(func(row, col int) {
+			logger.Info(fmt.Sprintf("table.SetSelectedFunc: row %d, col %d", row, col))
 			app.SetFocus(cellInput)
 		}).
 		SetSelectionChangedFunc(
 			func(row, col int) {
+				logger.Info(fmt.Sprintf("table.SetSelectionChangedFunc: row %d, col %d", row, col))
 				// Don't select x,y coordinates.
 				if row == 0 {
 					data.SetCurrentRow(1)
@@ -116,7 +118,7 @@ func buildTable() {
 			}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
-				//bottomBar.SetText(fmt.Sprintf("rune: %v, key: %v, modifier: %v, name: %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
+				logger.Info(fmt.Sprintf("table.SetInputCapture: rune - %v, key - %v, modifier - %v, name - %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
 				row, col := table.GetSelection()
 				rowSelectable, colSelectable := table.GetSelectable()
 				rowSelected := rowSelectable && !colSelectable
@@ -126,6 +128,8 @@ func buildTable() {
 				key := event.Key()
 
 				switch rune {
+				case 'i':
+					app.SetFocus(cellInput)
 				case 'V': // Select row.
 					table.SetSelectable(true, false)
 				case 22:
@@ -154,7 +158,7 @@ func buildTable() {
 					history.Do(NewInsertRowBelowCommand(data.CurrentRow()))
 				case 'O': // Insert row above.
 					history.Do(NewInsertRowAboveCommand(data.CurrentRow(), data.CurrentCol()))
-				case 'i':
+				case 'a':
 					history.Do(NewInsertColRightCommand(data.CurrentCol()))
 				case 'I':
 					history.Do(NewInsertColLeftCommand(data.CurrentRow(), data.CurrentCol()))
