@@ -161,18 +161,30 @@ type Data struct {
 	Cells      [][]*Cell
 	currentRow int
 	currentCol int
-	SortedCol  int
-	SortOrder  string
+	sortedCol  int
+	sortOrder  string
 	Highlight  *highlight
 }
 
 func NewData(frmls []Formula) *Data {
 	formulas = frmls
-	d = &Data{SortedCol: -1, SortOrder: ""}
+	d = &Data{sortedCol: -1, sortOrder: ""}
 	return d
 }
-func (t *Data) Clear() {
-	t.Cells = nil
+func (d *Data) SortedCol() int {
+	return d.sortedCol
+}
+func (d *Data) SetSortedCol(sortedCol int) {
+	d.sortedCol = sortedCol
+}
+func (d *Data) SortOrder() string {
+	return d.sortOrder
+}
+func (d *Data) SetSortOrder(sortOrder string) {
+	d.sortOrder = sortOrder
+}
+func (d *Data) Clear() {
+	d.Cells = nil
 }
 func (d *Data) InsertColumn(column int) {
 	for row := range d.Cells {
@@ -330,8 +342,8 @@ func (d *Data) SortColStrAsc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
 		return a.TableCell.Text < b.TableCell.Text // Compare the text of the cells for ascending order.
 	})
-	d.SortedCol = col
-	d.SortOrder = ascIndicator
+	d.sortedCol = col
+	d.sortOrder = ascIndicator
 	d.DrawXYCoordinates()
 }
 
@@ -339,8 +351,8 @@ func (d *Data) SortColStrDesc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
 		return a.TableCell.Text > b.TableCell.Text // Compare the text of the cells for descending order.
 	})
-	d.SortedCol = col
-	d.SortOrder = descIndicator
+	d.sortedCol = col
+	d.sortOrder = descIndicator
 	d.DrawXYCoordinates()
 }
 
@@ -359,9 +371,9 @@ func (d *Data) DrawXYCoordinates() {
 	}
 	for colIdx, col := range d.Cells[0] {
 		colText := fmt.Sprintf("%d", colIdx-1)
-		if d.SortedCol != -1 {
-			if colIdx == d.SortedCol {
-				colText = colText + d.SortOrder
+		if d.sortedCol != -1 {
+			if colIdx == d.sortedCol {
+				colText = colText + d.sortOrder
 			}
 		}
 		col.SetText(colText)

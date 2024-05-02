@@ -470,8 +470,8 @@ func NewSortColStrDescCommand(col int) *SortColStrDescCommand {
 // Execute executes the SortColStrDescCommand, sorting the column in descending order.
 func (cmd *SortColStrDescCommand) Execute() {
 	if cmd.originalOrder == nil {
-		cmd.originalSortedCol = dta.SortedCol
-		cmd.originalSortOrder = dta.SortOrder
+		cmd.originalSortedCol = dta.SortedCol()
+		cmd.originalSortOrder = dta.SortOrder()
 		// Capture the current order before sorting
 		cmd.originalOrder = make([][]*data.Cell, len(dta.Cells))
 		for i, row := range dta.Cells {
@@ -495,8 +495,8 @@ func (cmd *SortColStrDescCommand) Unexecute() {
 			}
 		}
 	}
-	dta.SortedCol = cmd.originalSortedCol
-	dta.SortOrder = cmd.originalSortOrder
+	dta.SetSortedCol(cmd.originalSortedCol)
+	dta.SetSortOrder(cmd.originalSortOrder)
 	dta.DrawXYCoordinates()
 	logger.Info(fmt.Sprintf("undo sorted %d col by string desc", cmd.col))
 }
@@ -520,8 +520,8 @@ func NewSortColStrAscCommand(col int) *SortColStrAscCommand {
 // Execute executes the SortColStrAscCommand, sorting the column in ascending order.
 func (cmd *SortColStrAscCommand) Execute() {
 	if cmd.originalOrder == nil {
-		cmd.originalSortedCol = dta.SortedCol
-		cmd.originalSortOrder = dta.SortOrder
+		cmd.originalSortedCol = dta.SortedCol()
+		cmd.originalSortOrder = dta.SortOrder()
 		// Capture the current order before sorting
 		cmd.originalOrder = make([][]*data.Cell, len(dta.Cells))
 		for i, row := range dta.Cells {
@@ -545,8 +545,8 @@ func (cmd *SortColStrAscCommand) Unexecute() {
 			}
 		}
 	}
-	dta.SortedCol = cmd.originalSortedCol
-	dta.SortOrder = cmd.originalSortOrder
+	dta.SetSortedCol(cmd.originalSortedCol)
+	dta.SetSortOrder(cmd.originalSortOrder)
 	dta.DrawXYCoordinates()
 	logger.Info(fmt.Sprintf("undo sorted %d col by string asc", cmd.col))
 }
