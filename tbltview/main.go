@@ -188,7 +188,7 @@ func buildCellInput() {
 		SetChangedFunc(func(text string) {
 			// This function is called whenever cursor changes position for some reason.
 			// So we need to check if the value actually changed.
-			prevVal := dta.Cells[dta.CurrentRow()][dta.CurrentCol()].GetText()
+			prevVal := dta.GetCells()[dta.CurrentRow()][dta.CurrentCol()].GetText()
 			if prevVal != text {
 				history.Do(NewChangeCellValueCommand(dta.CurrentRow(), dta.CurrentCol(), text))
 			}
@@ -262,10 +262,10 @@ func readCsvFile(fileName string, dataTbl *data.Data) {
 	}
 
 	// Pretty-print top left cell (empty it).
-	dataTbl.Cells[0][0].SetText("")
+	dataTbl.GetCells()[0][0].SetText("")
 
 	// Pretty-print table header.
-	for _, headerCell := range dataTbl.Cells[1] {
+	for _, headerCell := range dataTbl.GetCells()[1] {
 		headerCell.SetAttributes(tcell.AttrBold)
 	}
 }
@@ -291,7 +291,7 @@ func addRecordToDataTable(recordCount int, record []string, dataTbl *data.Data) 
 
 func convertDataToArr(dataTbl *data.Data) [][]string {
 	var data [][]string
-	for _, row := range dataTbl.Cells[1:] { // account for top col numbers row
+	for _, row := range dataTbl.GetCells()[1:] { // account for top col numbers row
 		row = row[1:] // account for row numbers col
 		stringRow := make([]string, len(row))
 		for j, cell := range row {
@@ -473,8 +473,8 @@ func (cmd *SortColStrDescCommand) Execute() {
 		cmd.originalSortedCol = dta.SortedCol()
 		cmd.originalSortOrder = dta.SortOrder()
 		// Capture the current order before sorting
-		cmd.originalOrder = make([][]*data.Cell, len(dta.Cells))
-		for i, row := range dta.Cells {
+		cmd.originalOrder = make([][]*data.Cell, len(dta.GetCells()))
+		for i, row := range dta.GetCells() {
 			cmd.originalOrder[i] = make([]*data.Cell, len(row))
 			copy(cmd.originalOrder[i], row)
 		}
@@ -491,7 +491,7 @@ func (cmd *SortColStrDescCommand) Unexecute() {
 		// Restore the original cell order
 		for i, row := range cmd.originalOrder {
 			for j, cell := range row {
-				dta.Cells[i][j] = cell
+				dta.GetCells()[i][j] = cell
 			}
 		}
 	}
@@ -523,8 +523,8 @@ func (cmd *SortColStrAscCommand) Execute() {
 		cmd.originalSortedCol = dta.SortedCol()
 		cmd.originalSortOrder = dta.SortOrder()
 		// Capture the current order before sorting
-		cmd.originalOrder = make([][]*data.Cell, len(dta.Cells))
-		for i, row := range dta.Cells {
+		cmd.originalOrder = make([][]*data.Cell, len(dta.GetCells()))
+		for i, row := range dta.GetCells() {
 			cmd.originalOrder[i] = make([]*data.Cell, len(row))
 			copy(cmd.originalOrder[i], row)
 		}
@@ -541,7 +541,7 @@ func (cmd *SortColStrAscCommand) Unexecute() {
 		// Restore the original cell order
 		for i, row := range cmd.originalOrder {
 			for j, cell := range row {
-				dta.Cells[i][j] = cell
+				dta.GetCells()[i][j] = cell
 			}
 		}
 	}
@@ -560,8 +560,8 @@ func NewDecreaseColWidthCommand(col int) *DecreaseColWidthCommand {
 }
 
 func (cmd *DecreaseColWidthCommand) Execute() {
-	for rowIdx := range dta.Cells {
-		cell := dta.Cells[rowIdx][cmd.col]
+	for rowIdx := range dta.GetCells() {
+		cell := dta.GetCells()[rowIdx][cmd.col]
 		if cell.MaxWidth == 1 {
 			break
 		}
@@ -571,8 +571,8 @@ func (cmd *DecreaseColWidthCommand) Execute() {
 }
 
 func (cmd *DecreaseColWidthCommand) Unexecute() {
-	for rowIdx := range dta.Cells {
-		cell := dta.Cells[rowIdx][dta.CurrentCol()]
+	for rowIdx := range dta.GetCells() {
+		cell := dta.GetCells()[rowIdx][dta.CurrentCol()]
 		cell.SetMaxWidth(cell.MaxWidth + 1)
 	}
 	logger.Info(fmt.Sprintf("undo decreased column %d width", dta.CurrentCol()))
@@ -587,16 +587,16 @@ func NewIncreaseColWidthCommand(col int) *IncreaseColWidthCommand {
 }
 
 func (cmd *IncreaseColWidthCommand) Execute() {
-	for rowIdx := range dta.Cells {
-		cell := dta.Cells[rowIdx][dta.CurrentCol()]
+	for rowIdx := range dta.GetCells() {
+		cell := dta.GetCells()[rowIdx][dta.CurrentCol()]
 		cell.SetMaxWidth(cell.MaxWidth + 1)
 	}
 	logger.Info(fmt.Sprintf("increased column %d width", dta.CurrentCol()))
 }
 
 func (cmd *IncreaseColWidthCommand) Unexecute() {
-	for rowIdx := range dta.Cells {
-		cell := dta.Cells[rowIdx][cmd.col]
+	for rowIdx := range dta.GetCells() {
+		cell := dta.GetCells()[rowIdx][cmd.col]
 		if cell.MaxWidth == 1 {
 			break
 		}
@@ -619,7 +619,7 @@ func (cmd *DeleteColumnCommand) Execute() {
 	// Capture the current column before deleting.
 	if cmd.deletedCol == nil {
 		for i := 0; i < dta.GetRowCount(); i++ {
-			cmd.deletedCol = append(cmd.deletedCol, dta.Cells[i][cmd.col])
+			cmd.deletedCol = append(cmd.deletedCol, dta.GetCells()[i][cmd.col])
 		}
 	}
 	dta.RemoveColumn(cmd.col)
@@ -636,8 +636,8 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 	if cmd.col == dta.GetColumnCount() {
 		dta.InsertColumn(dta.GetColumnCount() - 1)
 		// Paste back deleted cells.
-		for row := range dta.Cells {
-			dta.Cells[row][cmd.col] = cmd.deletedCol[row]
+		for row := range dta.GetCells() {
+			dta.GetCells()[row][cmd.col] = cmd.deletedCol[row]
 		}
 		table.Select(cmd.row, dta.GetColumnCount()-1)
 		return
@@ -645,8 +645,8 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 
 	dta.InsertColumn(cmd.col)
 	// Paste back deleted cells.
-	for row := range dta.Cells {
-		dta.Cells[row][cmd.col] = cmd.deletedCol[row]
+	for row := range dta.GetCells() {
+		dta.GetCells()[row][cmd.col] = cmd.deletedCol[row]
 	}
 	logger.Info(fmt.Sprintf("undo deleted column %d", cmd.col))
 }
@@ -665,7 +665,7 @@ func (cmd *DeleteRowCommand) Execute() {
 	// Capture the current row before deleting.
 	if cmd.deletedRow == nil {
 		for i := 0; i < dta.GetColumnCount(); i++ {
-			cmd.deletedRow = append(cmd.deletedRow, dta.Cells[cmd.row][i])
+			cmd.deletedRow = append(cmd.deletedRow, dta.GetCells()[cmd.row][i])
 		}
 	}
 
@@ -686,7 +686,7 @@ func (cmd *DeleteRowCommand) Unexecute() {
 		dta.InsertRow(dta.GetRowCount() - 1)
 		// Paste back deleted cells.
 		for col := 0; col < dta.GetColumnCount(); col++ {
-			dta.Cells[dta.GetRowCount()-1][col] = cmd.deletedRow[col]
+			dta.GetCells()[dta.GetRowCount()-1][col] = cmd.deletedRow[col]
 		}
 		table.Select(dta.GetRowCount()-1, cmd.col)
 		return
@@ -695,7 +695,7 @@ func (cmd *DeleteRowCommand) Unexecute() {
 	dta.InsertRow(cmd.row)
 	// Paste back deleted cells.
 	for col := 0; col < dta.GetColumnCount(); col++ {
-		dta.Cells[cmd.row][col] = cmd.deletedRow[col]
+		dta.GetCells()[cmd.row][col] = cmd.deletedRow[col]
 	}
 
 	logger.Info(fmt.Sprintf("undo deleted row %d", cmd.row))
@@ -713,13 +713,13 @@ func NewChangeCellValueCommand(row int, col int, text string) *ChangeCellValueCo
 }
 
 func (cmd *ChangeCellValueCommand) Execute() {
-	cmd.prevVal = dta.Cells[cmd.row][cmd.col].GetText()
-	dta.Cells[cmd.row][cmd.col].SetText(cmd.newVal)
+	cmd.prevVal = dta.GetCells()[cmd.row][cmd.col].GetText()
+	dta.GetCells()[cmd.row][cmd.col].SetText(cmd.newVal)
 	logger.Info(fmt.Sprintf("%d:%d changed value from %s to %s", cmd.row, cmd.col, cmd.prevVal, cmd.newVal))
 }
 
 func (cmd *ChangeCellValueCommand) Unexecute() {
-	dta.Cells[cmd.row][cmd.col].SetText(cmd.prevVal)
+	dta.GetCells()[cmd.row][cmd.col].SetText(cmd.prevVal)
 	logger.Info(fmt.Sprintf("%d:%d undo value from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
 }
 
