@@ -174,6 +174,22 @@ func NewData(frmls []Formula) *Data {
 func (d *Data) GetCells() [][]*Cell {
 	return d.cells
 }
+func (d *Data) GetDataCell(row int, col int) *Cell {
+	return d.cells[row][col]
+}
+func (d *Data) SetDataCell(row int, col int, cell *Cell) {
+	d.cells[row][col] = cell
+}
+func (d *Data) GetRow(row int) []*Cell {
+	return d.cells[row]
+}
+func (d *Data) GetCol(column int) []*Cell {
+	var col []*Cell
+	for row := range d.cells {
+		col = append(col, d.cells[row][column])
+	}
+	return col
+}
 func (d *Data) SortedCol() int {
 	return d.sortedCol
 }
