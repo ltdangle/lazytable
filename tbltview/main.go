@@ -113,7 +113,7 @@ func buildTable() {
 				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
 				cellInput.SetText(dta.GetCurrentCell().GetText())
 
-				dta.Highlight = dta.GetCurrentCell().Calculate()
+				dta.SetHighlight(dta.GetCurrentCell().Calculate())
 			}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
@@ -192,7 +192,7 @@ func buildCellInput() {
 			if prevVal != text {
 				history.Do(NewChangeCellValueCommand(dta.CurrentRow(), dta.CurrentCol(), text))
 			}
-			dta.Highlight = dta.GetCurrentCell().Calculate()
+			dta.SetHighlight(dta.GetCurrentCell().Calculate())
 		},
 		)
 }
