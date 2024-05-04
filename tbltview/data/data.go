@@ -2,9 +2,7 @@ package data
 
 import (
 	"fmt"
-	"regexp"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
@@ -13,7 +11,6 @@ import (
 
 var d *Data
 var formulas []Formula
-var floatFormat = "%.2f"
 
 const (
 	ascIndicator  = "↑"
@@ -38,14 +35,14 @@ func (cell *Cell) ShowError(text string) {
 	cell.TableCell.SetText("#ERR:" + text)
 	cell.TableCell.SetTextColor(tcell.ColorRed)
 }
-func (cell *Cell) Calculate() *highlight {
+func (cell *Cell) Calculate() *Highlight {
 	if cell.IsFormula() {
 		cell.text = strings.ReplaceAll(cell.text, " ", "") // remove spaces
 		fText := cell.text[1:]                             // strip leading =
 		for _, formula := range formulas {
 			isMatch, _ := formula.Match(fText)
 			if isMatch {
-				calculated, highlight, err := formula.Calculate(fText)
+				calculated, highlight, err := formula.Calculate(d, fText)
 				if err != nil {
 					cell.ShowError(err.Error())
 					return nil
@@ -75,85 +72,20 @@ type Formula interface {
 	// Checks if provided text matches the formula.
 	Match(text string) (ok bool, matches []string)
 	// Calculates the formula.
-	Calculate(text string) (string, *highlight, error)
-}
-
-type SumFormula struct {
-}
-
-func NewSumFormula() *SumFormula {
-	return &SumFormula{}
-}
-func (f *SumFormula) Match(text string) (ok bool, matches []string) {
-	pattern := `^SUM\((\d+),(\d+);(\d+),(\d+)\)$`
-	re := regexp.MustCompile(pattern)
-	matches = re.FindStringSubmatch(text)
-	return matches != nil, matches
-}
-
-func (f *SumFormula) Calculate(text string) (string, *highlight, error) {
-	ok, matches := f.Match(text)
-	if !ok {
-		return "", nil, fmt.Errorf("string does not match formula")
-	}
-
-	// Assuming matches[1:] are {startRow, startY, endX, endY}
-	startRow, _ := strconv.Atoi(matches[1])
-	startCol, _ := strconv.Atoi(matches[2])
-	endRow, _ := strconv.Atoi(matches[3])
-	endCol, _ := strconv.Atoi(matches[4])
-
-	// Call the sum method (assuming data is accessible)
-	total, err := f.sum(startRow+1, startCol+1, endRow+1, endCol+1)
-	if err != nil {
-		return "", nil, err
-	}
-
-	highlight := NewHighlight()
-	highlight.startRow = startRow
-	highlight.startCol = startCol
-	highlight.endRow = endRow
-	highlight.endCol = endCol
-
-	return fmt.Sprintf(floatFormat, total), highlight, nil
-}
-
-func (f *SumFormula) sum(startRow, startCol, endRow, endCol int) (float64, error) {
-	sum := 0.0
-
-	// Validate the coordinates
-	if startCol > endCol || startRow > endRow {
-		return 0, fmt.Errorf("start coordinates must be less than or equal to end coordinates")
-	}
-	if startCol < 0 || startRow < 0 || endRow >= len(d.cells) || endCol >=
-		len(d.cells[0]) {
-		return 0, fmt.Errorf("coordinates out of bounds")
-	}
-
-	// Sum cells in the range [startX:endX, startY:endY]
-	for y := startRow; y <= endRow; y++ {
-		for x := startCol; x <= endCol; x++ {
-			val, err := strconv.ParseFloat(d.cells[y][x].TableCell.Text, 64)
-			if err != nil {
-				return 0, fmt.Errorf("%d,%d is not a number", y-1, x-1)
-			}
-			sum += val
-		}
-	}
-	return sum, nil
+	Calculate(data *Data, text string) (string, *Highlight, error)
 }
 
 // Highlighted cells region.
 // TODO: use getter and setter and check validity in setter
-type highlight struct {
-	startRow int
-	startCol int
-	endRow   int
-	endCol   int
+type Highlight struct {
+	StartRow int
+	StartCol int
+	EndRow   int
+	EndCol   int
 }
 
-func NewHighlight() *highlight {
-	return &highlight{}
+func NewHighlight() *Highlight {
+	return &Highlight{}
 }
 
 // Data type.
@@ -163,7 +95,7 @@ type Data struct {
 	currentCol int
 	sortedCol  int
 	sortOrder  string
-	highlight  *highlight
+	highlight  *Highlight
 }
 
 func NewData(frmls []Formula) *Data {
@@ -286,10 +218,10 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	return cell.TableCell
 }
 
-func (d *Data) Highlight() *highlight {
+func (d *Data) Highlight() *Highlight {
 	return d.highlight
 }
-func (d *Data) SetHighlight(h *highlight) {
+func (d *Data) SetHighlight(h *Highlight) {
 	d.highlight = h
 }
 
@@ -300,7 +232,7 @@ func (d *Data) highlightCell(row int, column int, cell *Cell) {
 		return
 	}
 
-	cellIsHighlighted := row >= d.highlight.startRow+1 && column >= d.highlight.startCol+1 && row <= d.highlight.endRow+1 && column <= d.highlight.endCol+1
+	cellIsHighlighted := row >= d.highlight.StartRow+1 && column >= d.highlight.StartCol+1 && row <= d.highlight.EndRow+1 && column <= d.highlight.EndCol+1
 	if cellIsHighlighted {
 		cell.SetTextColor(tcell.ColorGreen)
 	}

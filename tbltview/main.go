@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"tblview/data"
+	formulas "tblview/forumulas"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -35,12 +36,12 @@ func main() {
 		log.Fatal("-file not specified")
 	}
 
-	// Configure available formulas.
-	var formulas []data.Formula
-	formulas = append(formulas, data.NewSumFormula())
+	// Configure available frmls.
+	var frmls []data.Formula
+	frmls = append(frmls, formulas.NewSumFormula())
 
 	// Init Data.
-	dta = data.NewData(formulas)
+	dta = data.NewData(frmls)
 
 	// Load csv file data.
 	readCsvFile(*csvFile, dta)
