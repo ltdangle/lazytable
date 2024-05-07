@@ -207,6 +207,9 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	if cell.IsFormula() {
 		cell.TableCell.SetTextColor(tcell.ColorGreen)
 	}
+	if cell.isSelected {
+		cell.TableCell.SetTextColor(tcell.ColorBlue)
+	}
 	if cell.isError {
 		cell.TableCell.SetTextColor(tcell.ColorRed)
 	}
@@ -234,7 +237,7 @@ func (d *Data) ClearFormulaRange(h *FormulaRange) {
 func (d *Data) SelectCells(s *Selection) {
 	for row := s.startRow; row <= s.endRow; row++ {
 		for col := s.startCol; col <= s.endCol; col++ {
-			d.GetDataCell(row, col).SetTextColor(tcell.ColorBlue)
+			d.GetDataCell(row, col).isSelected = true
 
 		}
 	}
@@ -246,7 +249,7 @@ func (d *Data) ClearCellSelect(s *Selection) {
 	}
 	for row := s.startRow; row <= s.endRow; row++ {
 		for col := s.startCol; col <= s.endCol; col++ {
-			d.GetDataCell(row, col).SetTextColor(tcell.ColorWhite)
+			d.GetDataCell(row, col).isSelected = false
 		}
 	}
 }
