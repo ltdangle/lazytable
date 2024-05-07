@@ -92,28 +92,39 @@ func NewFormulaRange() *FormulaRange {
 }
 
 type Selection struct {
-	startRow int
-	startCol int
-	endRow   int
-	endCol   int
+	startRow int // Inital selction point.
+	startCol int // Initial selection point.
+
+	topRow    int
+	leftCol   int
+	bottomRow int
+	rightCol  int
 }
 
 func NewSelection(startRow int, startCol int, endRow int, endCol int) *Selection {
-	return &Selection{startRow: startRow, startCol: startCol, endRow: endRow, endCol: endCol}
+	return &Selection{
+		startRow: startRow,
+		startCol: startCol,
+
+		topRow:    startRow,
+		leftCol:   startCol,
+		bottomRow: endRow,
+		rightCol:  endCol,
+	}
 }
 
 func (s *Selection) Update(endRow int, endCol int) {
-	s.endRow = endRow
-	s.endCol = endCol
-	if s.startRow > s.endRow {
-		temp := s.startRow
-		s.startRow = s.endRow
-		s.endRow = temp
+	s.bottomRow = endRow
+	s.rightCol = endCol
+
+	if s.bottomRow <= s.startRow {
+		s.topRow = s.bottomRow
+		s.bottomRow = s.startRow
 	}
-	if s.startCol > s.endCol {
-		temp := s.startCol
-		s.startCol = s.endCol
-		s.endCol = temp
+
+	if s.rightCol <= s.startCol {
+		s.leftCol = s.rightCol
+		s.rightCol = s.startCol
 	}
 
 }
@@ -248,8 +259,8 @@ func (d *Data) ClearFormulaRange(h *FormulaRange) {
 
 func (d *Data) SelectCells(s *Selection) {
 	d.logger.Info(fmt.Sprintf("Data.SelectCells: %v", s))
-	for row := s.startRow; row <= s.endRow; row++ {
-		for col := s.startCol; col <= s.endCol; col++ {
+	for row := s.topRow; row <= s.bottomRow; row++ {
+		for col := s.leftCol; col <= s.rightCol; col++ {
 			d.GetDataCell(row, col).isSelected = true
 
 		}
@@ -261,8 +272,8 @@ func (d *Data) ClearCellSelect(s *Selection) {
 	if s == nil {
 		return
 	}
-	for row := s.startRow; row <= s.endRow; row++ {
-		for col := s.startCol; col <= s.endCol; col++ {
+	for row := s.topRow; row <= s.bottomRow; row++ {
+		for col := s.leftCol; col <= s.rightCol; col++ {
 			d.GetDataCell(row, col).isSelected = false
 		}
 	}
