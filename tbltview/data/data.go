@@ -234,16 +234,18 @@ func (d *Data) ClearFormulaRange(h *FormulaRange) {
 func (d *Data) SelectCells(s *Selection) {
 	for row := s.startRow; row <= s.endRow; row++ {
 		for col := s.startCol; col <= s.endCol; col++ {
-			// d.GetDataCell(row, col).SetAttributes(tcell.AttrReverse)
 			d.GetDataCell(row, col).SetTextColor(tcell.ColorBlue)
 
 		}
 	}
 }
 
-func (d *Data) ClearCellSelect(h *Selection) {
-	for row := h.startRow; row <= h.endRow; row++ {
-		for col := h.startCol; col <= h.endCol; col++ {
+func (d *Data) ClearCellSelect(s *Selection) {
+	if s == nil {
+		return
+	}
+	for row := s.startRow; row <= s.endRow; row++ {
+		for col := s.startCol; col <= s.endCol; col++ {
 			d.GetDataCell(row, col).SetTextColor(tcell.ColorWhite)
 		}
 	}

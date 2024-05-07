@@ -22,7 +22,7 @@ func (f *SumFormula) Match(text string) (ok bool, matches []string) {
 	return matches != nil, matches
 }
 
-func (f *SumFormula) Calculate(data *d.Data, text string) (string, *d.Highlight, error) {
+func (f *SumFormula) Calculate(data *d.Data, text string) (string, *d.FormulaRange, error) {
 	ok, matches := f.Match(text)
 	if !ok {
 		return "", nil, fmt.Errorf("string does not match formula")
@@ -40,7 +40,7 @@ func (f *SumFormula) Calculate(data *d.Data, text string) (string, *d.Highlight,
 		return "", nil, err
 	}
 
-	highlight := d.NewHighlight()
+	highlight := d.NewFormulaRange()
 	highlight.StartRow = startRow
 	highlight.StartCol = startCol
 	highlight.EndRow = endRow

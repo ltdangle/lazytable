@@ -663,7 +663,7 @@ func (l *Logger) Info(msg string) {
 }
 
 func wrapSelectionChangedFunc() func(row, col int) {
-	var hihglight *data.Highlight
+	var hihglight *data.FormulaRange
 	return func(row, col int) {
 		logger.Info(fmt.Sprintf("table.SetSelectionChangedFunc: row %d, col %d", row, col))
 		// Don't select x,y coordinates.
@@ -687,13 +687,13 @@ func wrapSelectionChangedFunc() func(row, col int) {
 
 		// Clear previos highlights.
 		if hihglight != nil {
-			dta.ClearHighlight(hihglight)
+			dta.ClearFormulaRange(hihglight)
 		}
 
 		// Highlight cells for the formula.
 		hihglight = dta.GetCurrentCell().Calculate()
 		if hihglight != nil {
-			dta.HighlightCells(hihglight)
+			dta.HighlightFormulaRange(hihglight)
 		}
 
 		dta.DrawXYCoordinates()
@@ -701,7 +701,7 @@ func wrapSelectionChangedFunc() func(row, col int) {
 }
 
 func wrapChangedFunc() func(text string) {
-	var hihglight *data.Highlight
+	var hihglight *data.FormulaRange
 	return func(text string) {
 		logger.Info(fmt.Sprintf("cellInput.SetChangedFunc: %v", text))
 		// This function is called whenever cursor changes position.
@@ -713,13 +713,13 @@ func wrapChangedFunc() func(text string) {
 
 		// Clear previos highlights.
 		if hihglight != nil {
-			dta.ClearHighlight(hihglight)
+			dta.ClearFormulaRange(hihglight)
 		}
 
 		// Highlight cells for the formula.
 		hihglight = dta.GetCurrentCell().Calculate()
 		if hihglight != nil {
-			dta.HighlightCells(hihglight)
+			dta.HighlightFormulaRange(hihglight)
 		}
 	}
 }
