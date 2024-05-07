@@ -105,6 +105,17 @@ func NewSelection(startRow int, startCol int, endRow int, endCol int) *Selection
 func (s *Selection) Update(endRow int, endCol int) {
 	s.endRow = endRow
 	s.endCol = endCol
+	if s.startRow > s.endRow {
+		temp := s.startRow
+		s.startRow = s.endRow
+		s.endRow = temp
+	}
+	if s.startCol > s.endCol {
+		temp := s.startCol
+		s.startCol = s.endCol
+		s.endCol = temp
+	}
+
 }
 
 // Data type.
