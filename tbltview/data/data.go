@@ -95,8 +95,8 @@ type Selection struct {
 	EndCol   int
 }
 
-func NewSelection() *Selection {
-	return &Selection{}
+func NewSelection(startRow int, startCol int, endRow int, endCol int) *Selection {
+	return &Selection{StartRow: startRow, StartCol: startCol, EndRow: endRow, EndCol: endCol}
 }
 
 // Data type.
@@ -212,9 +212,10 @@ func (d *Data) ClearHighlight(h *Highlight) {
 }
 
 func (d *Data) SelectCells(s *Selection) {
-	for row := s.StartRow + 1; row <= s.EndRow+1; row++ {
-		for col := s.StartCol + 1; col <= s.EndCol+1; col++ {
+	for row := s.StartRow ; row <= s.EndRow; row++ {
+		for col := s.StartCol ; col <= s.EndCol; col++ {
 			d.GetDataCell(row, col).SetAttributes(tcell.AttrReverse)
+			// d.GetDataCell(row, col).SetTextColor(tcell.ColorBlue)
 		}
 	}
 }

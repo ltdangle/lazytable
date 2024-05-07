@@ -727,6 +727,7 @@ func wrapChangedFunc() func(text string) {
 func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 	const MODE_VISUAL = "v"
 	const MODE_NORMAL = "n"
+	var selection data.Selection
 	var mode string = MODE_NORMAL
 
 	return func(event *tcell.EventKey) *tcell.EventKey {
@@ -753,6 +754,8 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			app.SetFocus(cellInput)
 		case 'v':
 			mode = MODE_VISUAL
+			selection = *data.NewSelection(row, col, row, col)
+			dta.SelectCells(&selection)
 		case 'V': // Select row.
 			table.SetSelectable(true, false)
 		case 22:
