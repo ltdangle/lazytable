@@ -39,8 +39,9 @@ func (cell *Cell) ShowError(text string) {
 	cell.isError = true
 }
 func (cell *Cell) Calculate() *Highlight {
+	cell.isInRange = false
+	cell.isError = false
 	if cell.IsFormula() {
-		cell.isError=false
 		cell.text = strings.ReplaceAll(cell.text, " ", "") // remove spaces
 		fText := cell.text[1:]                             // strip leading =
 		for _, formula := range formulas {
@@ -52,7 +53,6 @@ func (cell *Cell) Calculate() *Highlight {
 					return nil
 				}
 				cell.TableCell.SetText(calculated)
-				cell.SetTextColor(tcell.ColorGreen)
 				return highlight
 			}
 		}
@@ -201,9 +201,17 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	}
 
 	cell := d.cells[row][column]
+
+	if cell.isInRange {
+		cell.TableCell.SetTextColor(tcell.ColorGreen)
+	}
+	if cell.IsFormula() {
+		cell.TableCell.SetTextColor(tcell.ColorGreen)
+	}
 	if cell.isError {
 		cell.TableCell.SetTextColor(tcell.ColorRed)
 	}
+
 	return cell.TableCell
 
 }
