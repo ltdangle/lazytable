@@ -93,35 +93,7 @@ func buildTable() {
 			logger.Info(fmt.Sprintf("table.SetSelectedFunc: row %d, col %d", row, col))
 			app.SetFocus(cellInput)
 		}).
-		SetSelectionChangedFunc(
-			func(row, col int) {
-				logger.Info(fmt.Sprintf("table.SetSelectionChangedFunc: row %d, col %d", row, col))
-				// Don't select x,y coordinates.
-				if row == 0 {
-					dta.SetCurrentRow(1)
-					table.Select(dta.CurrentRow(), col)
-					return
-				}
-				if col == 0 {
-					dta.SetCurrentCol(1)
-					table.Select(row, dta.CurrentCol())
-					return
-				}
-
-				// Select individual cell.
-				dta.SetCurrentRow(row) // account for top coordinate row
-				dta.SetCurrentCol(col) // account for leftmost coordinates col
-
-				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
-				cellInput.SetText(dta.GetCurrentCell().GetText())
-
-				hihglight := dta.GetCurrentCell().Calculate()
-				if hihglight != nil {
-					dta.HighlightCells(hihglight)
-				}
-
-				dta.DrawXYCoordinates()
-			}).
+		SetSelectionChangedFunc(wrapSelectionChangedFunc()).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
 				logger.Info(fmt.Sprintf("table.SetInputCapture: rune - %v, key - %v, modifier - %v, name - %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
@@ -753,4 +725,43 @@ func (l *Logger) Info(msg string) {
 	if err != nil {
 		panic(err)
 	}
+}
+
+func wrapSelectionChangedFunc() func(row, col int) {
+	var hihglight *data.Highlight
+	return func(row, col int) {
+		logger.Info(fmt.Sprintf("table.SetSelectionChangedFunc: row %d, col %d", row, col))
+		// Don't select x,y coordinates.
+		if row == 0 {
+			dta.SetCurrentRow(1)
+			table.Select(dta.CurrentRow(), col)
+			return
+		}
+		if col == 0 {
+			dta.SetCurrentCol(1)
+			table.Select(row, dta.CurrentCol())
+			return
+		}
+
+		// Select individual cell.
+		dta.SetCurrentRow(row) // account for top coordinate row
+		dta.SetCurrentCol(col) // account for leftmost coordinates col
+
+		cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
+		cellInput.SetText(dta.GetCurrentCell().GetText())
+
+		// Clear previos highlights.
+		if hihglight != nil {
+			dta.ClearHighlight(hihglight)
+		}
+
+		// Highlight cells for the formula.
+		hihglight = dta.GetCurrentCell().Calculate()
+		if hihglight != nil {
+			dta.HighlightCells(hihglight)
+		}
+
+		dta.DrawXYCoordinates()
+	}
+
 }

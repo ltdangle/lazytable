@@ -192,7 +192,12 @@ func (d *Data) SetHighlight(h *Highlight) {
 	d.highlight = h
 }
 
-func (d *Data) ClearHighlight() {
+func (d *Data) ClearHighlight(h *Highlight) {
+	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
+		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
+			d.GetDataCell(row, col).SetTextColor(tcell.ColorDefault)
+		}
+	}
 }
 
 func (d *Data) HighlightCells(h *Highlight) {
