@@ -94,62 +94,7 @@ func buildTable() {
 			app.SetFocus(cellInput)
 		}).
 		SetSelectionChangedFunc(wrapSelectionChangedFunc()).
-		SetInputCapture(
-			func(event *tcell.EventKey) *tcell.EventKey {
-				logger.Info(fmt.Sprintf("table.SetInputCapture: rune - %v, key - %v, modifier - %v, name - %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
-				row, col := table.GetSelection()
-				rowSelectable, colSelectable := table.GetSelectable()
-				rowSelected := rowSelectable && !colSelectable
-				colSelected := !rowSelectable && colSelectable
-
-				rune := event.Rune()
-				key := event.Key()
-
-				switch rune {
-				case 'i':
-					app.SetFocus(cellInput)
-				case 'V': // Select row.
-					table.SetSelectable(true, false)
-				case 22:
-					if key == 22 { // Rune 22, key 22 = CTRL+V. Select column.
-						table.SetSelectable(false, true)
-					}
-				case 0:
-					if key == 27 { // Rune 0, key 27 = ESC.  Select individual cell.
-						table.SetSelectable(true, true)
-					}
-				case 'd':
-					if rowSelected {
-						history.Do(NewDeleteRowCommand(row, col))
-					} else if colSelected {
-						history.Do(NewDeleteColumnCommand(row, col))
-					}
-				case '>': // Increase column width.
-					history.Do(NewIncreaseColWidthCommand(dta.CurrentCol()))
-				case '<': // Decrease column width.
-					history.Do(NewDecreaseColWidthCommand(dta.CurrentCol()))
-				case 'f': // Sort string values asc.
-					history.Do(NewSortColStrAscCommand(dta.CurrentCol()))
-				case 'F': // Sort string values desc.
-					history.Do(NewSortColStrDescCommand(dta.CurrentCol()))
-				case 'o': // Insert row below.
-					history.Do(NewInsertRowBelowCommand(dta.CurrentRow()))
-				case 'O': // Insert row above.
-					history.Do(NewInsertRowAboveCommand(dta.CurrentRow(), dta.CurrentCol()))
-				case 'a':
-					history.Do(NewInsertColRightCommand(dta.CurrentCol()))
-				case 'I':
-					history.Do(NewInsertColLeftCommand(dta.CurrentRow(), dta.CurrentCol()))
-				case 'u':
-					history.Undo()
-				case 18:
-					if key == 18 { // CTRL+R, redo.
-						history.Redo()
-					}
-				}
-				return event
-			},
-		)
+		SetInputCapture(wrapInputCapture())
 }
 
 func buildCellInput() {
@@ -776,5 +721,79 @@ func wrapChangedFunc() func(text string) {
 		if hihglight != nil {
 			dta.HighlightCells(hihglight)
 		}
+	}
+}
+
+func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
+	const MODE_VISUAL = "v"
+	const MODE_NORMAL = "n"
+	var mode string = MODE_NORMAL
+
+	return func(event *tcell.EventKey) *tcell.EventKey {
+		logger.Info(fmt.Sprintf("table.SetInputCapture: rune - %v, key - %v, modifier - %v, name - %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
+		row, col := table.GetSelection()
+		rowSelectable, colSelectable := table.GetSelectable()
+		rowSelected := rowSelectable && !colSelectable
+		colSelected := !rowSelectable && colSelectable
+
+		rune := event.Rune()
+		key := event.Key()
+
+		if mode == MODE_VISUAL {
+			switch event.Name() {
+			case "Rune[j]", "Down":
+			case "Rune[k]", "Up":
+			case "Rune[h]", "Left":
+			case "Rune[l]", "Right":
+			}
+		}
+
+		switch rune {
+		case 'i':
+			app.SetFocus(cellInput)
+		case 'v':
+			mode = MODE_VISUAL
+		case 'V': // Select row.
+			table.SetSelectable(true, false)
+		case 22:
+			if key == 22 { // Rune 22, key 22 = CTRL+V. Select column.
+				table.SetSelectable(false, true)
+			}
+		case 0:
+			if key == 27 { // Rune 0, key 27 = ESC.  Select individual cell.
+				table.SetSelectable(true, true)
+				mode = MODE_NORMAL
+			}
+		case 'd':
+			if rowSelected {
+				history.Do(NewDeleteRowCommand(row, col))
+			} else if colSelected {
+				history.Do(NewDeleteColumnCommand(row, col))
+			}
+		case '>': // Increase column width.
+			history.Do(NewIncreaseColWidthCommand(dta.CurrentCol()))
+		case '<': // Decrease column width.
+			history.Do(NewDecreaseColWidthCommand(dta.CurrentCol()))
+		case 'f': // Sort string values asc.
+			history.Do(NewSortColStrAscCommand(dta.CurrentCol()))
+		case 'F': // Sort string values desc.
+			history.Do(NewSortColStrDescCommand(dta.CurrentCol()))
+		case 'o': // Insert row below.
+			history.Do(NewInsertRowBelowCommand(dta.CurrentRow()))
+		case 'O': // Insert row above.
+			history.Do(NewInsertRowAboveCommand(dta.CurrentRow(), dta.CurrentCol()))
+		case 'a':
+			history.Do(NewInsertColRightCommand(dta.CurrentCol()))
+		case 'I':
+			history.Do(NewInsertColLeftCommand(dta.CurrentRow(), dta.CurrentCol()))
+		case 'u':
+			history.Undo()
+		case 18:
+			if key == 18 { // CTRL+R, redo.
+				history.Redo()
+			}
+		}
+
+		return event
 	}
 }

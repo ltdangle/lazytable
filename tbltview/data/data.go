@@ -88,6 +88,17 @@ func NewHighlight() *Highlight {
 	return &Highlight{}
 }
 
+type Selection struct {
+	StartRow int
+	StartCol int
+	EndRow   int
+	EndCol   int
+}
+
+func NewSelection() *Selection {
+	return &Selection{}
+}
+
 // Data type.
 type Data struct {
 	cells      [][]*Cell
@@ -184,6 +195,14 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 
 }
 
+func (d *Data) HighlightCells(h *Highlight) {
+	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
+		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
+			d.GetDataCell(row, col).SetTextColor(tcell.ColorGreen)
+		}
+	}
+}
+
 func (d *Data) ClearHighlight(h *Highlight) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
@@ -192,10 +211,18 @@ func (d *Data) ClearHighlight(h *Highlight) {
 	}
 }
 
-func (d *Data) HighlightCells(h *Highlight) {
+func (d *Data) SelectCells(s *Selection) {
+	for row := s.StartRow + 1; row <= s.EndRow+1; row++ {
+		for col := s.StartCol + 1; col <= s.EndCol+1; col++ {
+			d.GetDataCell(row, col).SetAttributes(tcell.AttrReverse)
+		}
+	}
+}
+
+func (d *Data) ClearCellSelect(h *Selection) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
-			d.GetDataCell(row, col).SetTextColor(tcell.ColorGreen)
+			d.GetDataCell(row, col).SetAttributes(tcell.AttrReverse)
 		}
 	}
 }
