@@ -19,7 +19,10 @@ const (
 
 type Cell struct {
 	*tview.TableCell
-	text string
+	isSelected bool
+	isInRange  bool // Cell is part of the formula range.
+	isError    bool // Cell formula has error.
+	text       string
 }
 
 func NewCell() *Cell {
@@ -33,10 +36,11 @@ func (cell *Cell) SetText(text string) {
 }
 func (cell *Cell) ShowError(text string) {
 	cell.TableCell.SetText("#ERR:" + text)
-	cell.TableCell.SetTextColor(tcell.ColorRed)
+	cell.isError = true
 }
 func (cell *Cell) Calculate() *Highlight {
 	if cell.IsFormula() {
+		cell.isError=false
 		cell.text = strings.ReplaceAll(cell.text, " ", "") // remove spaces
 		fText := cell.text[1:]                             // strip leading =
 		for _, formula := range formulas {
@@ -196,7 +200,11 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		return nil
 	}
 
-	return d.cells[row][column].TableCell
+	cell := d.cells[row][column]
+	if cell.isError {
+		cell.TableCell.SetTextColor(tcell.ColorRed)
+	}
+	return cell.TableCell
 
 }
 
