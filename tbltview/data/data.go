@@ -290,6 +290,7 @@ func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
 		return sorter(d.cells[i+2][col], d.cells[j+2][col])
 	})
 }
+
 func (d *Data) DrawXYCoordinates() {
 	// Write row numbers.
 	for rowIdx := range d.cells {
@@ -320,39 +321,4 @@ func (d *Data) DrawXYCoordinates() {
 	}
 
 	d.cells[0][0].SetText("")
-
-	// Draw table coordinates.
-	// if row == 0 { // This is top row with col numbers.
-	// 	if column == 0 {
-	// 		return cell.TableCell
-	// 	}
-	// 	cell.SetAttributes(tcell.AttrDim)
-	// 	cell.SetAlign(1) //AlignCenter
-	//
-	// 	// Highlight row header cell for current selection.
-	// 	if column == d.currentCol {
-	// 		cell.SetAttributes(tcell.AttrBold)
-	// 		cell.SetAttributes(tcell.AttrUnderline)
-	// 		return cell.TableCell
-	// 	}
-	// 	return cell.TableCell
-	// }
-	//
-	// if column == 0 { // This is leftmost row with row numbers.
-	// 	cell.SetAttributes(tcell.AttrDim)
-	//
-	// 	// Highlight col header cell for current selection.
-	// 	if row == d.currentRow {
-	// 		cell.SetAttributes(tcell.AttrBold)
-	// 		cell.SetAttributes(tcell.AttrUnderline)
-	// 		return cell.TableCell
-	// 	}
-	// 	return cell.TableCell
-	// }
-	//
-	// cell.Calculate()
-	//
-	// d.highlightCell(row, column, cell)
-	//
-	// return cell.TableCell
 }
