@@ -28,9 +28,10 @@ var bottomBar = tview.NewTextView()
 var history = NewHistory()
 var logger = lgr.NewLogger("tmp/log.txt")
 
+const MODE_NORMAL = "n"
 const MODE_VISUAL = "v"
 const MODE_VISUAL_LINE = "V"
-const MODE_NORMAL = "n"
+const MODE_VISUAL_BLOCK = "CTRL+V"
 
 var selection *data.Selection
 var mode string = MODE_NORMAL
@@ -323,64 +324,53 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 		rowSelected := rowSelectable && !colSelectable
 		colSelected := !rowSelectable && colSelectable
 
-		rune := event.Rune()
-		key := event.Key()
-
 		// Normal mode.
-		switch rune {
-		case 'i':
+		switch event.Name() {
+		case "Rune[i]":
 			app.SetFocus(cellInput)
-		case 'v':
+		case "Rune[v]":
 			mode = MODE_VISUAL
 			selection = data.NewSelection(row, col, row, col)
 			dta.SelectCells(selection)
 			logger.Info("visual mode")
-		case 'V':
+		case "Rune[V]":
 			mode = MODE_VISUAL_LINE
 			selection = data.NewSelection(row, 1, row, dta.GetColumnCount()-1)
 			dta.SelectCells(selection)
 			logger.Info("visual line mode")
-		// case 'V': // Select row.
-		// 	table.SetSelectable(true, false)
-		case 22:
-			if key == 22 { // Rune 22, key 22 = CTRL+V. Select column.
-				table.SetSelectable(false, true)
-			}
-		case 0:
-			if key == 27 { // Rune 0, key 27 = ESC.  Select individual cell.
-				table.SetSelectable(true, true)
-				mode = MODE_NORMAL
-				dta.ClearCellSelect(selection)
-				logger.Info("normal mode")
-			}
-		case 'd':
+		case "Ctrl+V":
+			table.SetSelectable(false, true)
+		case "Esc":
+			table.SetSelectable(true, true)
+			mode = MODE_NORMAL
+			dta.ClearCellSelect(selection)
+			logger.Info("normal mode")
+		case "Rune[d]":
 			if rowSelected {
 				history.Do(NewDeleteRowCommand(row, col))
 			} else if colSelected {
 				history.Do(NewDeleteColumnCommand(row, col))
 			}
-		case '>': // Increase column width.
+		case "Rune[>]": // Increase column width.
 			history.Do(NewIncreaseColWidthCommand(dta.CurrentCol()))
-		case '<': // Decrease column width.
+		case "Rune[<]": // Decrease column width.
 			history.Do(NewDecreaseColWidthCommand(dta.CurrentCol()))
-		case 'f': // Sort string values asc.
+		case "Rune[f]": // Sort string values asc.
 			history.Do(NewSortColStrAscCommand(dta.CurrentCol()))
-		case 'F': // Sort string values desc.
+		case "Rune[F]": // Sort string values desc.
 			history.Do(NewSortColStrDescCommand(dta.CurrentCol()))
-		case 'o': // Insert row below.
+		case "Rune[o]": // Insert row below.
 			history.Do(NewInsertRowBelowCommand(dta.CurrentRow()))
-		case 'O': // Insert row above.
+		case "Rune[O]": // Insert row above.
 			history.Do(NewInsertRowAboveCommand(dta.CurrentRow(), dta.CurrentCol()))
-		case 'a':
+		case "Rune[a]":
 			history.Do(NewInsertColRightCommand(dta.CurrentCol()))
-		case 'I':
+		case "Rune[I]":
 			history.Do(NewInsertColLeftCommand(dta.CurrentRow(), dta.CurrentCol()))
-		case 'u':
+		case "Rune[u]":
 			history.Undo()
-		case 18:
-			if key == 18 { // CTRL+R, redo.
-				history.Redo()
-			}
+		case "Ctrl+R":
+			history.Redo()
 		}
 
 		return event
