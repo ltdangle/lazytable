@@ -756,6 +756,7 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			mode = MODE_VISUAL
 			selection = *data.NewSelection(row, col, row, col)
 			dta.SelectCells(&selection)
+			logger.Info("visual mode")
 		case 'V': // Select row.
 			table.SetSelectable(true, false)
 		case 22:
@@ -766,6 +767,8 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			if key == 27 { // Rune 0, key 27 = ESC.  Select individual cell.
 				table.SetSelectable(true, true)
 				mode = MODE_NORMAL
+				dta.ClearCellSelect(&selection)
+				logger.Info("normal mode")
 			}
 		case 'd':
 			if rowSelected {

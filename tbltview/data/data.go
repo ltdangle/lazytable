@@ -212,18 +212,19 @@ func (d *Data) ClearHighlight(h *Highlight) {
 }
 
 func (d *Data) SelectCells(s *Selection) {
-	for row := s.StartRow ; row <= s.EndRow; row++ {
-		for col := s.StartCol ; col <= s.EndCol; col++ {
-			d.GetDataCell(row, col).SetAttributes(tcell.AttrReverse)
-			// d.GetDataCell(row, col).SetTextColor(tcell.ColorBlue)
+	for row := s.StartRow; row <= s.EndRow; row++ {
+		for col := s.StartCol; col <= s.EndCol; col++ {
+			// d.GetDataCell(row, col).SetAttributes(tcell.AttrReverse)
+			d.GetDataCell(row, col).SetTextColor(tcell.ColorBlue)
+
 		}
 	}
 }
 
 func (d *Data) ClearCellSelect(h *Selection) {
-	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
-		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
-			d.GetDataCell(row, col).SetAttributes(tcell.AttrReverse)
+	for row := h.StartRow; row <= h.EndRow; row++ {
+		for col := h.StartCol; col <= h.EndCol; col++ {
+			d.GetDataCell(row, col).SetTextColor(tcell.ColorWhite)
 		}
 	}
 }
