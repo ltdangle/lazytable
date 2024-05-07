@@ -89,14 +89,19 @@ func NewHighlight() *Highlight {
 }
 
 type Selection struct {
-	StartRow int
-	StartCol int
-	EndRow   int
-	EndCol   int
+	startRow int
+	startCol int
+	endRow   int
+	endCol   int
 }
 
 func NewSelection(startRow int, startCol int, endRow int, endCol int) *Selection {
-	return &Selection{StartRow: startRow, StartCol: startCol, EndRow: endRow, EndCol: endCol}
+	return &Selection{startRow: startRow, startCol: startCol, endRow: endRow, endCol: endCol}
+}
+
+func (s *Selection) Update(endRow int, endCol int) {
+	s.endRow = endRow
+	s.endCol = endCol
 }
 
 // Data type.
@@ -212,8 +217,8 @@ func (d *Data) ClearHighlight(h *Highlight) {
 }
 
 func (d *Data) SelectCells(s *Selection) {
-	for row := s.StartRow; row <= s.EndRow; row++ {
-		for col := s.StartCol; col <= s.EndCol; col++ {
+	for row := s.startRow; row <= s.endRow; row++ {
+		for col := s.startCol; col <= s.endCol; col++ {
 			// d.GetDataCell(row, col).SetAttributes(tcell.AttrReverse)
 			d.GetDataCell(row, col).SetTextColor(tcell.ColorBlue)
 
@@ -222,8 +227,8 @@ func (d *Data) SelectCells(s *Selection) {
 }
 
 func (d *Data) ClearCellSelect(h *Selection) {
-	for row := h.StartRow; row <= h.EndRow; row++ {
-		for col := h.StartCol; col <= h.EndCol; col++ {
+	for row := h.startRow; row <= h.endRow; row++ {
+		for col := h.startCol; col <= h.endCol; col++ {
 			d.GetDataCell(row, col).SetTextColor(tcell.ColorWhite)
 		}
 	}
