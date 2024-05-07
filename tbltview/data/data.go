@@ -193,7 +193,6 @@ func (d *Data) AddDataRow(dataRow []*Cell) {
 	d.cells = append(d.cells, dataRow)
 }
 
-// TODO: manage cell attibutes (color, etc) explicitly here
 func (d *Data) GetCell(row, column int) *tview.TableCell {
 	// Coordinates are outside our table.
 	if row > d.GetRowCount()-1 || column > d.GetColumnCount()-1 {
@@ -237,6 +236,7 @@ func (d *Data) ClearFormulaRange(h *FormulaRange) {
 }
 
 func (d *Data) SelectCells(s *Selection) {
+	d.logger.Info(fmt.Sprintf("Data.SelectCells: %v", s))
 	for row := s.startRow; row <= s.endRow; row++ {
 		for col := s.startCol; col <= s.endCol; col++ {
 			d.GetDataCell(row, col).isSelected = true
@@ -246,6 +246,7 @@ func (d *Data) SelectCells(s *Selection) {
 }
 
 func (d *Data) ClearCellSelect(s *Selection) {
+	d.logger.Info(fmt.Sprintf("Data.ClearCellSelect: %v", s))
 	if s == nil {
 		return
 	}

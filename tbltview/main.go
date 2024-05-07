@@ -28,6 +28,12 @@ var bottomBar = tview.NewTextView()
 var history = NewHistory()
 var logger = lgr.NewLogger("tmp/log.txt")
 
+const MODE_VISUAL = "v"
+const MODE_NORMAL = "n"
+
+var selection *data.Selection
+var mode string = MODE_NORMAL
+
 func main() {
 
 	// Parse cli arguments.
@@ -675,6 +681,12 @@ func wrapSelectionChangedFunc() func(row, col int) {
 			dta.HighlightFormulaRange(hihglight)
 		}
 
+		if mode == MODE_VISUAL {
+			dta.ClearCellSelect(selection)
+			selection.Update(row, col)
+			dta.SelectCells(selection)
+		}
+
 		dta.DrawXYCoordinates()
 	}
 }
@@ -704,11 +716,6 @@ func wrapChangedFunc() func(text string) {
 }
 
 func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
-	const MODE_VISUAL = "v"
-	const MODE_NORMAL = "n"
-	var selection *data.Selection
-	var mode string = MODE_NORMAL
-
 	return func(event *tcell.EventKey) *tcell.EventKey {
 		logger.Info(fmt.Sprintf("table.SetInputCapture: rune - %v, key - %v, modifier - %v, name - %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
 		row, col := table.GetSelection()
@@ -718,29 +725,6 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 
 		rune := event.Rune()
 		key := event.Key()
-
-		// Visual mode.
-		if mode == MODE_VISUAL {
-			switch event.Name() {
-			case "Rune[j]", "Down":
-				dta.ClearCellSelect(selection)
-				selection.Update(row, col)
-				dta.SelectCells(selection)
-			case "Rune[k]", "Up":
-				dta.ClearCellSelect(selection)
-				selection.Update(row, col)
-				dta.SelectCells(selection)
-			case "Rune[h]", "Left":
-				dta.ClearCellSelect(selection)
-				selection.Update(row, col)
-				dta.SelectCells(selection)
-			case "Rune[l]", "Right":
-				dta.ClearCellSelect(selection)
-				selection.Update(row, col)
-				dta.SelectCells(selection)
-			}
-			return event
-		}
 
 		// Normal mode.
 		switch rune {
