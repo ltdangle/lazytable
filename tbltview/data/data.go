@@ -60,7 +60,6 @@ func (cell *Cell) Calculate() *Highlight {
 		return nil
 	}
 	cell.TableCell.SetText(cell.text)
-	cell.TableCell.SetTextColor(tcell.ColorWhite)
 	return nil
 }
 
@@ -201,6 +200,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	}
 
 	cell := d.cells[row][column]
+	cell.TableCell.SetTextColor(tcell.ColorWhite)
 
 	if cell.isInRange {
 		cell.TableCell.SetTextColor(tcell.ColorGreen)
@@ -219,7 +219,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 func (d *Data) HighlightCells(h *Highlight) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
-			d.GetDataCell(row, col).SetTextColor(tcell.ColorGreen)
+			d.GetDataCell(row, col).isInRange = true
 		}
 	}
 }
@@ -227,7 +227,7 @@ func (d *Data) HighlightCells(h *Highlight) {
 func (d *Data) ClearHighlight(h *Highlight) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
-			d.GetDataCell(row, col).SetTextColor(tcell.ColorDefault)
+			d.GetDataCell(row, col).isInRange = false
 		}
 	}
 }
