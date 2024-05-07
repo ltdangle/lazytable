@@ -181,9 +181,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		return nil
 	}
 
-	cell := d.cells[row][column]
-	cell.Calculate()
-	return cell.TableCell
+	return d.cells[row][column].TableCell
 
 }
 
