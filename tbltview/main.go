@@ -10,6 +10,7 @@ import (
 	"os"
 	"tblview/data"
 	formulas "tblview/forumulas"
+	lgr "tblview/logger"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -25,7 +26,7 @@ var modal func(p tview.Primitive, width, height int) tview.Primitive
 var modalContents = tview.NewBox()
 var bottomBar = tview.NewTextView()
 var history = NewHistory()
-var logger = NewLogger("tmp/log.txt")
+var logger = lgr.NewLogger("tmp/log.txt")
 
 func main() {
 
@@ -640,28 +641,6 @@ func (cmd *ChangeCellValueCommand) Unexecute() {
 	logger.Info(fmt.Sprintf("%d:%d undo value from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
 }
 
-type Logger struct {
-	file *os.File
-}
-
-func NewLogger(path string) *Logger {
-	logger := &Logger{}
-	file, err := os.Create(path)
-	if err != nil {
-		panic(err)
-	}
-	logger.file = file
-	return logger
-}
-
-func (l *Logger) Info(msg string) {
-	msg = msg + "\n"
-	_, err := l.file.Write([]byte(msg))
-	if err != nil {
-		panic(err)
-	}
-}
-
 func wrapSelectionChangedFunc() func(row, col int) {
 	var hihglight *data.FormulaRange
 	return func(row, col int) {
@@ -740,6 +719,7 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 		rune := event.Rune()
 		key := event.Key()
 
+		// Visual mode.
 		if mode == MODE_VISUAL {
 			switch event.Name() {
 			case "Rune[j]", "Down":
@@ -759,8 +739,10 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 				selection.Update(row, col)
 				dta.SelectCells(selection)
 			}
+			return event
 		}
 
+		// Normal mode.
 		switch rune {
 		case 'i':
 			app.SetFocus(cellInput)
