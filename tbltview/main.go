@@ -115,7 +115,10 @@ func buildTable() {
 				cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
 				cellInput.SetText(dta.GetCurrentCell().GetText())
 
-				dta.SetHighlight(dta.GetCurrentCell().Calculate())
+				hihglight := dta.GetCurrentCell().Calculate()
+				if hihglight != nil {
+					dta.HighlightCells(hihglight)
+				}
 
 				dta.DrawXYCoordinates()
 			}).

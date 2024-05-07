@@ -185,11 +185,22 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 
 }
 
-func (d *Data) Highlight() *Highlight {
+func (d *Data) GetHighlight() *Highlight {
 	return d.highlight
 }
 func (d *Data) SetHighlight(h *Highlight) {
 	d.highlight = h
+}
+
+func (d *Data) ClearHighlight() {
+}
+
+func (d *Data) HighlightCells(h *Highlight) {
+	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
+		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
+			d.GetDataCell(row, col).SetTextColor(tcell.ColorGreen)
+		}
+	}
 }
 
 // Highlight cell range.
