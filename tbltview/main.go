@@ -174,7 +174,8 @@ func buildCellInput() {
 			if prevVal != text {
 				history.Do(NewChangeCellValueCommand(dta.CurrentRow(), dta.CurrentCol(), text))
 			}
-			dta.SetHighlight(dta.GetCurrentCell().Calculate())
+			// TODO: highlight cells
+			// dta.HighlightCells(dta.GetCurrentCell().Calculate())
 		},
 		)
 }

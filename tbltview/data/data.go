@@ -95,7 +95,6 @@ type Data struct {
 	currentCol int
 	sortedCol  int
 	sortOrder  string
-	highlight  *Highlight
 }
 
 func NewData(frmls []Formula) *Data {
@@ -185,13 +184,6 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 
 }
 
-func (d *Data) GetHighlight() *Highlight {
-	return d.highlight
-}
-func (d *Data) SetHighlight(h *Highlight) {
-	d.highlight = h
-}
-
 func (d *Data) ClearHighlight(h *Highlight) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
@@ -205,19 +197,6 @@ func (d *Data) HighlightCells(h *Highlight) {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
 			d.GetDataCell(row, col).SetTextColor(tcell.ColorGreen)
 		}
-	}
-}
-
-// Highlight cell range.
-func (d *Data) highlightCell(row int, column int, cell *Cell) {
-	if d.highlight == nil {
-		cell.SetAttributes(tcell.AttrNone)
-		return
-	}
-
-	cellIsHighlighted := row >= d.highlight.StartRow+1 && column >= d.highlight.StartCol+1 && row <= d.highlight.EndRow+1 && column <= d.highlight.EndCol+1
-	if cellIsHighlighted {
-		cell.SetTextColor(tcell.ColorGreen)
 	}
 }
 
