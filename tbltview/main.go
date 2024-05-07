@@ -29,6 +29,7 @@ var history = NewHistory()
 var logger = lgr.NewLogger("tmp/log.txt")
 
 const MODE_VISUAL = "v"
+const MODE_VISUAL_LINE = "V"
 const MODE_NORMAL = "n"
 
 var selection *data.Selection
@@ -276,13 +277,16 @@ func wrapSelectionChangedFunc() func(row, col int) {
 		if hihglight != nil {
 			dta.HighlightFormulaRange(hihglight)
 		}
-
-		if mode == MODE_VISUAL {
+		switch mode {
+		case MODE_VISUAL:
 			dta.ClearCellSelect(selection)
 			selection.Update(row, col)
 			dta.SelectCells(selection)
+		case MODE_VISUAL_LINE:
+			dta.ClearCellSelect(selection)
+			selection.Update(row, dta.GetColumnCount()-1)
+			dta.SelectCells(selection)
 		}
-
 		dta.DrawXYCoordinates()
 	}
 }
@@ -331,8 +335,13 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			selection = data.NewSelection(row, col, row, col)
 			dta.SelectCells(selection)
 			logger.Info("visual mode")
-		case 'V': // Select row.
-			table.SetSelectable(true, false)
+		case 'V':
+			mode = MODE_VISUAL_LINE
+			selection = data.NewSelection(row, 1, row, dta.GetColumnCount()-1)
+			dta.SelectCells(selection)
+			logger.Info("visual line mode")
+		// case 'V': // Select row.
+		// 	table.SetSelectable(true, false)
 		case 22:
 			if key == 22 { // Rune 22, key 22 = CTRL+V. Select column.
 				table.SetSelectable(false, true)
