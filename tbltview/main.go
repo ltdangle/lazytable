@@ -31,7 +31,7 @@ var logger = lgr.NewLogger("tmp/log.txt")
 const MODE_NORMAL = "n"
 const MODE_VISUAL = "v"
 const MODE_VISUAL_LINE = "V"
-const MODE_VISUAL_BLOCK = "CTRL+V"
+const MODE_VISUAL_BLOCK = "Ctrl+V"
 
 var selection *data.Selection
 var mode string = MODE_NORMAL
@@ -287,6 +287,10 @@ func wrapSelectionChangedFunc() func(row, col int) {
 			dta.ClearCellSelect(selection)
 			selection.Update(row, dta.GetColumnCount()-1)
 			dta.SelectCells(selection)
+		case MODE_VISUAL_BLOCK:
+			dta.ClearCellSelect(selection)
+			selection.Update(dta.GetRowCount()-1, col)
+			dta.SelectCells(selection)
 		}
 		dta.DrawXYCoordinates()
 	}
@@ -339,7 +343,10 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			dta.SelectCells(selection)
 			logger.Info("visual line mode")
 		case "Ctrl+V":
-			table.SetSelectable(false, true)
+			mode = MODE_VISUAL_BLOCK
+			selection = data.NewSelection(1, col, dta.GetRowCount()-1, col)
+			dta.SelectCells(selection)
+			logger.Info("visual block mode")
 		case "Esc":
 			table.SetSelectable(true, true)
 			mode = MODE_NORMAL
