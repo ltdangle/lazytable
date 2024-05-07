@@ -42,7 +42,7 @@ func main() {
 	frmls = append(frmls, formulas.NewSumFormula())
 
 	// Init Data.
-	dta = data.NewData(frmls)
+	dta = data.NewData(frmls, logger)
 
 	// Load csv file data.
 	readCsvFile(*csvFile, dta)

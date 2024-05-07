@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"tblview/logger"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -113,11 +114,12 @@ type Data struct {
 	currentCol int
 	sortedCol  int
 	sortOrder  string
+	logger     *logger.Logger
 }
 
-func NewData(frmls []Formula) *Data {
+func NewData(frmls []Formula, logger *logger.Logger) *Data {
 	formulas = frmls
-	d = &Data{sortedCol: -1, sortOrder: ""}
+	d = &Data{sortedCol: -1, sortOrder: "", logger: logger}
 	return d
 }
 func (d *Data) GetCells() [][]*Cell {
