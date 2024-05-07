@@ -76,6 +76,7 @@ func main() {
 		AddPage("modal", modal(modalContents, 40, 10), true, false)
 
 	bottomBar.SetText("> ")
+	dta.DrawXYCoordinates()
 	if err := app.SetRoot(pages, true).SetFocus(table).Run(); err != nil {
 		panic(err)
 	}
@@ -115,6 +116,8 @@ func buildTable() {
 				cellInput.SetText(dta.GetCurrentCell().GetText())
 
 				dta.SetHighlight(dta.GetCurrentCell().Calculate())
+
+				dta.DrawXYCoordinates()
 			}).
 		SetInputCapture(
 			func(event *tcell.EventKey) *tcell.EventKey {
@@ -178,16 +181,19 @@ func buildCellInput() {
 	cellInput.
 		SetLabel(fmt.Sprintf("%d:%d ", dta.CurrentRow()-1, dta.CurrentCol()-1)).
 		SetText(dta.GetCurrentCell().GetText()).
-		SetDoneFunc(func(key tcell.Key) {
-			app.SetFocus(table)
-			// Push cursor down, if possible.
-			if dta.CurrentRow() < dta.GetRowCount()-1 {
-				dta.SetCurrentRow(dta.CurrentRow() + 1)
-			}
-			table.Select(dta.CurrentRow(), dta.CurrentCol())
-		}).
+		SetDoneFunc(
+			func(key tcell.Key) {
+				logger.Info(fmt.Sprintf("cellInput.SetDoneFunc: %v", key))
+				app.SetFocus(table)
+				// Push cursor down, if possible.
+				if dta.CurrentRow() < dta.GetRowCount()-1 {
+					dta.SetCurrentRow(dta.CurrentRow() + 1)
+				}
+				table.Select(dta.CurrentRow(), dta.CurrentCol())
+			}).
 		SetChangedFunc(func(text string) {
-			// This function is called whenever cursor changes position for some reason.
+			logger.Info(fmt.Sprintf("cellInput.SetChangedFunc: %v", text))
+			// This function is called whenever cursor changes position.
 			// So we need to check if the value actually changed.
 			prevVal := dta.GetCurrentCell().GetText()
 			if prevVal != text {

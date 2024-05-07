@@ -182,40 +182,9 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	}
 
 	cell := d.cells[row][column]
-	// Draw table coordinates.
-	if row == 0 { // This is top row with col numbers.
-		if column == 0 {
-			return cell.TableCell
-		}
-		cell.SetAttributes(tcell.AttrDim)
-		cell.SetAlign(1) //AlignCenter
-
-		// Highlight row header cell for current selection.
-		if column == d.currentCol {
-			cell.SetAttributes(tcell.AttrBold)
-			cell.SetAttributes(tcell.AttrUnderline)
-			return cell.TableCell
-		}
-		return cell.TableCell
-	}
-
-	if column == 0 { // This is leftmost row with row numbers.
-		cell.SetAttributes(tcell.AttrDim)
-
-		// Highlight col header cell for current selection.
-		if row == d.currentRow {
-			cell.SetAttributes(tcell.AttrBold)
-			cell.SetAttributes(tcell.AttrUnderline)
-			return cell.TableCell
-		}
-		return cell.TableCell
-	}
-
 	cell.Calculate()
-
-	d.highlightCell(row, column, cell)
-
 	return cell.TableCell
+
 }
 
 func (d *Data) Highlight() *Highlight {
@@ -324,18 +293,68 @@ func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
 	})
 }
 func (d *Data) DrawXYCoordinates() {
+	// Write row numbers.
 	for rowIdx := range d.cells {
-		d.cells[rowIdx][0].SetText(fmt.Sprintf("%d", rowIdx-1))
+		cell := d.cells[rowIdx][0]
+		cell.SetText(fmt.Sprintf("%d", rowIdx-1))
+		cell.SetAttributes(tcell.AttrDim)
+		cell.SetAlign(1) //AlignCenter
+		if rowIdx == d.CurrentRow() {
+			cell.SetAttributes(tcell.AttrBold)
+			cell.SetAttributes(tcell.AttrUnderline)
+		}
 	}
-	for colIdx, col := range d.cells[0] {
+	// Write column numbers.
+	for colIdx, cell := range d.cells[0] {
 		colText := fmt.Sprintf("%d", colIdx-1)
+		cell.SetAttributes(tcell.AttrDim)
+		cell.SetAlign(1) //AlignCenter
+		if colIdx == d.CurrentCol() {
+			cell.SetAttributes(tcell.AttrBold)
+			cell.SetAttributes(tcell.AttrUnderline)
+		}
 		if d.sortedCol != -1 {
 			if colIdx == d.sortedCol {
 				colText = colText + d.sortOrder
 			}
 		}
-		col.SetText(colText)
+		cell.SetText(colText)
 	}
 
 	d.cells[0][0].SetText("")
+
+	// Draw table coordinates.
+	// if row == 0 { // This is top row with col numbers.
+	// 	if column == 0 {
+	// 		return cell.TableCell
+	// 	}
+	// 	cell.SetAttributes(tcell.AttrDim)
+	// 	cell.SetAlign(1) //AlignCenter
+	//
+	// 	// Highlight row header cell for current selection.
+	// 	if column == d.currentCol {
+	// 		cell.SetAttributes(tcell.AttrBold)
+	// 		cell.SetAttributes(tcell.AttrUnderline)
+	// 		return cell.TableCell
+	// 	}
+	// 	return cell.TableCell
+	// }
+	//
+	// if column == 0 { // This is leftmost row with row numbers.
+	// 	cell.SetAttributes(tcell.AttrDim)
+	//
+	// 	// Highlight col header cell for current selection.
+	// 	if row == d.currentRow {
+	// 		cell.SetAttributes(tcell.AttrBold)
+	// 		cell.SetAttributes(tcell.AttrUnderline)
+	// 		return cell.TableCell
+	// 	}
+	// 	return cell.TableCell
+	// }
+	//
+	// cell.Calculate()
+	//
+	// d.highlightCell(row, column, cell)
+	//
+	// return cell.TableCell
 }
