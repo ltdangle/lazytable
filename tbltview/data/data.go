@@ -38,7 +38,7 @@ func (cell *Cell) ShowError(text string) {
 	cell.TableCell.SetText("#ERR:" + text)
 	cell.isError = true
 }
-func (cell *Cell) Calculate() *Highlight {
+func (cell *Cell) Calculate() *FormulaRange {
 	cell.isInRange = false
 	cell.isError = false
 	if cell.IsFormula() {
@@ -47,13 +47,13 @@ func (cell *Cell) Calculate() *Highlight {
 		for _, formula := range formulas {
 			isMatch, _ := formula.Match(fText)
 			if isMatch {
-				calculated, highlight, err := formula.Calculate(d, fText)
+				calculated, formulaRange, err := formula.Calculate(d, fText)
 				if err != nil {
 					cell.ShowError(err.Error())
 					return nil
 				}
 				cell.TableCell.SetText(calculated)
-				return highlight
+				return formulaRange
 			}
 		}
 		cell.ShowError("no formula")
@@ -75,20 +75,19 @@ type Formula interface {
 	// Checks if provided text matches the formula.
 	Match(text string) (ok bool, matches []string)
 	// Calculates the formula.
-	Calculate(data *Data, text string) (string, *Highlight, error)
+	Calculate(data *Data, text string) (string, *FormulaRange, error)
 }
 
-// Highlighted cells region.
 // TODO: use getter and setter and check validity in setter
-type Highlight struct {
+type FormulaRange struct {
 	StartRow int
 	StartCol int
 	EndRow   int
 	EndCol   int
 }
 
-func NewHighlight() *Highlight {
-	return &Highlight{}
+func NewFormulaRange() *FormulaRange {
+	return &FormulaRange{}
 }
 
 type Selection struct {
@@ -216,7 +215,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 
 }
 
-func (d *Data) HighlightCells(h *Highlight) {
+func (d *Data) HighlightFormulaRange(h *FormulaRange) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
 			d.GetDataCell(row, col).isInRange = true
@@ -224,7 +223,7 @@ func (d *Data) HighlightCells(h *Highlight) {
 	}
 }
 
-func (d *Data) ClearHighlight(h *Highlight) {
+func (d *Data) ClearFormulaRange(h *FormulaRange) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
 			d.GetDataCell(row, col).isInRange = false
