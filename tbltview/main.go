@@ -166,18 +166,7 @@ func buildCellInput() {
 				}
 				table.Select(dta.CurrentRow(), dta.CurrentCol())
 			}).
-		SetChangedFunc(func(text string) {
-			logger.Info(fmt.Sprintf("cellInput.SetChangedFunc: %v", text))
-			// This function is called whenever cursor changes position.
-			// So we need to check if the value actually changed.
-			prevVal := dta.GetCurrentCell().GetText()
-			if prevVal != text {
-				history.Do(NewChangeCellValueCommand(dta.CurrentRow(), dta.CurrentCol(), text))
-			}
-			// TODO: highlight cells
-			// dta.HighlightCells(dta.GetCurrentCell().Calculate())
-		},
-		)
+		SetChangedFunc(wrapChangedFunc())
 }
 
 func buildModal() {
@@ -764,5 +753,28 @@ func wrapSelectionChangedFunc() func(row, col int) {
 
 		dta.DrawXYCoordinates()
 	}
+}
 
+func wrapChangedFunc() func(text string) {
+	var hihglight *data.Highlight
+	return func(text string) {
+		logger.Info(fmt.Sprintf("cellInput.SetChangedFunc: %v", text))
+		// This function is called whenever cursor changes position.
+		// So we need to check if the value actually changed.
+		prevVal := dta.GetCurrentCell().GetText()
+		if prevVal != text {
+			history.Do(NewChangeCellValueCommand(dta.CurrentRow(), dta.CurrentCol(), text))
+		}
+
+		// Clear previos highlights.
+		if hihglight != nil {
+			dta.ClearHighlight(hihglight)
+		}
+
+		// Highlight cells for the formula.
+		hihglight = dta.GetCurrentCell().Calculate()
+		if hihglight != nil {
+			dta.HighlightCells(hihglight)
+		}
+	}
 }
