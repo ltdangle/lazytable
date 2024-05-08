@@ -19,6 +19,8 @@ type History struct {
 func NewHistory() *History {
 	return &History{}
 }
+
+// TODO: log history actions
 func (h *History) Do(cmd Command) {
 	cmd.Execute()
 	h.UndoStack = append(h.UndoStack, cmd)
