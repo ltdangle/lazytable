@@ -132,22 +132,35 @@ func buildCellInput() {
 func buildCommandInput() {
 	commandInput.SetFieldStyle(tcell.StyleDefault)
 	commandInput.SetDoneFunc(
-		func(key tcell.Key) {
-			text := commandInput.GetText()
-			logger.Info(fmt.Sprintf("commandInput.SetDoneFunc: key: %v, text: %s", key, text))
-			for _, clmCommand := range clmCommands {
-				match, command := clmCommand.Match(text)
-				if match {
-					history.Do(command)
+		func() func(key tcell.Key) {
+			var error string
+			return func(key tcell.Key) {
+				if error != "" {
+					error = ""
 					commandInput.SetLabel("")
 					commandInput.SetText("")
 					app.SetFocus(table)
 					return
 				}
+
+				text := commandInput.GetText()
+				logger.Info(fmt.Sprintf("commandInput.SetDoneFunc: key: %v, text: %s", key, text))
+				for _, clmCommand := range clmCommands {
+					match, command := clmCommand.Match(text)
+					if match {
+						history.Do(command)
+						commandInput.SetLabel("")
+						commandInput.SetText("")
+						app.SetFocus(table)
+						return
+					}
+				}
+
+				error = "command not found. press ENTER to continue"
+				commandInput.SetText(error)
 			}
-			commandInput.SetText("command not found")
-			app.SetFocus(table)
-		}).
+		}(),
+	).
 		SetChangedFunc(func(text string) {
 			logger.Info(fmt.Sprintf("commandInput.SetChangedFunc: %s", text))
 		})
