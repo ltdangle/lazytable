@@ -36,6 +36,8 @@ const MODE_VISUAL_BLOCK = "Ctrl+V"
 var selection *data.Selection
 var mode string = MODE_NORMAL
 
+var clmCommands []ClmCommand
+
 func main() {
 
 	// Parse cli arguments.
@@ -51,6 +53,9 @@ func main() {
 
 	// Init Data.
 	dta = data.NewData(frmls, logger)
+
+	// Build clm command.
+	clmCommands = append(clmCommands, NewSortColStrAscClmCommand())
 
 	// Load csv file data.
 	readCsvFile(*csvFile, dta)
@@ -128,7 +133,18 @@ func buildCommandInput() {
 	commandInput.SetFieldStyle(tcell.StyleDefault)
 	commandInput.SetDoneFunc(
 		func(key tcell.Key) {
-			logger.Info(fmt.Sprintf("commandInput.SetDoneFunc: %v", key))
+			text := commandInput.GetText()
+			logger.Info(fmt.Sprintf("commandInput.SetDoneFunc: key: %v, text: %s", key, text))
+			for _, clmCommand := range clmCommands {
+				match, _ := clmCommand.Match(text)
+				if match {
+					history.Do(clmCommand)
+				}
+			}
+
+			commandInput.SetLabel("")
+			commandInput.SetText("")
+
 			app.SetFocus(table)
 		}).
 		SetChangedFunc(func(text string) {

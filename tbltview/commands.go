@@ -407,4 +407,3 @@ func (cmd *ChangeCellValueCommand) Unexecute() {
 	dta.GetDataCell(cmd.row, cmd.col).SetText(cmd.prevVal)
 	logger.Info(fmt.Sprintf("%d:%d undo value from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
 }
-
