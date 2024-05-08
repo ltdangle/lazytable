@@ -21,10 +21,10 @@ var dta *data.Data
 var table = tview.NewTable()
 var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
+var commandInput = tview.NewInputField()
 var pages = tview.NewPages()
 var modal func(p tview.Primitive, width, height int) tview.Primitive
 var modalContents = tview.NewBox()
-var bottomBar = tview.NewTextView()
 var history = NewHistory()
 var logger = lgr.NewLogger("tmp/log.txt")
 
@@ -62,13 +62,14 @@ func main() {
 	buildCellInput()
 	buildTable()
 	buildModal()
+	buildCommandInput()
 
 	// Configure layout.
 	flex := tview.NewFlex().
 		SetDirection(tview.FlexRow).
 		AddItem(cellInput, 1, 0, false).
 		AddItem(table, 0, 1, false).
-		AddItem(bottomBar, 1, 0, false)
+		AddItem(commandInput, 1, 0, false)
 
 	flex.SetInputCapture(
 		func(event *tcell.EventKey) *tcell.EventKey {
@@ -84,7 +85,6 @@ func main() {
 		AddPage("background", flex, true, true).
 		AddPage("modal", modal(modalContents, 40, 10), true, false)
 
-	bottomBar.SetText("> ")
 	dta.DrawXYCoordinates()
 	if err := app.SetRoot(pages, true).SetFocus(table).Run(); err != nil {
 		panic(err)
@@ -108,6 +108,7 @@ func buildTable() {
 
 func buildCellInput() {
 	cellInput.
+		SetFieldStyle(tcell.StyleDefault).
 		SetLabel(fmt.Sprintf("%d:%d ", dta.CurrentRow()-1, dta.CurrentCol()-1)).
 		SetText(dta.GetCurrentCell().GetText()).
 		SetDoneFunc(
@@ -121,6 +122,17 @@ func buildCellInput() {
 				table.Select(dta.CurrentRow(), dta.CurrentCol())
 			}).
 		SetChangedFunc(wrapChangedFunc())
+}
+
+func buildCommandInput() {
+	commandInput.SetFieldStyle(tcell.StyleDefault)
+	commandInput.SetDoneFunc(
+		func(key tcell.Key) {
+			logger.Info(fmt.Sprintf("commandInput.SetDoneFunc: %v", key))
+		}).
+		SetChangedFunc(func(text string) {
+			logger.Info(fmt.Sprintf("commandInput.SetChangedFunc: %s", text))
+		})
 }
 
 func buildModal() {
@@ -330,6 +342,9 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 
 		// Normal mode.
 		switch event.Name() {
+		case "Rune[:]":
+			commandInput.SetLabel(":")
+			app.SetFocus(commandInput)
 		case "Rune[i]":
 			app.SetFocus(cellInput)
 		case "Rune[v]":
