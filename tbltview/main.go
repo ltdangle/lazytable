@@ -136,8 +136,7 @@ func buildCommandInput() {
 			text := commandInput.GetText()
 			logger.Info(fmt.Sprintf("commandInput.SetDoneFunc: key: %v, text: %s", key, text))
 			for _, clmCommand := range clmCommands {
-				match, _ := clmCommand.Match(text)
-				if match {
+				if clmCommand.Match(text) {
 					history.Do(clmCommand)
 				}
 			}
