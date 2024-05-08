@@ -129,6 +129,7 @@ func buildCommandInput() {
 	commandInput.SetDoneFunc(
 		func(key tcell.Key) {
 			logger.Info(fmt.Sprintf("commandInput.SetDoneFunc: %v", key))
+			app.SetFocus(table)
 		}).
 		SetChangedFunc(func(text string) {
 			logger.Info(fmt.Sprintf("commandInput.SetChangedFunc: %s", text))
