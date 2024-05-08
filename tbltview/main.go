@@ -139,12 +139,13 @@ func buildCommandInput() {
 				match, command := clmCommand.Match(text)
 				if match {
 					history.Do(command)
+					commandInput.SetLabel("")
+					commandInput.SetText("")
+					app.SetFocus(table)
+					return
 				}
 			}
-
-			commandInput.SetLabel("")
-			commandInput.SetText("")
-
+			commandInput.SetText("command not found")
 			app.SetFocus(table)
 		}).
 		SetChangedFunc(func(text string) {
