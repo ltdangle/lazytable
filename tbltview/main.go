@@ -156,6 +156,7 @@ func buildCommandInput() {
 						history.Do(command)
 						commandInput.SetLabel("")
 						commandInput.SetText("")
+						mode = MODE_NORMAL
 						app.SetFocus(table)
 						return
 					}
