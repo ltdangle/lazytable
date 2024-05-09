@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/qdm12/reprint"
 	"strings"
 	"tblview/data"
+	// "github.com/mohae/deepcopy"
 )
 
 // Undo / redo functionality.
@@ -412,9 +414,10 @@ func (cmd *ChangeCellValueCommand) Unexecute() {
 }
 
 type ReplaceTextCommand struct {
-	selection *data.Selection
-	search    string
-	replace   string
+	selection     *data.Selection
+	search        string
+	replace       string
+	originalCells [][]*data.Cell
 }
 
 func NewReplaceTextCommand(selection *data.Selection, search string, replace string) *ReplaceTextCommand {
@@ -422,14 +425,27 @@ func NewReplaceTextCommand(selection *data.Selection, search string, replace str
 }
 
 func (cmd *ReplaceTextCommand) Execute() {
-	// TODO: copy cells first
+	// Mirror originalCells dimensions to data.
+	cmd.originalCells = make([][]*data.Cell, dta.GetRowCount())
+	for row := range cmd.originalCells {
+		cmd.originalCells[row] = make([]*data.Cell, dta.GetColumnCount())
+	}
+
 	var replaced bool
 	for row := cmd.selection.GetTopRow(); row <= cmd.selection.GetBottomRow(); row++ {
 		for col := cmd.selection.GetLeftCol(); col <= cmd.selection.GetRightCol(); col++ {
-			newText := strings.ReplaceAll(dta.GetDataCell(row, col).GetText(), cmd.search, cmd.replace)
-			dta.GetDataCell(row, col).SetText(newText)
-			logger.Info(fmt.Sprintf("cell %d:%d replaced %s with %s", row, col, cmd.search, cmd.replace))
+			cell := dta.GetDataCell(row, col)
+			// Copy cell.
+			err := reprint.FromTo(&cell, &cmd.originalCells[row][col])
+			if err != nil {
+				logger.Error(err.Error())
+			}
+			// Replace cell text.
+			newText := strings.ReplaceAll(cell.GetText(), cmd.search, cmd.replace)
+			cell.SetText(newText)
 			replaced = true
+
+			logger.Info(fmt.Sprintf("cell %d:%d replaced %s with %s", row, col, cmd.search, cmd.replace))
 		}
 	}
 
@@ -439,7 +455,13 @@ func (cmd *ReplaceTextCommand) Execute() {
 	}
 }
 
-// TODO: implement
 func (cmd *ReplaceTextCommand) Unexecute() {
-	logger.Info(fmt.Sprintf("undo replaced text"))
+	// Restore copied cells.
+	for row := cmd.selection.GetTopRow(); row <= cmd.selection.GetBottomRow(); row++ {
+		for col := cmd.selection.GetLeftCol(); col <= cmd.selection.GetRightCol(); col++ {
+			cell := cmd.originalCells[row][col]
+			dta.SetDataCell(row, col, cell)
+		}
+	}
+	logger.Info(fmt.Sprintf("undo replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection))
 }

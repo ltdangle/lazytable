@@ -4,6 +4,8 @@ go 1.22.0
 
 require (
 	github.com/gdamore/tcell/v2 v2.7.1
+	github.com/jinzhu/copier v0.4.0
+	github.com/qdm12/reprint v0.0.0-20200326205758-722754a53494
 	github.com/rivo/tview v0.0.0-20240406141410-79d4cc321256
 )
 

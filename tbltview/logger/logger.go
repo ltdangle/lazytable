@@ -23,3 +23,10 @@ func (l *Logger) Info(msg string) {
 		panic(err)
 	}
 }
+func (l *Logger) Error(msg string) {
+	msg = "error: " + msg + "\n"
+	_, err := l.file.Write([]byte(msg))
+	if err != nil {
+		panic(err)
+	}
+}

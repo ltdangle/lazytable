@@ -7,6 +7,7 @@ import (
 	"tblview/logger"
 
 	"github.com/gdamore/tcell/v2"
+	"github.com/jinzhu/copier"
 	"github.com/rivo/tview"
 )
 
@@ -163,6 +164,9 @@ func (d *Data) GetDataCell(row int, col int) *Cell {
 }
 func (d *Data) SetDataCell(row int, col int, cell *Cell) {
 	d.cells[row][col] = cell
+}
+func (d *Data) CopyDataCell(row int, col int, cell *Cell) {
+	_ = copier.Copy(d.cells[row][col], cell)
 }
 func (d *Data) GetRow(row int) []*Cell {
 	return d.cells[row]
