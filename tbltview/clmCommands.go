@@ -9,8 +9,6 @@ import (
 type ClmCommand interface {
 	// Regex match of the command string.
 	Match(text string) (bool, Command)
-	// Undoable command.
-	Command
 }
 
 type SortColStrAscClmCommand struct {
@@ -41,5 +39,38 @@ func (clm *SortColStrAscClmCommand) Match(text string) (bool, Command) {
 	}
 
 	return true, NewSortColStrAscCommand(column + 1)
+
+}
+
+type ReplaceClmCommand struct {
+}
+
+func NewReplaceClmCommand() *ReplaceClmCommand {
+	return &ReplaceClmCommand{}
+}
+func (clm *ReplaceClmCommand) regex(text string) (ok bool, search string, replace string) {
+	// Compile the regular expression to match the whole pattern and extract the content within the quotes
+	re, err := regexp.Compile(`^replace '([^']*)' with '([^']*)'$`)
+	if err != nil {
+		return
+	}
+
+	// Find submatches, ensuring the whole string matches the pattern
+	match := re.FindStringSubmatch(text)
+	if match == nil {
+		return
+	}
+
+	ok = true
+	search = match[1]
+	replace = match[2]
+	return
+}
+func (clm *ReplaceClmCommand) Match(text string) (bool, Command) {
+	ok, search, replace := clm.regex(text)
+	if !ok {
+		return false, nil
+	}
+	return true, NewChangeCellValueCommand(1, 1, search+"=>"+replace)
 
 }

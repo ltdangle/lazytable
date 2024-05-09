@@ -55,7 +55,7 @@ func main() {
 	dta = data.NewData(frmls, logger)
 
 	// Build clm command.
-	clmCommands = append(clmCommands, NewSortColStrAscClmCommand())
+	clmCommands = append(clmCommands, NewSortColStrAscClmCommand(),NewReplaceClmCommand())
 
 	// Load csv file data.
 	readCsvFile(*csvFile, dta)
