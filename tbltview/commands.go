@@ -5,7 +5,6 @@ import (
 	"github.com/qdm12/reprint"
 	"strings"
 	"tblview/data"
-	// "github.com/mohae/deepcopy"
 )
 
 // Undo / redo functionality.
@@ -438,7 +437,7 @@ func (cmd *ReplaceTextCommand) Execute() {
 	for row := cmd.selection.GetTopRow(); row <= cmd.selection.GetBottomRow(); row++ {
 		for col := cmd.selection.GetLeftCol(); col <= cmd.selection.GetRightCol(); col++ {
 			cell := dta.GetDataCell(row, col)
-			// Copy cell.
+			// (Deep) copy cell (even unexported fields).
 			err := reprint.FromTo(&cell, &cmd.originalCells[row][col])
 			if err != nil {
 				logger.Error(err.Error())
