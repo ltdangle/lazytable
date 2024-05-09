@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"strings"
 	"tblview/data"
 )
 
@@ -408,4 +409,37 @@ func (cmd *ChangeCellValueCommand) Execute() {
 func (cmd *ChangeCellValueCommand) Unexecute() {
 	dta.GetDataCell(cmd.row, cmd.col).SetText(cmd.prevVal)
 	logger.Info(fmt.Sprintf("%d:%d undo value from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
+}
+
+type ReplaceTextCommand struct {
+	selection *data.Selection
+	search    string
+	replace   string
+}
+
+func NewReplaceTextCommand(selection *data.Selection, search string, replace string) *ReplaceTextCommand {
+	return &ReplaceTextCommand{selection: selection, search: search, replace: replace}
+}
+
+func (cmd *ReplaceTextCommand) Execute() {
+	// TODO: copy cells first
+	var replaced bool
+	for row := cmd.selection.GetTopRow(); row <= cmd.selection.GetBottomRow(); row++ {
+		for col := cmd.selection.GetLeftCol(); col <= cmd.selection.GetRightCol(); col++ {
+			newText := strings.ReplaceAll(dta.GetDataCell(row, col).GetText(), cmd.search, cmd.replace)
+			dta.GetDataCell(row, col).SetText(newText)
+			logger.Info(fmt.Sprintf("cell %d:%d replaced %s with %s", row, col, cmd.search, cmd.replace))
+			replaced = true
+		}
+	}
+
+	if !replaced {
+		logger.Info(fmt.Sprintf("did not replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection))
+		return
+	}
+}
+
+// TODO: implement
+func (cmd *ReplaceTextCommand) Unexecute() {
+	logger.Info(fmt.Sprintf("undo replaced text"))
 }

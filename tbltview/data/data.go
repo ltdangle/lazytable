@@ -126,7 +126,18 @@ func (s *Selection) Update(endRow int, endCol int) {
 		s.leftCol = s.rightCol
 		s.rightCol = s.startCol
 	}
-
+}
+func (s *Selection) GetTopRow() int {
+	return s.topRow
+}
+func (s *Selection) GetLeftCol() int {
+	return s.leftCol
+}
+func (s *Selection) GetBottomRow() int {
+	return s.bottomRow
+}
+func (s *Selection) GetRightCol() int {
+	return s.rightCol
 }
 
 // Data type.

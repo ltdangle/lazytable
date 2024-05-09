@@ -1,14 +1,16 @@
 package main
 
 import (
+	"errors"
 	"regexp"
 	"strconv"
+	"tblview/data"
 )
 
 // Command-line mode commands. that can be parsed from the command line.
 type ClmCommand interface {
 	// Regex match of the command string.
-	Match(text string) (bool, Command)
+	Match(text string) (parsed bool, commandError error, command Command)
 }
 
 type SortColStrAscClmCommand struct {
@@ -19,35 +21,38 @@ func NewSortColStrAscClmCommand() *SortColStrAscClmCommand {
 	return &SortColStrAscClmCommand{}
 }
 
-func (clm *SortColStrAscClmCommand) Match(text string) (bool, Command) {
+func (clm *SortColStrAscClmCommand) Match(text string) (parsed bool, commandError error, command Command) {
 	var matches []string
 	re, err := regexp.Compile(`sortasc (\d+)`)
 	if err != nil {
-		return false, nil
+		return
 	}
 
 	// Find submatch returns the entire match and any parenthesized submatches
 	matches = re.FindStringSubmatch(text)
 	if matches == nil || len(matches) < 2 {
-		return false, nil
+		return
 	}
 
 	column, err := strconv.Atoi(matches[1])
 
 	if err != nil {
-		return false, nil
+		return
 	}
 
-	return true, NewSortColStrAscCommand(column + 1)
-
+	parsed = true
+	command = NewSortColStrAscCommand(column + 1)
+	return
 }
 
 type ReplaceClmCommand struct {
+	selection *data.Selection
 }
 
 func NewReplaceClmCommand() *ReplaceClmCommand {
-	return &ReplaceClmCommand{}
+	return &ReplaceClmCommand{selection: selection}
 }
+
 func (clm *ReplaceClmCommand) regex(text string) (ok bool, search string, replace string) {
 	// Compile the regular expression to match the whole pattern and extract the content within the quotes
 	re, err := regexp.Compile(`^replace '([^']*)' with '([^']*)'$`)
@@ -66,11 +71,22 @@ func (clm *ReplaceClmCommand) regex(text string) (ok bool, search string, replac
 	replace = match[2]
 	return
 }
-func (clm *ReplaceClmCommand) Match(text string) (bool, Command) {
-	ok, search, replace := clm.regex(text)
-	if !ok {
-		return false, nil
-	}
-	return true, NewChangeCellValueCommand(1, 1, search+"=>"+replace)
 
+func (clm *ReplaceClmCommand) Match(text string) (parsed bool, commandError error, command Command) {
+	ok, search, replace := clm.regex(text)
+
+	if !ok {
+		parsed = false
+		return
+	}
+
+	if selection == nil {
+		parsed = true
+		commandError = errors.New("no cells selected")
+		return
+	}
+
+	parsed = true
+	command = NewReplaceTextCommand(selection, search, replace)
+	return
 }

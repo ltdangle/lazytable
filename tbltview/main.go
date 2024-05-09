@@ -55,7 +55,7 @@ func main() {
 	dta = data.NewData(frmls, logger)
 
 	// Build clm command.
-	clmCommands = append(clmCommands, NewSortColStrAscClmCommand(),NewReplaceClmCommand())
+	clmCommands = append(clmCommands, NewSortColStrAscClmCommand(), NewReplaceClmCommand())
 
 	// Load csv file data.
 	readCsvFile(*csvFile, dta)
@@ -146,8 +146,13 @@ func buildCommandInput() {
 				text := commandInput.GetText()
 				logger.Info(fmt.Sprintf("commandInput.SetDoneFunc: key: %v, text: %s", key, text))
 				for _, clmCommand := range clmCommands {
-					match, command := clmCommand.Match(text)
+					match, commandError, command := clmCommand.Match(text)
 					if match {
+						if commandError != nil {
+							error = commandError.Error()
+							commandInput.SetText(error)
+							return
+						}
 						history.Do(command)
 						commandInput.SetLabel("")
 						commandInput.SetText("")
