@@ -41,7 +41,6 @@ func (cell *Cell) ShowError(text string) {
 	cell.isError = true
 }
 func (cell *Cell) Calculate() *FormulaRange {
-	cell.isInRange = false
 	cell.isError = false
 	if cell.IsFormula() {
 		cell.text = strings.ReplaceAll(cell.text, " ", "") // remove spaces
