@@ -237,6 +237,8 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	}
 
 	cell := d.cells[row][column]
+	cell.Calculate()
+
 	cell.TableCell.SetTextColor(tcell.ColorWhite)
 
 	if cell.isInRange {

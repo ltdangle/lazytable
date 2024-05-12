@@ -24,7 +24,14 @@ func NewHistory() *History {
 
 // TODO: log history actions
 func (h *History) Do(cmd Command) {
-	cmd.Execute()
+	// Execute command and que table update.
+	go func() {
+		app.QueueUpdateDraw(
+			func() {
+				cmd.Execute()
+			},
+		)
+	}()
 	h.UndoStack = append(h.UndoStack, cmd)
 	// Clear RedoStack because a new action has been taken
 	h.RedoStack = nil
@@ -37,7 +44,14 @@ func (h *History) Undo() {
 	// Pop command from UndoStack and reverse the action
 	last := len(h.UndoStack) - 1
 	cmd := h.UndoStack[last]
-	cmd.Unexecute()
+	// Execute command and que table update.
+	go func() {
+		app.QueueUpdateDraw(
+			func() {
+				cmd.Unexecute()
+			},
+		)
+	}()
 	h.UndoStack = h.UndoStack[:last]
 	// Push the command onto RedoStack
 	h.RedoStack = append(h.RedoStack, cmd)
@@ -50,7 +64,14 @@ func (h *History) Redo() {
 	// Pop command from RedoStack and re-apply the action
 	last := len(h.RedoStack) - 1
 	cmd := h.RedoStack[last]
-	cmd.Execute()
+	// Execute command and que table update.
+	go func() {
+		app.QueueUpdateDraw(
+			func() {
+				cmd.Execute()
+			},
+		)
+	}()
 	h.RedoStack = h.RedoStack[:last]
 	// Push the command back onto UndoStack
 	h.UndoStack = append(h.UndoStack, cmd)
