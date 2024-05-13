@@ -330,15 +330,15 @@ func wrapSelectionChangedFunc() func(row, col int) {
 		}
 		switch mode {
 		case MODE_VISUAL:
-			dta.ClearSelection(selection)
+			dta.ClearSelection()
 			selection.Update(row, col)
 			dta.SelectCells(selection)
 		case MODE_VISUAL_LINE:
-			dta.ClearSelection(selection)
+			dta.ClearSelection()
 			selection.Update(row, dta.GetColumnCount()-1)
 			dta.SelectCells(selection)
 		case MODE_VISUAL_BLOCK:
-			dta.ClearSelection(selection)
+			dta.ClearSelection()
 			selection.Update(dta.GetRowCount()-1, col)
 			dta.SelectCells(selection)
 		}
@@ -400,7 +400,7 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 		case "Esc":
 			table.SetSelectable(true, true)
 			mode = MODE_NORMAL
-			dta.ClearSelection(selection)
+			dta.ClearSelection()
 			selection.Clear()
 			logger.Info("normal mode")
 		case "Rune[d]":
@@ -409,14 +409,14 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			case MODE_VISUAL_LINE:
 				if selection.IsRowSelected() {
 					history.Do(NewDeleteRowsCommand(*selection))
-					dta.ClearSelection(selection)
+					dta.ClearSelection()
 					selection.Clear()
 					mode = MODE_NORMAL
 				}
 			case MODE_VISUAL_BLOCK:
 				if selection.IsColumnSelected() {
 					history.Do(NewDeleteColumnCommand(row, col))
-					dta.ClearSelection(selection)
+					dta.ClearSelection()
 					selection.Clear()
 					mode = MODE_NORMAL
 				}

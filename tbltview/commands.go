@@ -25,13 +25,14 @@ func NewHistory() *History {
 // TODO: log history actions
 func (h *History) Do(cmd Command) {
 	// Execute command and que table update.
-	go func() {
-		app.QueueUpdateDraw(
-			func() {
-				cmd.Execute()
-			},
-		)
-	}()
+	// go func() {
+	// 	app.QueueUpdateDraw(
+	// 		func() {
+	// 			cmd.Execute()
+	// 		},
+	// 	)
+	// }()
+	cmd.Execute()
 	h.UndoStack = append(h.UndoStack, cmd)
 	// Clear RedoStack because a new action has been taken
 	h.RedoStack = nil
@@ -45,13 +46,15 @@ func (h *History) Undo() {
 	last := len(h.UndoStack) - 1
 	cmd := h.UndoStack[last]
 	// Execute command and que table update.
-	go func() {
-		app.QueueUpdateDraw(
-			func() {
-				cmd.Unexecute()
-			},
-		)
-	}()
+	// go func() {
+	// 	app.QueueUpdateDraw(
+	// 		func() {
+	// 			cmd.Unexecute()
+	// 		},
+	// 	)
+	// }()
+	cmd.Unexecute()
+	dta.ClearSelection()
 	h.UndoStack = h.UndoStack[:last]
 	// Push the command onto RedoStack
 	h.RedoStack = append(h.RedoStack, cmd)
@@ -65,13 +68,14 @@ func (h *History) Redo() {
 	last := len(h.RedoStack) - 1
 	cmd := h.RedoStack[last]
 	// Execute command and que table update.
-	go func() {
-		app.QueueUpdateDraw(
-			func() {
-				cmd.Execute()
-			},
-		)
-	}()
+	// go func() {
+	// 	app.QueueUpdateDraw(
+	// 		func() {
+	// 			cmd.Execute()
+	// 		},
+	// 	)
+	// }()
+	cmd.Execute()
 	h.RedoStack = h.RedoStack[:last]
 	// Push the command back onto UndoStack
 	h.UndoStack = append(h.UndoStack, cmd)
@@ -418,7 +422,7 @@ func NewReplaceTextCommand(selection *data.Selection, search string, replace str
 
 func (cmd *ReplaceTextCommand) Execute() {
 	// Clear cell selection first.
-	dta.ClearSelection(cmd.selection)
+	dta.ClearSelection()
 	selection.Clear()
 
 	// Mirror originalCells dimensions to data.

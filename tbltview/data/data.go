@@ -310,14 +310,11 @@ func (d *Data) SelectCells(s *Selection) {
 	}
 }
 
-func (d *Data) ClearSelection(s *Selection) {
-	d.logger.Info(fmt.Sprintf("Data.ClearCellSelect: %v", s))
-	if s == nil {
-		return
-	}
-	for row := s.topRow; row <= s.bottomRow; row++ {
-		for col := s.leftCol; col <= s.rightCol; col++ {
-			d.GetDataCell(row, col).isSelected = false
+func (d *Data) ClearSelection() {
+	d.logger.Info("Data.ClearSelection: cleared selection")
+	for _, row := range d.cells {
+		for _, cell := range row {
+			cell.isSelected = false
 		}
 	}
 }
