@@ -446,7 +446,7 @@ func NewReplaceTextCommand(selection *data.Selection, search string, replace str
 
 func (cmd *ReplaceTextCommand) Execute() {
 	// Clear cell selection first.
-	dta.ClearCellSelect(cmd.selection)
+	dta.ClearSelection(cmd.selection)
 
 	// Mirror originalCells dimensions to data.
 	cmd.originalCells = make([][]*data.Cell, dta.GetRowCount())

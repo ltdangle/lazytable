@@ -92,6 +92,8 @@ func NewFormulaRange() *FormulaRange {
 }
 
 type Selection struct {
+	data *Data
+
 	startRow int // Inital selction point.
 	startCol int // Initial selection point.
 
@@ -101,8 +103,9 @@ type Selection struct {
 	rightCol  int
 }
 
-func NewSelection(startRow int, startCol int, endRow int, endCol int) *Selection {
+func NewSelection(data *Data, startRow int, startCol int, endRow int, endCol int) *Selection {
 	return &Selection{
+		data:     data,
 		startRow: startRow,
 		startCol: startCol,
 
@@ -113,6 +116,19 @@ func NewSelection(startRow int, startCol int, endRow int, endCol int) *Selection
 	}
 }
 
+func (s *Selection) IsRowSelected() bool {
+	if s.leftCol == 1 && s.rightCol == s.data.GetColumnCount()-1 {
+		return true
+	}
+	return false
+}
+
+func (s *Selection) IsColumnSelected() bool {
+	if s.topRow == 1 && s.bottomRow == s.data.GetRowCount()-1 {
+		return true
+	}
+	return false
+}
 func (s *Selection) Update(endRow int, endCol int) {
 	s.bottomRow = endRow
 	s.rightCol = endCol
@@ -283,7 +299,7 @@ func (d *Data) SelectCells(s *Selection) {
 	}
 }
 
-func (d *Data) ClearCellSelect(s *Selection) {
+func (d *Data) ClearSelection(s *Selection) {
 	d.logger.Info(fmt.Sprintf("Data.ClearCellSelect: %v", s))
 	if s == nil {
 		return

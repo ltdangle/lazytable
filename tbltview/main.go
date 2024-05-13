@@ -329,15 +329,15 @@ func wrapSelectionChangedFunc() func(row, col int) {
 		}
 		switch mode {
 		case MODE_VISUAL:
-			dta.ClearCellSelect(selection)
+			dta.ClearSelection(selection)
 			selection.Update(row, col)
 			dta.SelectCells(selection)
 		case MODE_VISUAL_LINE:
-			dta.ClearCellSelect(selection)
+			dta.ClearSelection(selection)
 			selection.Update(row, dta.GetColumnCount()-1)
 			dta.SelectCells(selection)
 		case MODE_VISUAL_BLOCK:
-			dta.ClearCellSelect(selection)
+			dta.ClearSelection(selection)
 			selection.Update(dta.GetRowCount()-1, col)
 			dta.SelectCells(selection)
 		}
@@ -373,9 +373,6 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 	return func(event *tcell.EventKey) *tcell.EventKey {
 		logger.Info(fmt.Sprintf("table.SetInputCapture: rune - %v, key - %v, modifier - %v, name - %v", event.Rune(), event.Key(), event.Modifiers(), event.Name()))
 		row, col := table.GetSelection()
-		rowSelectable, colSelectable := table.GetSelectable()
-		rowSelected := rowSelectable && !colSelectable
-		colSelected := !rowSelectable && colSelectable
 
 		// Normal mode.
 		switch event.Name() {
@@ -386,29 +383,40 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			app.SetFocus(cellInput)
 		case "Rune[v]":
 			mode = MODE_VISUAL
-			selection = data.NewSelection(row, col, row, col)
+			selection = data.NewSelection(dta, row, col, row, col)
 			dta.SelectCells(selection)
 			logger.Info("visual mode")
 		case "Rune[V]":
 			mode = MODE_VISUAL_LINE
-			selection = data.NewSelection(row, 1, row, dta.GetColumnCount()-1)
+			selection = data.NewSelection(dta, row, 1, row, dta.GetColumnCount()-1)
 			dta.SelectCells(selection)
 			logger.Info("visual line mode")
 		case "Ctrl+V":
 			mode = MODE_VISUAL_BLOCK
-			selection = data.NewSelection(1, col, dta.GetRowCount()-1, col)
+			selection = data.NewSelection(dta, 1, col, dta.GetRowCount()-1, col)
 			dta.SelectCells(selection)
 			logger.Info("visual block mode")
 		case "Esc":
 			table.SetSelectable(true, true)
 			mode = MODE_NORMAL
-			dta.ClearCellSelect(selection)
+			dta.ClearSelection(selection)
 			logger.Info("normal mode")
 		case "Rune[d]":
-			if rowSelected {
-				history.Do(NewDeleteRowCommand(row, col))
-			} else if colSelected {
-				history.Do(NewDeleteColumnCommand(row, col))
+			commandInput.SetText(fmt.Sprintf("Row selected: %v, col selected: %v", selection.IsRowSelected(), selection.IsColumnSelected()))
+			switch mode {
+			case MODE_VISUAL_LINE:
+				if selection != nil && selection.IsRowSelected() {
+					history.Do(NewDeleteRowCommand(row, col))
+					dta.ClearSelection(selection)
+					mode = MODE_NORMAL
+				}
+			case MODE_VISUAL_BLOCK:
+				if selection != nil && selection.IsColumnSelected() {
+					history.Do(NewDeleteColumnCommand(row, col))
+					dta.ClearSelection(selection)
+					mode = MODE_NORMAL
+				}
+
 			}
 		case "Rune[>]": // Increase column width.
 			history.Do(NewIncreaseColWidthCommand(dta.CurrentCol()))
