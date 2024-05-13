@@ -406,13 +406,13 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			commandInput.SetText(fmt.Sprintf("Row selected: %v, col selected: %v", selection.IsRowSelected(), selection.IsColumnSelected()))
 			switch mode {
 			case MODE_VISUAL_LINE:
-				if selection != nil && selection.IsRowSelected() {
+				if selection.IsRowSelected() {
 					history.Do(NewDeleteRowCommand(row, col))
 					dta.ClearSelection(selection)
 					mode = MODE_NORMAL
 				}
 			case MODE_VISUAL_BLOCK:
-				if selection != nil && selection.IsColumnSelected() {
+				if selection.IsColumnSelected() {
 					history.Do(NewDeleteColumnCommand(row, col))
 					dta.ClearSelection(selection)
 					mode = MODE_NORMAL
