@@ -346,10 +346,16 @@ func (d *Data) RemoveRow(row int) {
 }
 
 func (d *Data) RemoveRows(fromRow int, toRow int) {
-	for row := fromRow; row <= toRow; row++ {
-		d.RemoveRow(row)
+	if d.GetRowCount() == 2 {
+		return
 	}
+	if fromRow <= 0 || toRow >= d.GetRowCount() {
+		return // Invalid row index
+	}
+	d.cells = append(d.cells[:fromRow], d.cells[toRow+1:]...)
+	d.DrawXYCoordinates()
 }
+
 func (d *Data) RemoveColumn(col int) {
 	if d.GetColumnCount() == 2 {
 		return
