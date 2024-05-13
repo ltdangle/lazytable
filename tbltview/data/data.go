@@ -103,17 +103,20 @@ type Selection struct {
 	rightCol  int
 }
 
-func NewSelection(data *Data, startRow int, startCol int, endRow int, endCol int) *Selection {
+func NewSelection(data *Data) *Selection {
 	return &Selection{
-		data:     data,
-		startRow: startRow,
-		startCol: startCol,
-
-		topRow:    startRow,
-		leftCol:   startCol,
-		bottomRow: endRow,
-		rightCol:  endCol,
+		data: data,
 	}
+}
+func (s *Selection) SetCoordintates(startRow int, startCol int, endRow int, endCol int) {
+	s.startRow = startRow
+	s.startCol = startCol
+
+	s.topRow = startRow
+	s.leftCol = startCol
+	s.bottomRow = endRow
+	s.rightCol = endCol
+
 }
 
 func (s *Selection) IsRowSelected() bool {

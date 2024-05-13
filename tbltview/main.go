@@ -53,7 +53,8 @@ func main() {
 
 	// Init Data.
 	dta = data.NewData(frmls, logger)
-
+	// Init selection.
+	selection = data.NewSelection(dta)
 	// Build clm command.
 	clmCommands = append(clmCommands, NewSortColStrAscClmCommand(), NewReplaceClmCommand())
 
@@ -383,17 +384,17 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			app.SetFocus(cellInput)
 		case "Rune[v]":
 			mode = MODE_VISUAL
-			selection = data.NewSelection(dta, row, col, row, col)
+			selection.SetCoordintates(row, col, row, col)
 			dta.SelectCells(selection)
 			logger.Info("visual mode")
 		case "Rune[V]":
 			mode = MODE_VISUAL_LINE
-			selection = data.NewSelection(dta, row, 1, row, dta.GetColumnCount()-1)
+			selection.SetCoordintates(row, 1, row, dta.GetColumnCount()-1)
 			dta.SelectCells(selection)
 			logger.Info("visual line mode")
 		case "Ctrl+V":
 			mode = MODE_VISUAL_BLOCK
-			selection = data.NewSelection(dta, 1, col, dta.GetRowCount()-1, col)
+			selection.SetCoordintates(1, col, dta.GetRowCount()-1, col)
 			dta.SelectCells(selection)
 			logger.Info("visual block mode")
 		case "Esc":
