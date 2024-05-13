@@ -418,6 +418,21 @@ func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
 		return sorter(d.cells[i+2][col], d.cells[j+2][col])
 	})
 }
+func (d *Data) SnapShotCells() [][]*Cell {
+	var dest [][]*Cell
+	for _, row := range d.cells {
+		var rowCopy []*Cell
+		for _, cell := range row {
+			rowCopy = append(rowCopy, cell)
+		}
+		dest = append(dest, rowCopy)
+	}
+	return dest
+}
+
+func (d *Data) RestoreSnapshot(snapshot [][]*Cell) {
+	d.cells = snapshot
+}
 
 func (d *Data) DrawXYCoordinates() {
 	// Write row numbers.

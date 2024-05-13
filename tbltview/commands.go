@@ -362,53 +362,25 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 }
 
 type DeleteRowCommand struct {
-	deletedRow []*data.Cell // to remember the order before sorting
-	fromRow    int
-	col        int
-	toRow      int
+	cellSnapshot  [][]*data.Cell
+	selectedCells data.Selection
 }
 
-func NewDeleteRowCommand(row int, col int, toRow int) *DeleteRowCommand {
-	return &DeleteRowCommand{fromRow: row, col: col, toRow: toRow}
+func NewDeleteRowCommand(s data.Selection) *DeleteRowCommand {
+	return &DeleteRowCommand{selectedCells: s}
 }
 
 func (cmd *DeleteRowCommand) Execute() {
-	// TODO: capture all rows
-	if cmd.deletedRow == nil {
-		for i := 0; i < dta.GetColumnCount(); i++ {
-			cmd.deletedRow = append(cmd.deletedRow, dta.GetDataCell(cmd.fromRow, i))
-		}
-	}
+	cmd.cellSnapshot = dta.SnapShotCells()
 
-	dta.RemoveRows(cmd.fromRow, cmd.toRow)
+	dta.RemoveRows(cmd.selectedCells.GetTopRow(), cmd.selectedCells.GetBottomRow())
 
-	if cmd.fromRow == dta.GetRowCount() { // Last row deleted, shift selection up.
-		if dta.GetRowCount() > 0 {
-			table.Select(dta.GetRowCount()-1, cmd.col)
-		}
-	}
-	logger.Info(fmt.Sprintf("DeleteRowCommand: delete from row %d to row %d", cmd.fromRow, cmd.toRow))
+	logger.Info(fmt.Sprintf("DeleteRowCommand: delete from row %d to row %d", cmd.selectedCells.GetTopRow(), cmd.selectedCells.GetBottomRow()))
 }
 
 func (cmd *DeleteRowCommand) Unexecute() {
-	// This is last column (special case)
-	if cmd.fromRow == dta.GetRowCount() {
-		dta.InsertRow(dta.GetRowCount() - 1)
-		// Paste back deleted cells.
-		for col := 0; col < dta.GetColumnCount(); col++ {
-			dta.SetDataCell(dta.GetRowCount()-1, col, cmd.deletedRow[col])
-		}
-		table.Select(dta.GetRowCount()-1, cmd.col)
-		return
-	}
-
-	dta.InsertRow(cmd.fromRow)
-	// Paste back deleted cells.
-	for col := 0; col < dta.GetColumnCount(); col++ {
-		dta.SetDataCell(cmd.fromRow, col, cmd.deletedRow[col])
-	}
-
-	logger.Info(fmt.Sprintf("undo deleted row %d", cmd.fromRow))
+	dta.RestoreSnapshot(cmd.cellSnapshot)
+	logger.Info(fmt.Sprintf("undo deleted rows %v", cmd.selectedCells))
 }
 
 type ChangeCellValueCommand struct {
