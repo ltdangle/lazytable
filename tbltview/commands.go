@@ -361,16 +361,16 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 	logger.Info(fmt.Sprintf("undo deleted column %d", cmd.col))
 }
 
-type DeleteRowCommand struct {
+type DeleteRowsCommand struct {
 	cellSnapshot  [][]*data.Cell
 	selectedCells data.Selection
 }
 
-func NewDeleteRowCommand(s data.Selection) *DeleteRowCommand {
-	return &DeleteRowCommand{selectedCells: s}
+func NewDeleteRowsCommand(s data.Selection) *DeleteRowsCommand {
+	return &DeleteRowsCommand{selectedCells: s}
 }
 
-func (cmd *DeleteRowCommand) Execute() {
+func (cmd *DeleteRowsCommand) Execute() {
 	cmd.cellSnapshot = dta.SnapShotCells()
 
 	dta.RemoveRows(cmd.selectedCells.GetTopRow(), cmd.selectedCells.GetBottomRow())
@@ -378,7 +378,7 @@ func (cmd *DeleteRowCommand) Execute() {
 	logger.Info(fmt.Sprintf("DeleteRowCommand: delete from row %d to row %d", cmd.selectedCells.GetTopRow(), cmd.selectedCells.GetBottomRow()))
 }
 
-func (cmd *DeleteRowCommand) Unexecute() {
+func (cmd *DeleteRowsCommand) Unexecute() {
 	dta.RestoreSnapshot(cmd.cellSnapshot)
 	logger.Info(fmt.Sprintf("undo deleted rows %v", cmd.selectedCells))
 }

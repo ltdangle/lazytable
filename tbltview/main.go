@@ -408,7 +408,7 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			switch mode {
 			case MODE_VISUAL_LINE:
 				if selection.IsRowSelected() {
-					history.Do(NewDeleteRowCommand(*selection))
+					history.Do(NewDeleteRowsCommand(*selection))
 					dta.ClearSelection(selection)
 					selection.Clear()
 					mode = MODE_NORMAL
