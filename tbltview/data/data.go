@@ -108,6 +108,14 @@ func NewSelection(data *Data) *Selection {
 		data: data,
 	}
 }
+func (s *Selection) Clear() {
+	s.startRow = 0
+	s.startCol = 0
+	s.topRow = 0
+	s.leftCol = 0
+	s.bottomRow = 0
+	s.rightCol = 0
+}
 func (s *Selection) SetCoordintates(startRow int, startCol int, endRow int, endCol int) {
 	s.startRow = startRow
 	s.startCol = startCol
@@ -337,6 +345,11 @@ func (d *Data) RemoveRow(row int) {
 	d.DrawXYCoordinates()
 }
 
+func (d *Data) RemoveRows(fromRow int, toRow int) {
+	for row := fromRow; row <= toRow; row++ {
+		d.RemoveRow(row)
+	}
+}
 func (d *Data) RemoveColumn(col int) {
 	if d.GetColumnCount() == 2 {
 		return

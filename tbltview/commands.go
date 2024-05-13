@@ -363,36 +363,36 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 
 type DeleteRowCommand struct {
 	deletedRow []*data.Cell // to remember the order before sorting
-	row        int
+	fromRow    int
 	col        int
+	toRow      int
 }
 
-func NewDeleteRowCommand(row int, col int) *DeleteRowCommand {
-	return &DeleteRowCommand{row: row, col: col}
+func NewDeleteRowCommand(row int, col int, toRow int) *DeleteRowCommand {
+	return &DeleteRowCommand{fromRow: row, col: col, toRow: toRow}
 }
 
 func (cmd *DeleteRowCommand) Execute() {
-	// Capture the current row before deleting.
+	// TODO: capture all rows
 	if cmd.deletedRow == nil {
 		for i := 0; i < dta.GetColumnCount(); i++ {
-			cmd.deletedRow = append(cmd.deletedRow, dta.GetDataCell(cmd.row, i))
+			cmd.deletedRow = append(cmd.deletedRow, dta.GetDataCell(cmd.fromRow, i))
 		}
 	}
 
-	dta.RemoveRow(cmd.row)
+	dta.RemoveRows(cmd.fromRow, cmd.toRow)
 
-	if cmd.row == dta.GetRowCount() { // Last row deleted, shift selection up.
+	if cmd.fromRow == dta.GetRowCount() { // Last row deleted, shift selection up.
 		if dta.GetRowCount() > 0 {
 			table.Select(dta.GetRowCount()-1, cmd.col)
 		}
 	}
-
-	logger.Info(fmt.Sprintf("deleted row %d", cmd.row))
+	logger.Info(fmt.Sprintf("DeleteRowCommand: delete from row %d to row %d", cmd.fromRow, cmd.toRow))
 }
 
 func (cmd *DeleteRowCommand) Unexecute() {
 	// This is last column (special case)
-	if cmd.row == dta.GetRowCount() {
+	if cmd.fromRow == dta.GetRowCount() {
 		dta.InsertRow(dta.GetRowCount() - 1)
 		// Paste back deleted cells.
 		for col := 0; col < dta.GetColumnCount(); col++ {
@@ -402,13 +402,13 @@ func (cmd *DeleteRowCommand) Unexecute() {
 		return
 	}
 
-	dta.InsertRow(cmd.row)
+	dta.InsertRow(cmd.fromRow)
 	// Paste back deleted cells.
 	for col := 0; col < dta.GetColumnCount(); col++ {
-		dta.SetDataCell(cmd.row, col, cmd.deletedRow[col])
+		dta.SetDataCell(cmd.fromRow, col, cmd.deletedRow[col])
 	}
 
-	logger.Info(fmt.Sprintf("undo deleted row %d", cmd.row))
+	logger.Info(fmt.Sprintf("undo deleted row %d", cmd.fromRow))
 }
 
 type ChangeCellValueCommand struct {
@@ -447,6 +447,7 @@ func NewReplaceTextCommand(selection *data.Selection, search string, replace str
 func (cmd *ReplaceTextCommand) Execute() {
 	// Clear cell selection first.
 	dta.ClearSelection(cmd.selection)
+	selection.Clear()
 
 	// Mirror originalCells dimensions to data.
 	cmd.originalCells = make([][]*data.Cell, dta.GetRowCount())
