@@ -429,6 +429,7 @@ func (d *Data) SnapShotCells() [][]*Cell {
 
 func (d *Data) RestoreSnapshot(snapshot [][]*Cell) {
 	d.cells = snapshot
+	d.DrawXYCoordinates()
 }
 
 func (d *Data) DrawXYCoordinates() {
