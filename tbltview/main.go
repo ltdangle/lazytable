@@ -404,14 +404,24 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			selection.Clear()
 			logger.Info("normal mode")
 		case "Rune[d]":
-			commandInput.SetText(fmt.Sprintf("Row selected: %v, col selected: %v", selection.IsRowSelected(), selection.IsColumnSelected()))
 			switch mode {
 			case MODE_VISUAL_LINE:
+				lastLineDeleted := false
 				if selection.IsRowSelected() {
+					// Move cursor if we deleted last row.
+					if selection.GetBottomRow() == dta.GetRowCount()-1 {
+						lastLineDeleted = true
+					}
+
 					history.Do(NewDeleteRowsCommand(*selection))
+					mode = MODE_NORMAL
 					dta.ClearSelection()
 					selection.Clear()
-					mode = MODE_NORMAL
+
+					// Move cursor if we deleted last row.
+					if lastLineDeleted {
+						table.Select(dta.GetRowCount()-1, dta.CurrentCol())
+					}
 				}
 			case MODE_VISUAL_BLOCK:
 				if selection.IsColumnSelected() {
