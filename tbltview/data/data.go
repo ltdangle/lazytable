@@ -32,8 +32,7 @@ type Cell struct {
 }
 
 func NewCell() *Cell {
-	cell := &Cell{}
-	// cell.SetMaxWidth(10)
+	cell := &Cell{Width: 10}
 	return cell
 }
 
@@ -252,6 +251,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 
 	cell := d.cells[row][column]
 	tblCell := tview.NewTableCell("")
+	tblCell.SetMaxWidth(cell.Width)
 
 	displayedText, _, err := cell.Calculate()
 	if err != nil {

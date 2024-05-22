@@ -280,16 +280,12 @@ func (cmd *DecreaseColWidthCommand) Execute() {
 			break
 		}
 		cell.Width = cell.Width - 1
+		logger.Info(fmt.Sprintf("decreased column %d width to %d", dta.CurrentCol(), cell.Width))
 	}
-	logger.Info(fmt.Sprintf("decreased column %d width", dta.CurrentCol()))
 }
 
 func (cmd *DecreaseColWidthCommand) Unexecute() {
-	for rowIdx := range dta.GetCells() {
-		cell := dta.GetCell(rowIdx, dta.CurrentCol())
-		cell.SetMaxWidth(cell.MaxWidth + 1)
-	}
-	logger.Info(fmt.Sprintf("undo decreased column %d width", dta.CurrentCol()))
+	// TODO:
 }
 
 type IncreaseColWidthCommand struct {
@@ -302,21 +298,14 @@ func NewIncreaseColWidthCommand(col int) *IncreaseColWidthCommand {
 
 func (cmd *IncreaseColWidthCommand) Execute() {
 	for rowIdx := range dta.GetCells() {
-		cell := dta.GetCell(rowIdx, dta.CurrentCol())
-		cell.SetMaxWidth(cell.MaxWidth + 1)
+		cell := dta.GetDataCell(rowIdx, cmd.col)
+		cell.Width = cell.Width + 1
+		logger.Info(fmt.Sprintf("increased column %d width to %d", dta.CurrentCol(), cell.Width))
 	}
-	logger.Info(fmt.Sprintf("increased column %d width", dta.CurrentCol()))
 }
 
 func (cmd *IncreaseColWidthCommand) Unexecute() {
-	for rowIdx := range dta.GetCells() {
-		cell := dta.GetCell(rowIdx, cmd.col)
-		if cell.MaxWidth == 1 {
-			break
-		}
-		cell.SetMaxWidth(cell.MaxWidth - 1)
-	}
-	logger.Info(fmt.Sprintf("undo increased column %d width", dta.CurrentCol()))
+	// TODO:
 }
 
 type DeleteColumnCommand struct {
