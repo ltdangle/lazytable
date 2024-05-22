@@ -54,7 +54,6 @@ func (h *History) Undo() {
 	// 	)
 	// }()
 	cmd.Unexecute()
-	dta.ClearSelection()
 	h.UndoStack = h.UndoStack[:last]
 	// Push the command onto RedoStack
 	h.RedoStack = append(h.RedoStack, cmd)
