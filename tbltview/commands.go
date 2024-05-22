@@ -285,7 +285,11 @@ func (cmd *DecreaseColWidthCommand) Execute() {
 }
 
 func (cmd *DecreaseColWidthCommand) Unexecute() {
-	// TODO:
+	for rowIdx := range dta.GetCells() {
+		cell := dta.GetDataCell(rowIdx, cmd.col)
+		cell.Width = cell.Width + 1
+		logger.Info(fmt.Sprintf("increased column %d width to %d", dta.CurrentCol(), cell.Width))
+	}
 }
 
 type IncreaseColWidthCommand struct {
@@ -305,7 +309,14 @@ func (cmd *IncreaseColWidthCommand) Execute() {
 }
 
 func (cmd *IncreaseColWidthCommand) Unexecute() {
-	// TODO:
+	for rowIdx := range dta.GetCells() {
+		cell := dta.GetDataCell(rowIdx, cmd.col)
+		if cell.Width == 1 {
+			break
+		}
+		cell.Width = cell.Width - 1
+		logger.Info(fmt.Sprintf("decreased column %d width to %d", dta.CurrentCol(), cell.Width))
+	}
 }
 
 type DeleteColumnCommand struct {
