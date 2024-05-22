@@ -63,7 +63,7 @@ func (f *SumFormula) sum(data *d.Data, startRow, startCol, endRow, endCol int) (
 	// Sum cells in the range [startX:endX, startY:endY]
 	for y := startRow; y <= endRow; y++ {
 		for x := startCol; x <= endCol; x++ {
-			val, err := strconv.ParseFloat(data.GetDataCell(y, x).TableCell.Text, 64)
+			val, err := strconv.ParseFloat(data.GetDataCell(y, x).Text, 64)
 			if err != nil {
 				return 0, fmt.Errorf("%d,%d is not a number", y-1, x-1)
 			}

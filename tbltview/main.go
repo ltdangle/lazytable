@@ -116,7 +116,7 @@ func buildCellInput() {
 	cellInput.
 		SetFieldStyle(tcell.StyleDefault).
 		SetLabel(fmt.Sprintf("%d:%d ", dta.CurrentRow()-1, dta.CurrentCol()-1)).
-		SetText(dta.GetCurrentCell().GetText()).
+		SetText(dta.GetCurrentCell().Text).
 		SetDoneFunc(
 			func(key tcell.Key) {
 				logger.Info(fmt.Sprintf("cellInput.SetDoneFunc: %v", key))
@@ -242,7 +242,7 @@ func readCsvFile(fileName string, dataTbl *data.Data) {
 
 	// Pretty-print table header.
 	for _, headerCell := range dataTbl.GetRow(1) {
-		headerCell.SetAttributes(tcell.AttrBold)
+		headerCell.Attributes = tcell.AttrBold
 	}
 }
 
@@ -251,14 +251,13 @@ func addRecordToDataTable(recordCount int, record []string, dataTbl *data.Data) 
 
 	// Set col header.
 	colHead := data.NewCell()
-	colHead.SetText(fmt.Sprintf("%d", recordCount))
+	colHead.Text = fmt.Sprintf("%d", recordCount)
 	dataRow = append(dataRow, colHead)
 
 	// Add row (record) data.
 	for _, val := range record {
 		cell := data.NewCell()
-		cell.SetText(val)
-		cell.SetMaxWidth(10)
+		cell.Text = val
 		dataRow = append(dataRow, cell)
 	}
 
@@ -271,7 +270,7 @@ func convertDataToArr(dataTbl *data.Data) [][]string {
 		row = row[1:] // account for row numbers col
 		stringRow := make([]string, len(row))
 		for j, cell := range row {
-			stringRow[j] = cell.GetText()
+			stringRow[j] = cell.Text
 		}
 		data = append(data, stringRow)
 	}
@@ -296,7 +295,7 @@ func saveDataToFile(path string, dataDataTable *data.Data) {
 
 }
 func wrapSelectionChangedFunc() func(row, col int) {
-	var hihglight *data.FormulaRange
+	var formulaRange *data.FormulaRange
 	return func(row, col int) {
 		logger.Info(fmt.Sprintf("table.SetSelectionChangedFunc: row %d, col %d", row, col))
 		// Don't select x,y coordinates.
@@ -316,17 +315,17 @@ func wrapSelectionChangedFunc() func(row, col int) {
 		dta.SetCurrentCol(col) // account for leftmost coordinates col
 
 		cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
-		cellInput.SetText(dta.GetCurrentCell().GetText())
+		cellInput.SetText(dta.GetCurrentCell().Text)
 
 		// Clear previos highlights.
-		if hihglight != nil {
-			dta.ClearFormulaRange(hihglight)
+		if formulaRange != nil {
+			dta.ClearFormulaRange(formulaRange)
 		}
 
 		// Highlight cells for the formula.
-		hihglight = dta.GetCurrentCell().Calculate()
-		if hihglight != nil {
-			dta.HighlightFormulaRange(hihglight)
+		_, formulaRange, _ = dta.GetCurrentCell().Calculate()
+		if formulaRange != nil {
+			dta.HighlightFormulaRange(formulaRange)
 		}
 		switch mode {
 		case MODE_VISUAL:
@@ -347,25 +346,25 @@ func wrapSelectionChangedFunc() func(row, col int) {
 }
 
 func wrapChangedFunc() func(text string) {
-	var hihglight *data.FormulaRange
+	var formulaRange *data.FormulaRange
 	return func(text string) {
 		logger.Info(fmt.Sprintf("cellInput.SetChangedFunc: %v", text))
 		// This function is called whenever cursor changes position.
 		// So we need to check if the value actually changed.
-		prevVal := dta.GetCurrentCell().GetText()
+		prevVal := dta.GetCurrentCell().Text
 		if prevVal != text {
 			history.Do(NewChangeCellValueCommand(dta.CurrentRow(), dta.CurrentCol(), text))
 		}
 
 		// Clear previos highlights.
-		if hihglight != nil {
-			dta.ClearFormulaRange(hihglight)
+		if formulaRange != nil {
+			dta.ClearFormulaRange(formulaRange)
 		}
 
 		// Highlight cells for the formula.
-		hihglight = dta.GetCurrentCell().Calculate()
-		if hihglight != nil {
-			dta.HighlightFormulaRange(hihglight)
+		_, formulaRange, _ = dta.GetCurrentCell().Calculate()
+		if formulaRange != nil {
+			dta.HighlightFormulaRange(formulaRange)
 		}
 	}
 }

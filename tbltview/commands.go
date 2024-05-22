@@ -276,10 +276,10 @@ func NewDecreaseColWidthCommand(col int) *DecreaseColWidthCommand {
 func (cmd *DecreaseColWidthCommand) Execute() {
 	for rowIdx := range dta.GetCells() {
 		cell := dta.GetDataCell(rowIdx, cmd.col)
-		if cell.MaxWidth == 1 {
+		if cell.Width == 1 {
 			break
 		}
-		cell.SetMaxWidth(cell.MaxWidth - 1)
+		cell.Width = cell.Width - 1
 	}
 	logger.Info(fmt.Sprintf("decreased column %d width", dta.CurrentCol()))
 }
@@ -399,13 +399,13 @@ func NewChangeCellValueCommand(row int, col int, text string) *ChangeCellValueCo
 }
 
 func (cmd *ChangeCellValueCommand) Execute() {
-	cmd.prevVal = dta.GetDataCell(cmd.row, cmd.col).GetText()
-	dta.GetDataCell(cmd.row, cmd.col).SetText(cmd.newVal)
+	cmd.prevVal = dta.GetDataCell(cmd.row, cmd.col).Text
+	dta.GetDataCell(cmd.row, cmd.col).Text = cmd.newVal
 	logger.Info(fmt.Sprintf("%d:%d changed value from %s to %s", cmd.row, cmd.col, cmd.prevVal, cmd.newVal))
 }
 
 func (cmd *ChangeCellValueCommand) Unexecute() {
-	dta.GetDataCell(cmd.row, cmd.col).SetText(cmd.prevVal)
+	dta.GetDataCell(cmd.row, cmd.col).Text = cmd.prevVal
 	logger.Info(fmt.Sprintf("%d:%d undo value from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
 }
 
@@ -441,8 +441,8 @@ func (cmd *ReplaceTextCommand) Execute() {
 				logger.Error(err.Error())
 			}
 			// Replace cell text.
-			newText := strings.ReplaceAll(cell.GetText(), cmd.search, cmd.replace)
-			cell.SetText(newText)
+			newText := strings.ReplaceAll(cell.Text, cmd.search, cmd.replace)
+			cell.Text = newText
 			replaced = true
 
 			logger.Info(fmt.Sprintf("cell %d:%d replaced %s with %s", row, col, cmd.search, cmd.replace))

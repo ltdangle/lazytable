@@ -1,6 +1,7 @@
 package data
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -20,56 +21,43 @@ const (
 )
 
 type Cell struct {
-	*tview.TableCell
-	isSelected bool
-	isInRange  bool // Cell is part of the formula range.
-	isError    bool // Cell formula has error.
-	text       string
+	IsSelected bool
+	IsInRange  bool // Cell is part of the formula range.
+	Text       string
+
+	// tview.TableCell attributes
+	Attributes tcell.AttrMask
+	Align      int
+	Width      int
 }
 
 func NewCell() *Cell {
-	cell := &Cell{TableCell: tview.NewTableCell("")}
-	cell.SetMaxWidth(10)
+	cell := &Cell{}
+	// cell.SetMaxWidth(10)
 	return cell
 }
-func (cell *Cell) SetText(text string) {
-	cell.text = text
-	cell.Calculate()
-}
-func (cell *Cell) ShowError(text string) {
-	cell.TableCell.SetText("#ERR:" + text)
-	cell.isError = true
-}
-func (cell *Cell) Calculate() *FormulaRange {
-	cell.isError = false
+
+func (cell *Cell) Calculate() (displayText string, rangeFormula *FormulaRange, err error) {
 	if cell.IsFormula() {
-		cell.text = strings.ReplaceAll(cell.text, " ", "") // remove spaces
-		fText := cell.text[1:]                             // strip leading =
+		text := strings.ReplaceAll(cell.Text, " ", "") // remove spaces
+		fText := text[1:]                              // strip leading =
 		for _, formula := range formulas {
 			isMatch, _ := formula.Match(fText)
 			if isMatch {
 				calculated, formulaRange, err := formula.Calculate(d, fText)
 				if err != nil {
-					cell.ShowError(err.Error())
-					return nil
+					return "", nil, err
 				}
-				cell.TableCell.SetText(calculated)
-				return formulaRange
+				return calculated, formulaRange, nil
 			}
 		}
-		cell.ShowError("no formula")
-		return nil
+		return "", nil, errors.New("no formula")
 	}
-	cell.TableCell.SetText(cell.text)
-	return nil
-}
-
-func (cell *Cell) GetText() string {
-	return cell.text
+	return cell.Text, nil, nil
 }
 
 func (cell *Cell) IsFormula() bool {
-	return strings.HasPrefix(cell.text, "=")
+	return strings.HasPrefix(cell.Text, "=")
 }
 
 type Formula interface {
@@ -263,31 +251,39 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 	}
 
 	cell := d.cells[row][column]
-	cell.Calculate()
+	tblCell := tview.NewTableCell("")
 
-	cell.TableCell.SetTextColor(tcell.ColorWhite)
+	displayedText, _, err := cell.Calculate()
+	if err != nil {
+		tblCell.SetText(err.Error())
+	} else {
+		tblCell.SetText(displayedText)
+	}
 
-	if cell.isInRange {
-		cell.TableCell.SetTextColor(tcell.ColorGreen)
+	if cell.IsInRange {
+		tblCell.SetTextColor(tcell.ColorGreen)
 	}
 	if cell.IsFormula() {
-		cell.TableCell.SetTextColor(tcell.ColorGreen)
+		tblCell.SetTextColor(tcell.ColorGreen)
 	}
-	if cell.isSelected {
-		cell.TableCell.SetTextColor(tcell.ColorBlue)
+	if cell.IsSelected {
+		tblCell.SetTextColor(tcell.ColorBlue)
 	}
-	if cell.isError {
-		cell.TableCell.SetTextColor(tcell.ColorRed)
+	if err != nil {
+		tblCell.SetTextColor(tcell.ColorRed)
 	}
 
-	return cell.TableCell
+	tblCell.SetAttributes(cell.Attributes)
+	tblCell.SetAlign(cell.Align)
+	tblCell.SetMaxWidth(cell.Width)
 
+	return tblCell
 }
 
 func (d *Data) HighlightFormulaRange(h *FormulaRange) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
-			d.GetDataCell(row, col).isInRange = true
+			d.GetDataCell(row, col).IsInRange = true
 		}
 	}
 }
@@ -295,7 +291,7 @@ func (d *Data) HighlightFormulaRange(h *FormulaRange) {
 func (d *Data) ClearFormulaRange(h *FormulaRange) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
-			d.GetDataCell(row, col).isInRange = false
+			d.GetDataCell(row, col).IsInRange = false
 		}
 	}
 }
@@ -304,7 +300,7 @@ func (d *Data) SelectCells(s *Selection) {
 	d.logger.Info(fmt.Sprintf("Data.SelectCells: %v", s))
 	for row := s.topRow; row <= s.bottomRow; row++ {
 		for col := s.leftCol; col <= s.rightCol; col++ {
-			d.GetDataCell(row, col).isSelected = true
+			d.GetDataCell(row, col).IsSelected = true
 
 		}
 	}
@@ -314,7 +310,7 @@ func (d *Data) ClearSelection() {
 	d.logger.Info("Data.ClearSelection: cleared selection")
 	for _, row := range d.cells {
 		for _, cell := range row {
-			cell.isSelected = false
+			cell.IsSelected = false
 		}
 	}
 }
@@ -390,7 +386,9 @@ func (d *Data) GetCurrentCell() *Cell {
 
 func (d *Data) SortColStrAsc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
-		return a.TableCell.Text < b.TableCell.Text // Compare the text of the cells for ascending order.
+		aText, _, _ := a.Calculate()
+		bText, _, _ := b.Calculate()
+		return aText < bText
 	})
 	d.sortedCol = col
 	d.sortOrder = ascIndicator
@@ -399,7 +397,9 @@ func (d *Data) SortColStrAsc(col int) {
 
 func (d *Data) SortColStrDesc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
-		return a.TableCell.Text > b.TableCell.Text // Compare the text of the cells for descending order.
+		aText, _, _ := a.Calculate()
+		bText, _, _ := b.Calculate()
+		return aText > bText
 	})
 	d.sortedCol = col
 	d.sortOrder = descIndicator
@@ -436,30 +436,30 @@ func (d *Data) DrawXYCoordinates() {
 	// Write row numbers.
 	for rowIdx := range d.cells {
 		cell := d.cells[rowIdx][0]
-		cell.SetText(fmt.Sprintf("%d", rowIdx-1))
-		cell.SetAttributes(tcell.AttrDim)
-		cell.SetAlign(1) //AlignCenter
+		cell.Text = fmt.Sprintf("%d", rowIdx-1)
+		cell.Attributes = tcell.AttrDim
+		cell.Align = 1 //AlignCenter
 		if rowIdx == d.CurrentRow() {
-			cell.SetAttributes(tcell.AttrBold)
-			cell.SetAttributes(tcell.AttrUnderline)
+			cell.Attributes = tcell.AttrBold
+			cell.Attributes = tcell.AttrUnderline
 		}
 	}
 	// Write column numbers.
 	for colIdx, cell := range d.cells[0] {
 		colText := fmt.Sprintf("%d", colIdx-1)
-		cell.SetAttributes(tcell.AttrDim)
-		cell.SetAlign(1) //AlignCenter
+		cell.Attributes = tcell.AttrDim
+		cell.Align = 1 //AlignCenter
 		if colIdx == d.CurrentCol() {
-			cell.SetAttributes(tcell.AttrBold)
-			cell.SetAttributes(tcell.AttrUnderline)
+			cell.Attributes = tcell.AttrBold
+			cell.Attributes = tcell.AttrUnderline
 		}
 		if d.sortedCol != -1 {
 			if colIdx == d.sortedCol {
 				colText = colText + d.sortOrder
 			}
 		}
-		cell.SetText(colText)
+		cell.Text = colText
 	}
 
-	d.cells[0][0].SetText("")
+	d.cells[0][0].Text = ""
 }
