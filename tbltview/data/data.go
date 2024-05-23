@@ -156,64 +156,52 @@ func (s *Selection) GetRightCol() int {
 
 // Data type.
 type Data struct {
-	cells      [][]*Cell
-	currentRow int
-	currentCol int
-	sortedCol  int
-	sortOrder  string
+	Cells      [][]*Cell
+	CurrentRow int
+	CurrentCol int
+	SortedCol  int
+	SortOrder  string
 	logger     *logger.Logger
 }
 
 func NewData(frmls []Formula, logger *logger.Logger) *Data {
 	formulas = frmls
-	d = &Data{sortedCol: -1, sortOrder: "", logger: logger}
+	d = &Data{SortedCol: -1, SortOrder: "", logger: logger}
 	return d
 }
 func (d *Data) GetCells() [][]*Cell {
-	return d.cells
+	return d.Cells
 }
 func (d *Data) GetDataCell(row int, col int) *Cell {
-	return d.cells[row][col]
+	return d.Cells[row][col]
 }
 func (d *Data) SetDataCell(row int, col int, cell *Cell) {
-	d.cells[row][col] = cell
+	d.Cells[row][col] = cell
 }
 func (d *Data) CopyDataCell(row int, col int, cell *Cell) {
-	_ = copier.Copy(d.cells[row][col], cell)
+	_ = copier.Copy(d.Cells[row][col], cell)
 }
 func (d *Data) GetRow(row int) []*Cell {
-	return d.cells[row]
+	return d.Cells[row]
 }
 func (d *Data) GetCol(column int) []*Cell {
 	var col []*Cell
-	for row := range d.cells {
-		col = append(col, d.cells[row][column])
+	for row := range d.Cells {
+		col = append(col, d.Cells[row][column])
 	}
 	return col
 }
-func (d *Data) SortedCol() int {
-	return d.sortedCol
-}
-func (d *Data) SetSortedCol(sortedCol int) {
-	d.sortedCol = sortedCol
-}
-func (d *Data) SortOrder() string {
-	return d.sortOrder
-}
-func (d *Data) SetSortOrder(sortOrder string) {
-	d.sortOrder = sortOrder
-}
 func (d *Data) Clear() {
-	d.cells = nil
+	d.Cells = nil
 }
 func (d *Data) InsertColumn(column int) {
-	for row := range d.cells {
-		if column > len(d.cells[row]) {
+	for row := range d.Cells {
+		if column > len(d.Cells[row]) {
 			continue
 		}
-		d.cells[row] = append(d.cells[row], nil)             // Extend by one.
-		copy(d.cells[row][column+1:], d.cells[row][column:]) // Shift to the right.
-		d.cells[row][column] = NewCell()
+		d.Cells[row] = append(d.Cells[row], nil)             // Extend by one.
+		copy(d.Cells[row][column+1:], d.Cells[row][column:]) // Shift to the right.
+		d.Cells[row][column] = NewCell()
 		d.DrawXYCoordinates()
 	}
 }
@@ -222,25 +210,14 @@ func (d *Data) InsertRow(row int) {
 		return
 	}
 
-	d.cells = append(d.cells, nil)       // Extend by one.
-	copy(d.cells[row+1:], d.cells[row:]) // Shift down.
-	d.cells[row] = d.createRow()         // New row is initialized.
+	d.Cells = append(d.Cells, nil)       // Extend by one.
+	copy(d.Cells[row+1:], d.Cells[row:]) // Shift down.
+	d.Cells[row] = d.createRow()         // New row is initialized.
 	d.DrawXYCoordinates()
 }
-func (d *Data) SetCurrentRow(row int) {
-	d.currentRow = row
-}
-func (d *Data) SetCurrentCol(col int) {
-	d.currentCol = col
-}
-func (d *Data) CurrentRow() int {
-	return d.currentRow
-}
-func (d *Data) CurrentCol() int {
-	return d.currentCol
-}
+
 func (d *Data) AddDataRow(dataRow []*Cell) {
-	d.cells = append(d.cells, dataRow)
+	d.Cells = append(d.Cells, dataRow)
 }
 
 func (d *Data) GetCell(row, column int) *tview.TableCell {
@@ -249,7 +226,7 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		return nil
 	}
 
-	cell := d.cells[row][column]
+	cell := d.Cells[row][column]
 	tblCell := tview.NewTableCell("")
 	tblCell.SetMaxWidth(cell.Width)
 
@@ -308,7 +285,7 @@ func (d *Data) SelectCells(s *Selection) {
 
 func (d *Data) ClearSelection() {
 	d.logger.Info("Data.ClearSelection: cleared selection")
-	for _, row := range d.cells {
+	for _, row := range d.Cells {
 		for _, cell := range row {
 			cell.IsSelected = false
 		}
@@ -320,11 +297,11 @@ func (d *Data) SetCell(row, column int, cell *tview.TableCell) {
 }
 
 func (d *Data) GetRowCount() int {
-	return len(d.cells)
+	return len(d.Cells)
 }
 
 func (d *Data) GetColumnCount() int {
-	return len(d.cells[0])
+	return len(d.Cells[0])
 }
 
 func (d *Data) RemoveRow(row int) {
@@ -334,7 +311,7 @@ func (d *Data) RemoveRow(row int) {
 	if row <= 0 || row >= d.GetRowCount() {
 		return // Invalid row index
 	}
-	d.cells = append(d.cells[:row], d.cells[row+1:]...)
+	d.Cells = append(d.Cells[:row], d.Cells[row+1:]...)
 	d.DrawXYCoordinates()
 }
 
@@ -345,7 +322,7 @@ func (d *Data) RemoveRows(fromRow int, toRow int) {
 	if fromRow <= 0 || toRow >= d.GetRowCount() {
 		return // Invalid row index
 	}
-	d.cells = append(d.cells[:fromRow], d.cells[toRow+1:]...)
+	d.Cells = append(d.Cells[:fromRow], d.Cells[toRow+1:]...)
 	d.DrawXYCoordinates()
 }
 
@@ -356,8 +333,8 @@ func (d *Data) RemoveColumn(col int) {
 	if col <= 0 || col >= d.GetColumnCount() {
 		return // Invalid column index
 	}
-	for i := range d.cells {
-		d.cells[i] = append(d.cells[i][:col], d.cells[i][col+1:]...)
+	for i := range d.Cells {
+		d.Cells[i] = append(d.Cells[i][:col], d.Cells[i][col+1:]...)
 	}
 	d.DrawXYCoordinates()
 }
@@ -372,14 +349,14 @@ func (d *Data) createRow() []*Cell {
 
 func (d *Data) GetCurrentCell() *Cell {
 	// Check of out of bounds values.
-	if d.CurrentRow() >= d.GetRowCount() {
+	if d.CurrentRow >= d.GetRowCount() {
 		return NewCell()
 	}
-	if d.CurrentCol() >= d.GetColumnCount() {
+	if d.CurrentCol >= d.GetColumnCount() {
 		return NewCell()
 	}
 
-	return d.cells[d.CurrentRow()][d.CurrentCol()]
+	return d.Cells[d.CurrentRow][d.CurrentCol]
 }
 
 // Sort column  string values.
@@ -390,8 +367,8 @@ func (d *Data) SortColStrAsc(col int) {
 		bText, _, _ := b.Calculate()
 		return aText < bText
 	})
-	d.sortedCol = col
-	d.sortOrder = ascIndicator
+	d.SortedCol = col
+	d.SortOrder = ascIndicator
 	d.DrawXYCoordinates()
 }
 
@@ -401,8 +378,8 @@ func (d *Data) SortColStrDesc(col int) {
 		bText, _, _ := b.Calculate()
 		return aText > bText
 	})
-	d.sortedCol = col
-	d.sortOrder = descIndicator
+	d.SortedCol = col
+	d.SortOrder = descIndicator
 	d.DrawXYCoordinates()
 }
 
@@ -411,13 +388,13 @@ func (d *Data) SortColStrDesc(col int) {
 func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
 	// Perform a stable sort to maintain the relative order of other elements.
 	// Account for cols row and header row (+2)
-	sort.SliceStable(d.cells[2:], func(i, j int) bool {
-		return sorter(d.cells[i+2][col], d.cells[j+2][col])
+	sort.SliceStable(d.Cells[2:], func(i, j int) bool {
+		return sorter(d.Cells[i+2][col], d.Cells[j+2][col])
 	})
 }
 func (d *Data) SnapShotCells() [][]*Cell {
 	var dest [][]*Cell
-	for _, row := range d.cells {
+	for _, row := range d.Cells {
 		var rowCopy []*Cell
 		for _, cell := range row {
 			rowCopy = append(rowCopy, cell)
@@ -428,38 +405,38 @@ func (d *Data) SnapShotCells() [][]*Cell {
 }
 
 func (d *Data) RestoreSnapshot(snapshot [][]*Cell) {
-	d.cells = snapshot
+	d.Cells = snapshot
 	d.DrawXYCoordinates()
 }
 
 func (d *Data) DrawXYCoordinates() {
 	// Write row numbers.
-	for rowIdx := range d.cells {
-		cell := d.cells[rowIdx][0]
+	for rowIdx := range d.Cells {
+		cell := d.Cells[rowIdx][0]
 		cell.Text = fmt.Sprintf("%d", rowIdx-1)
 		cell.Attributes = tcell.AttrDim
 		cell.Align = 1 //AlignCenter
-		if rowIdx == d.CurrentRow() {
+		if rowIdx == d.CurrentRow {
 			cell.Attributes = tcell.AttrBold
 			cell.Attributes = tcell.AttrUnderline
 		}
 	}
 	// Write column numbers.
-	for colIdx, cell := range d.cells[0] {
+	for colIdx, cell := range d.Cells[0] {
 		colText := fmt.Sprintf("%d", colIdx-1)
 		cell.Attributes = tcell.AttrDim
 		cell.Align = 1 //AlignCenter
-		if colIdx == d.CurrentCol() {
+		if colIdx == d.CurrentCol {
 			cell.Attributes = tcell.AttrBold
 			cell.Attributes = tcell.AttrUnderline
 		}
-		if d.sortedCol != -1 {
-			if colIdx == d.sortedCol {
-				colText = colText + d.sortOrder
+		if d.SortedCol != -1 {
+			if colIdx == d.SortedCol {
+				colText = colText + d.SortOrder
 			}
 		}
 		cell.Text = colText
 	}
 
-	d.cells[0][0].Text = ""
+	d.Cells[0][0].Text = ""
 }

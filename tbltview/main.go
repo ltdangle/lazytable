@@ -62,8 +62,8 @@ func main() {
 	readCsvFile(*csvFile, dta)
 
 	// Set cursor to the first cell.
-	dta.SetCurrentRow(1)
-	dta.SetCurrentCol(1)
+	dta.CurrentRow = 1
+	dta.CurrentCol = 1
 
 	buildCellInput()
 	buildTable()
@@ -115,17 +115,17 @@ func buildTable() {
 func buildCellInput() {
 	cellInput.
 		SetFieldStyle(tcell.StyleDefault).
-		SetLabel(fmt.Sprintf("%d:%d ", dta.CurrentRow()-1, dta.CurrentCol()-1)).
+		SetLabel(fmt.Sprintf("%d:%d ", dta.CurrentRow-1, dta.CurrentCol-1)).
 		SetText(dta.GetCurrentCell().Text).
 		SetDoneFunc(
 			func(key tcell.Key) {
 				logger.Info(fmt.Sprintf("cellInput.SetDoneFunc: %v", key))
 				app.SetFocus(table)
 				// Push cursor down, if possible.
-				if dta.CurrentRow() < dta.GetRowCount()-1 {
-					dta.SetCurrentRow(dta.CurrentRow() + 1)
+				if dta.CurrentRow < dta.GetRowCount()-1 {
+					dta.CurrentRow = dta.CurrentRow + 1
 				}
-				table.Select(dta.CurrentRow(), dta.CurrentCol())
+				table.Select(dta.CurrentRow, dta.CurrentCol)
 			}).
 		SetChangedFunc(wrapChangedFunc())
 }
@@ -300,19 +300,19 @@ func wrapSelectionChangedFunc() func(row, col int) {
 		logger.Info(fmt.Sprintf("table.SetSelectionChangedFunc: row %d, col %d", row, col))
 		// Don't select x,y coordinates.
 		if row == 0 {
-			dta.SetCurrentRow(1)
-			table.Select(dta.CurrentRow(), col)
+			dta.CurrentRow = 1
+			table.Select(dta.CurrentRow, col)
 			return
 		}
 		if col == 0 {
-			dta.SetCurrentCol(1)
-			table.Select(row, dta.CurrentCol())
+			dta.CurrentCol = 1
+			table.Select(row, dta.CurrentCol)
 			return
 		}
 
 		// Select individual cell.
-		dta.SetCurrentRow(row) // account for top coordinate row
-		dta.SetCurrentCol(col) // account for leftmost coordinates col
+		dta.CurrentRow = row // account for top coordinate row
+		dta.CurrentCol = col // account for leftmost coordinates col
 
 		cellInput.SetLabel(fmt.Sprintf("%d:%d ", row-1, col-1))
 		cellInput.SetText(dta.GetCurrentCell().Text)
@@ -353,7 +353,7 @@ func wrapChangedFunc() func(text string) {
 		// So we need to check if the value actually changed.
 		prevVal := dta.GetCurrentCell().Text
 		if prevVal != text {
-			history.Do(NewChangeCellValueCommand(dta.CurrentRow(), dta.CurrentCol(), text))
+			history.Do(NewChangeCellValueCommand(dta.CurrentRow, dta.CurrentCol, text))
 		}
 
 		// Clear previos highlights.
@@ -419,7 +419,7 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 
 					// Move cursor if we deleted last row.
 					if lastLineDeleted {
-						table.Select(dta.GetRowCount()-1, dta.CurrentCol())
+						table.Select(dta.GetRowCount()-1, dta.CurrentCol)
 					}
 				}
 			case MODE_VISUAL_BLOCK:
@@ -432,21 +432,21 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 
 			}
 		case "Rune[>]": // Increase column width.
-			history.Do(NewIncreaseColWidthCommand(dta.CurrentCol()))
+			history.Do(NewIncreaseColWidthCommand(dta.CurrentCol))
 		case "Rune[<]": // Decrease column width.
-			history.Do(NewDecreaseColWidthCommand(dta.CurrentCol()))
+			history.Do(NewDecreaseColWidthCommand(dta.CurrentCol))
 		case "Rune[f]": // Sort string values asc.
-			history.Do(NewSortColStrAscCommand(dta.CurrentCol()))
+			history.Do(NewSortColStrAscCommand(dta.CurrentCol))
 		case "Rune[F]": // Sort string values desc.
-			history.Do(NewSortColStrDescCommand(dta.CurrentCol()))
+			history.Do(NewSortColStrDescCommand(dta.CurrentCol))
 		case "Rune[o]": // Insert row below.
-			history.Do(NewInsertRowBelowCommand(dta.CurrentRow()))
+			history.Do(NewInsertRowBelowCommand(dta.CurrentRow))
 		case "Rune[O]": // Insert row above.
-			history.Do(NewInsertRowAboveCommand(dta.CurrentRow(), dta.CurrentCol()))
+			history.Do(NewInsertRowAboveCommand(dta.CurrentRow, dta.CurrentCol))
 		case "Rune[a]":
-			history.Do(NewInsertColRightCommand(dta.CurrentCol()))
+			history.Do(NewInsertColRightCommand(dta.CurrentCol))
 		case "Rune[I]":
-			history.Do(NewInsertColLeftCommand(dta.CurrentRow(), dta.CurrentCol()))
+			history.Do(NewInsertColLeftCommand(dta.CurrentRow, dta.CurrentCol))
 		case "Rune[u]":
 			history.Undo()
 		case "Ctrl+R":

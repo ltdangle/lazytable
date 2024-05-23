@@ -109,14 +109,14 @@ func NewInsertRowAboveCommand(row int, col int) *InsertRowAboveCommand {
 }
 func (cmd *InsertRowAboveCommand) Execute() {
 	dta.InsertRow(cmd.row)
-	dta.SetCurrentRow(cmd.row + 1)
+	dta.CurrentRow = cmd.row + 1
 	table.Select(cmd.row+1, cmd.col)
 	logger.Info(fmt.Sprintf("inserted row %d above", cmd.row))
 }
 
 func (cmd *InsertRowAboveCommand) Unexecute() {
 	dta.RemoveRow(cmd.row)
-	dta.SetCurrentRow(cmd.row)
+	dta.CurrentRow = cmd.row
 	table.Select(cmd.row, cmd.col)
 	logger.Info(fmt.Sprintf("undo inserted row %d above", cmd.row))
 }
@@ -152,14 +152,14 @@ func NewInsertColLeftCommand(row int, col int) *InsertColLeftCommand {
 
 func (cmd *InsertColLeftCommand) Execute() {
 	dta.InsertColumn(cmd.col)
-	dta.SetCurrentCol(cmd.col + 1)
+	dta.CurrentCol = cmd.col + 1
 	table.Select(cmd.row, cmd.col+1)
 	logger.Info(fmt.Sprintf("inserted col %d left", cmd.col))
 }
 
 func (cmd *InsertColLeftCommand) Unexecute() {
 	dta.RemoveColumn(cmd.col)
-	dta.SetCurrentCol(cmd.col)
+	dta.CurrentCol = cmd.col
 	table.Select(cmd.row, cmd.col)
 	logger.Info(fmt.Sprintf("undo inserted col %d left", cmd.col))
 }
@@ -183,8 +183,8 @@ func NewSortColStrDescCommand(col int) *SortColStrDescCommand {
 // Execute executes the SortColStrDescCommand, sorting the column in descending order.
 func (cmd *SortColStrDescCommand) Execute() {
 	if cmd.originalOrder == nil {
-		cmd.originalSortedCol = dta.SortedCol()
-		cmd.originalSortOrder = dta.SortOrder()
+		cmd.originalSortedCol = dta.SortedCol
+		cmd.originalSortOrder = dta.SortOrder
 		// Capture the current order before sorting
 		cmd.originalOrder = make([][]*data.Cell, dta.GetRowCount())
 		for i, row := range dta.GetCells() {
@@ -208,8 +208,8 @@ func (cmd *SortColStrDescCommand) Unexecute() {
 			}
 		}
 	}
-	dta.SetSortedCol(cmd.originalSortedCol)
-	dta.SetSortOrder(cmd.originalSortOrder)
+	dta.SortedCol = cmd.originalSortedCol
+	dta.SortOrder = cmd.originalSortOrder
 	dta.DrawXYCoordinates()
 	logger.Info(fmt.Sprintf("undo sorted %d col by string desc", cmd.col))
 }
@@ -233,8 +233,8 @@ func NewSortColStrAscCommand(col int) *SortColStrAscCommand {
 // Execute executes the SortColStrAscCommand, sorting the column in ascending order.
 func (cmd *SortColStrAscCommand) Execute() {
 	if cmd.originalOrder == nil {
-		cmd.originalSortedCol = dta.SortedCol()
-		cmd.originalSortOrder = dta.SortOrder()
+		cmd.originalSortedCol = dta.SortedCol
+		cmd.originalSortOrder = dta.SortOrder
 		// Capture the current order before sorting
 		cmd.originalOrder = make([][]*data.Cell, dta.GetRowCount())
 		for i, row := range dta.GetCells() {
@@ -258,8 +258,8 @@ func (cmd *SortColStrAscCommand) Unexecute() {
 			}
 		}
 	}
-	dta.SetSortedCol(cmd.originalSortedCol)
-	dta.SetSortOrder(cmd.originalSortOrder)
+	dta.SortedCol = cmd.originalSortedCol
+	dta.SortOrder = cmd.originalSortOrder
 	dta.DrawXYCoordinates()
 	logger.Info(fmt.Sprintf("undo sorted %d col by string asc", cmd.col))
 }
@@ -279,7 +279,7 @@ func (cmd *DecreaseColWidthCommand) Execute() {
 			break
 		}
 		cell.Width = cell.Width - 1
-		logger.Info(fmt.Sprintf("decreased column %d width to %d", dta.CurrentCol(), cell.Width))
+		logger.Info(fmt.Sprintf("decreased column %d width to %d", dta.CurrentCol, cell.Width))
 	}
 }
 
@@ -287,7 +287,7 @@ func (cmd *DecreaseColWidthCommand) Unexecute() {
 	for rowIdx := range dta.GetCells() {
 		cell := dta.GetDataCell(rowIdx, cmd.col)
 		cell.Width = cell.Width + 1
-		logger.Info(fmt.Sprintf("increased column %d width to %d", dta.CurrentCol(), cell.Width))
+		logger.Info(fmt.Sprintf("increased column %d width to %d", dta.CurrentCol, cell.Width))
 	}
 }
 
@@ -303,7 +303,7 @@ func (cmd *IncreaseColWidthCommand) Execute() {
 	for rowIdx := range dta.GetCells() {
 		cell := dta.GetDataCell(rowIdx, cmd.col)
 		cell.Width = cell.Width + 1
-		logger.Info(fmt.Sprintf("increased column %d width to %d", dta.CurrentCol(), cell.Width))
+		logger.Info(fmt.Sprintf("increased column %d width to %d", dta.CurrentCol, cell.Width))
 	}
 }
 
@@ -314,7 +314,7 @@ func (cmd *IncreaseColWidthCommand) Unexecute() {
 			break
 		}
 		cell.Width = cell.Width - 1
-		logger.Info(fmt.Sprintf("decreased column %d width to %d", dta.CurrentCol(), cell.Width))
+		logger.Info(fmt.Sprintf("decreased column %d width to %d", dta.CurrentCol, cell.Width))
 	}
 }
 
