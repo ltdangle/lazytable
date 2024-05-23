@@ -57,7 +57,7 @@ func main() {
 	// Init selection.
 	selection = data.NewSelection(dta)
 	// Build clm command.
-	clmCommands = append(clmCommands, NewSortColStrAscClmCommand(), NewReplaceClmCommand(), NewWriteFileClmCommand())
+	clmCommands = append(clmCommands, NewSortColStrAscClmCommand(), NewReplaceClmCommand(), NewWriteFileClmCommand(), NewLoadFileClmCommand())
 
 	// Load csv file data.
 	readCsvFile(*csvFile, dta)
@@ -81,12 +81,12 @@ func main() {
 	// flex.SetInputCapture(
 	// 	func(event *tcell.EventKey) *tcell.EventKey {
 	// 		switch event.Rune() {
-			// case 'm':
-			// 	pages.ShowPage("modal")
-			// 	modalContents.SetTitle("You pressed the m button!")
-			// }
-			// return event
-		// })
+	// case 'm':
+	// 	pages.ShowPage("modal")
+	// 	modalContents.SetTitle("You pressed the m button!")
+	// }
+	// return event
+	// })
 
 	pages.
 		AddPage("background", flex, true, true).
@@ -291,6 +291,20 @@ func exportToCsvFile(path string, dataDataTable *data.Data) {
 
 	arr := convertDataToArr(dataDataTable)
 	if err := writer.WriteAll(arr); err != nil {
+		panic(err)
+	}
+}
+
+func loadFile(path string, d *data.Data) {
+	file, err := os.Open(path)
+	if err != nil {
+		panic(err)
+	}
+
+	decoder := json.NewDecoder(file)
+
+	err = decoder.Decode(d)
+	if err != nil {
 		panic(err)
 	}
 }

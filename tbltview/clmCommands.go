@@ -93,11 +93,10 @@ func (clm *ReplaceClmCommand) Match(text string) (parsed bool, commandError erro
 }
 
 type WriteFileClmCommand struct {
-	selection *data.Selection
 }
 
 func NewWriteFileClmCommand() *WriteFileClmCommand {
-	return &WriteFileClmCommand{selection: selection}
+	return &WriteFileClmCommand{}
 }
 
 func (clm *WriteFileClmCommand) Match(text string) (parsed bool, commandError error, command Command) {
@@ -108,4 +107,20 @@ func (clm *WriteFileClmCommand) Match(text string) (parsed bool, commandError er
 	}
 
 	return true, nil, NewWriteFileCommand(args[1])
+}
+type LoadFileClmCommand struct {
+}
+
+func NewLoadFileClmCommand() *LoadFileClmCommand {
+	return &LoadFileClmCommand{}
+}
+
+func (clm *LoadFileClmCommand) Match(text string) (parsed bool, commandError error, command Command) {
+	args := strings.Split(text, " ")
+	if len(args) < 2 || args[0] != "e" {
+		parsed = false
+		return
+	}
+
+	return true, nil, NewLoadFileCommand(args[1])
 }

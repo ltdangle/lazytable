@@ -481,3 +481,20 @@ func (cmd *WriteFileCommand) Execute() {
 func (cmd *WriteFileCommand) Unexecute() {
 	logger.Info(fmt.Sprintf("[NOT IMPLEMENTED] undo wrote to file %s", cmd.filePath))
 }
+
+type LoadFileCommand struct {
+	filePath string
+}
+
+func NewLoadFileCommand(filePath string) *LoadFileCommand {
+	return &LoadFileCommand{filePath: filePath}
+}
+
+func (cmd *LoadFileCommand) Execute() {
+	loadFile(cmd.filePath, dta)
+	logger.Info(fmt.Sprintf("loaded file %s", cmd.filePath))
+}
+
+func (cmd *LoadFileCommand) Unexecute() {
+	logger.Info(fmt.Sprintf("[NOT IMPLEMENTED] undo loaded file %s", cmd.filePath))
+}
