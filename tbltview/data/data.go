@@ -21,14 +21,14 @@ const (
 )
 
 type Cell struct {
-	IsSelected bool
-	IsInRange  bool // Cell is part of the formula range.
-	Text       string
+	IsSelected bool   `json:"isSelected"`
+	IsInRange  bool   `json:"isInRange"`
+	Text       string `json:"text"`
 
 	// tview.TableCell attributes
-	Attributes tcell.AttrMask
-	Align      int
-	Width      int
+	Attributes tcell.AttrMask `json:"attributes"`
+	Align      int            `json:"align"`
+	Width      int            `json:"width"`
 }
 
 func NewCell() *Cell {
@@ -156,11 +156,11 @@ func (s *Selection) GetRightCol() int {
 
 // Data type.
 type Data struct {
-	Cells      [][]*Cell
-	CurrentRow int
-	CurrentCol int
-	SortedCol  int
-	SortOrder  string
+	Cells      [][]*Cell `json:"cells"`
+	CurrentRow int       `json:"currentRow"`
+	CurrentCol int       `json:"currentCol"`
+	SortedCol  int       `json:"sortedCol"`
+	SortOrder  string    `json:"sortOrder"`
 	logger     *logger.Logger
 }
 
