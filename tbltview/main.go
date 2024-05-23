@@ -3,6 +3,7 @@ package main
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -56,7 +57,7 @@ func main() {
 	// Init selection.
 	selection = data.NewSelection(dta)
 	// Build clm command.
-	clmCommands = append(clmCommands, NewSortColStrAscClmCommand(), NewReplaceClmCommand())
+	clmCommands = append(clmCommands, NewSortColStrAscClmCommand(), NewReplaceClmCommand(), NewWriteFileClmCommand())
 
 	// Load csv file data.
 	readCsvFile(*csvFile, dta)
@@ -77,15 +78,15 @@ func main() {
 		AddItem(table, 0, 1, false).
 		AddItem(commandInput, 1, 0, false)
 
-	flex.SetInputCapture(
-		func(event *tcell.EventKey) *tcell.EventKey {
-			switch event.Rune() {
-			case 'm':
-				pages.ShowPage("modal")
-				modalContents.SetTitle("You pressed the m button!")
-			}
-			return event
-		})
+	// flex.SetInputCapture(
+	// 	func(event *tcell.EventKey) *tcell.EventKey {
+	// 		switch event.Rune() {
+			// case 'm':
+			// 	pages.ShowPage("modal")
+			// 	modalContents.SetTitle("You pressed the m button!")
+			// }
+			// return event
+		// })
 
 	pages.
 		AddPage("background", flex, true, true).
@@ -277,7 +278,7 @@ func convertDataToArr(dataTbl *data.Data) [][]string {
 	return data
 }
 
-func saveDataToFile(path string, dataDataTable *data.Data) {
+func exportToCsvFile(path string, dataDataTable *data.Data) {
 	// Truncates file.
 	file, err := os.Create(path)
 	if err != nil {
@@ -292,8 +293,23 @@ func saveDataToFile(path string, dataDataTable *data.Data) {
 	if err := writer.WriteAll(arr); err != nil {
 		panic(err)
 	}
-
 }
+
+func saveFile(path string, d *data.Data) {
+	file, err := os.Create(path)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+
+	err = encoder.Encode(d)
+	if err != nil {
+		panic(err)
+	}
+}
+
 func wrapSelectionChangedFunc() func(row, col int) {
 	var formulaRange *data.FormulaRange
 	return func(row, col int) {

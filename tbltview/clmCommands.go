@@ -4,6 +4,7 @@ import (
 	"errors"
 	"regexp"
 	"strconv"
+	"strings"
 	"tblview/data"
 )
 
@@ -89,4 +90,22 @@ func (clm *ReplaceClmCommand) Match(text string) (parsed bool, commandError erro
 	parsed = true
 	command = NewReplaceTextCommand(selection, search, replace)
 	return
+}
+
+type WriteFileClmCommand struct {
+	selection *data.Selection
+}
+
+func NewWriteFileClmCommand() *WriteFileClmCommand {
+	return &WriteFileClmCommand{selection: selection}
+}
+
+func (clm *WriteFileClmCommand) Match(text string) (parsed bool, commandError error, command Command) {
+	args := strings.Split(text, " ")
+	if len(args) < 2 || args[0] != "w" {
+		parsed = false
+		return
+	}
+
+	return true, nil, NewWriteFileCommand(args[1])
 }

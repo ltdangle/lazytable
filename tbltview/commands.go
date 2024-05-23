@@ -464,3 +464,20 @@ func (cmd *ReplaceTextCommand) Unexecute() {
 	}
 	logger.Info(fmt.Sprintf("undo replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection))
 }
+
+type WriteFileCommand struct {
+	filePath string
+}
+
+func NewWriteFileCommand(filePath string) *WriteFileCommand {
+	return &WriteFileCommand{filePath: filePath}
+}
+
+func (cmd *WriteFileCommand) Execute() {
+	saveFile(cmd.filePath, dta)
+	logger.Info(fmt.Sprintf("wrote to file %s", cmd.filePath))
+}
+
+func (cmd *WriteFileCommand) Unexecute() {
+	logger.Info(fmt.Sprintf("[NOT IMPLEMENTED] undo wrote to file %s", cmd.filePath))
+}
