@@ -3,7 +3,6 @@ package main
 
 import (
 	"encoding/csv"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
@@ -291,35 +290,6 @@ func exportToCsvFile(path string, dataDataTable *data.Data) {
 
 	arr := convertDataToArr(dataDataTable)
 	if err := writer.WriteAll(arr); err != nil {
-		panic(err)
-	}
-}
-
-func loadFile(path string, d *data.Data) {
-	file, err := os.Open(path)
-	if err != nil {
-		panic(err)
-	}
-
-	decoder := json.NewDecoder(file)
-
-	err = decoder.Decode(d)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func saveFile(path string, d *data.Data) {
-	file, err := os.Create(path)
-	if err != nil {
-		panic(err)
-	}
-	defer file.Close()
-
-	encoder := json.NewEncoder(file)
-
-	err = encoder.Encode(d)
-	if err != nil {
 		panic(err)
 	}
 }

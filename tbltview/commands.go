@@ -1,10 +1,13 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/qdm12/reprint"
+	"os"
 	"strings"
 	"tblview/data"
+
+	"github.com/qdm12/reprint"
 )
 
 // Undo / redo functionality.
@@ -473,8 +476,21 @@ func NewWriteFileCommand(filePath string) *WriteFileCommand {
 	return &WriteFileCommand{filePath: filePath}
 }
 
+// TODO: remove panics
 func (cmd *WriteFileCommand) Execute() {
-	saveFile(cmd.filePath, dta)
+	file, err := os.Create(cmd.filePath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	encoder := json.NewEncoder(file)
+
+	err = encoder.Encode(dta)
+	if err != nil {
+		panic(err)
+	}
+
 	logger.Info(fmt.Sprintf("wrote to file %s", cmd.filePath))
 }
 
@@ -490,8 +506,20 @@ func NewLoadFileCommand(filePath string) *LoadFileCommand {
 	return &LoadFileCommand{filePath: filePath}
 }
 
+// TODO: remove panics
 func (cmd *LoadFileCommand) Execute() {
-	loadFile(cmd.filePath, dta)
+	file, err := os.Open(cmd.filePath)
+	if err != nil {
+		panic(err)
+	}
+
+	decoder := json.NewDecoder(file)
+
+	err = decoder.Decode(dta)
+	if err != nil {
+		panic(err)
+	}
+
 	logger.Info(fmt.Sprintf("loaded file %s", cmd.filePath))
 }
 
