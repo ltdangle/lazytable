@@ -77,15 +77,15 @@ func main() {
 		AddItem(table, 0, 1, false).
 		AddItem(commandInput, 1, 0, false)
 
-	// flex.SetInputCapture(
-	// 	func(event *tcell.EventKey) *tcell.EventKey {
-	// 		switch event.Rune() {
-	// case 'm':
-	// 	pages.ShowPage("modal")
-	// 	modalContents.SetTitle("You pressed the m button!")
-	// }
-	// return event
-	// })
+	flex.SetInputCapture(
+		func(event *tcell.EventKey) *tcell.EventKey {
+			switch event.Rune() {
+	case 'm':
+		pages.ShowPage("modal")
+		modalContents.SetTitle("You pressed the m button!")
+	}
+	return event
+	})
 
 	pages.
 		AddPage("background", flex, true, true).

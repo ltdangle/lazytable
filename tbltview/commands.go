@@ -12,8 +12,8 @@ import (
 
 // Undo / redo functionality.
 type Command interface {
-	Execute()
-	Unexecute()
+	Execute() error
+	Unexecute() error
 }
 
 type History struct {
@@ -35,7 +35,12 @@ func (h *History) Do(cmd Command) {
 	// 		},
 	// 	)
 	// }()
-	cmd.Execute()
+	err := cmd.Execute()
+	if err != nil {
+		pages.ShowPage("modal")
+		modalContents.SetTitle(err.Error())
+		app.SetFocus(table)
+	}
 	h.UndoStack = append(h.UndoStack, cmd)
 	// Clear RedoStack because a new action has been taken
 	h.RedoStack = nil
@@ -56,7 +61,12 @@ func (h *History) Undo() {
 	// 		},
 	// 	)
 	// }()
-	cmd.Unexecute()
+	err := cmd.Unexecute()
+	if err != nil {
+		pages.ShowPage("modal")
+		modalContents.SetTitle(err.Error())
+		app.SetFocus(table)
+	}
 	h.UndoStack = h.UndoStack[:last]
 	// Push the command onto RedoStack
 	h.RedoStack = append(h.RedoStack, cmd)
@@ -91,14 +101,16 @@ type InsertRowBelowCommand struct {
 func NewInsertRowBelowCommand(row int) *InsertRowBelowCommand {
 	return &InsertRowBelowCommand{row: row + 1}
 }
-func (cmd *InsertRowBelowCommand) Execute() {
+func (cmd *InsertRowBelowCommand) Execute() error {
 	dta.InsertRow(cmd.row)
 	logger.Info(fmt.Sprintf("inserted row %d below", cmd.row))
+	return nil
 }
 
-func (cmd *InsertRowBelowCommand) Unexecute() {
+func (cmd *InsertRowBelowCommand) Unexecute() error {
 	dta.RemoveRow(cmd.row)
 	logger.Info(fmt.Sprintf("undo inserted row %d below", cmd.row))
+	return nil
 }
 
 // InsertRowAboveCommand.
@@ -110,18 +122,20 @@ type InsertRowAboveCommand struct {
 func NewInsertRowAboveCommand(row int, col int) *InsertRowAboveCommand {
 	return &InsertRowAboveCommand{row: row, col: col}
 }
-func (cmd *InsertRowAboveCommand) Execute() {
+func (cmd *InsertRowAboveCommand) Execute() error {
 	dta.InsertRow(cmd.row)
 	dta.CurrentRow = cmd.row + 1
 	table.Select(cmd.row+1, cmd.col)
 	logger.Info(fmt.Sprintf("inserted row %d above", cmd.row))
+	return nil
 }
 
-func (cmd *InsertRowAboveCommand) Unexecute() {
+func (cmd *InsertRowAboveCommand) Unexecute() error {
 	dta.RemoveRow(cmd.row)
 	dta.CurrentRow = cmd.row
 	table.Select(cmd.row, cmd.col)
 	logger.Info(fmt.Sprintf("undo inserted row %d above", cmd.row))
+	return nil
 }
 
 // InsertColRightCommand.
@@ -133,14 +147,16 @@ func NewInsertColRightCommand(col int) *InsertColRightCommand {
 	return &InsertColRightCommand{col: col + 1}
 }
 
-func (cmd *InsertColRightCommand) Execute() {
+func (cmd *InsertColRightCommand) Execute() error {
 	dta.InsertColumn(cmd.col)
 	logger.Info(fmt.Sprintf("inserted col %d right", cmd.col))
+	return nil
 }
 
-func (cmd *InsertColRightCommand) Unexecute() {
+func (cmd *InsertColRightCommand) Unexecute() error {
 	dta.RemoveColumn(cmd.col)
 	logger.Info(fmt.Sprintf("undo inserted col %d right", cmd.col))
+	return nil
 }
 
 // InsertColLeftCommand.
@@ -153,18 +169,20 @@ func NewInsertColLeftCommand(row int, col int) *InsertColLeftCommand {
 	return &InsertColLeftCommand{row: row, col: col}
 }
 
-func (cmd *InsertColLeftCommand) Execute() {
+func (cmd *InsertColLeftCommand) Execute() error {
 	dta.InsertColumn(cmd.col)
 	dta.CurrentCol = cmd.col + 1
 	table.Select(cmd.row, cmd.col+1)
 	logger.Info(fmt.Sprintf("inserted col %d left", cmd.col))
+	return nil
 }
 
-func (cmd *InsertColLeftCommand) Unexecute() {
+func (cmd *InsertColLeftCommand) Unexecute() error {
 	dta.RemoveColumn(cmd.col)
 	dta.CurrentCol = cmd.col
 	table.Select(cmd.row, cmd.col)
 	logger.Info(fmt.Sprintf("undo inserted col %d left", cmd.col))
+	return nil
 }
 
 // SortColStrDescCommand is the command used to sort a column in descending string order.
@@ -184,7 +202,7 @@ func NewSortColStrDescCommand(col int) *SortColStrDescCommand {
 }
 
 // Execute executes the SortColStrDescCommand, sorting the column in descending order.
-func (cmd *SortColStrDescCommand) Execute() {
+func (cmd *SortColStrDescCommand) Execute() error {
 	if cmd.originalOrder == nil {
 		cmd.originalSortedCol = dta.SortedCol
 		cmd.originalSortOrder = dta.SortOrder
@@ -199,10 +217,11 @@ func (cmd *SortColStrDescCommand) Execute() {
 	// Now sort the column in descending order
 	dta.SortColStrDesc(cmd.col)
 	logger.Info(fmt.Sprintf("sorted %d col by string desc", cmd.col))
+	return nil
 }
 
 // Unexecute restores the column to the original order before sorting.
-func (cmd *SortColStrDescCommand) Unexecute() {
+func (cmd *SortColStrDescCommand) Unexecute() error {
 	if cmd.originalOrder != nil {
 		// Restore the original cell order
 		for i, row := range cmd.originalOrder {
@@ -215,6 +234,7 @@ func (cmd *SortColStrDescCommand) Unexecute() {
 	dta.SortOrder = cmd.originalSortOrder
 	dta.DrawXYCoordinates()
 	logger.Info(fmt.Sprintf("undo sorted %d col by string desc", cmd.col))
+	return nil
 }
 
 // SortColStrAscCommand is the command used to sort a column in ascending string order.
@@ -234,7 +254,7 @@ func NewSortColStrAscCommand(col int) *SortColStrAscCommand {
 }
 
 // Execute executes the SortColStrAscCommand, sorting the column in ascending order.
-func (cmd *SortColStrAscCommand) Execute() {
+func (cmd *SortColStrAscCommand) Execute() error {
 	if cmd.originalOrder == nil {
 		cmd.originalSortedCol = dta.SortedCol
 		cmd.originalSortOrder = dta.SortOrder
@@ -249,10 +269,11 @@ func (cmd *SortColStrAscCommand) Execute() {
 	// Now sort the column in ascending order
 	dta.SortColStrAsc(cmd.col)
 	logger.Info(fmt.Sprintf("sorted %d col by string asc", cmd.col))
+	return nil
 }
 
 // Unexecute restores the column to the original order before sorting.
-func (cmd *SortColStrAscCommand) Unexecute() {
+func (cmd *SortColStrAscCommand) Unexecute() error {
 	if cmd.originalOrder != nil {
 		// Restore the original cell order
 		for i, row := range cmd.originalOrder {
@@ -265,6 +286,7 @@ func (cmd *SortColStrAscCommand) Unexecute() {
 	dta.SortOrder = cmd.originalSortOrder
 	dta.DrawXYCoordinates()
 	logger.Info(fmt.Sprintf("undo sorted %d col by string asc", cmd.col))
+	return nil
 }
 
 type DecreaseColWidthCommand struct {
@@ -275,7 +297,7 @@ func NewDecreaseColWidthCommand(col int) *DecreaseColWidthCommand {
 	return &DecreaseColWidthCommand{col: col}
 }
 
-func (cmd *DecreaseColWidthCommand) Execute() {
+func (cmd *DecreaseColWidthCommand) Execute() error {
 	for rowIdx := range dta.GetCells() {
 		cell := dta.GetDataCell(rowIdx, cmd.col)
 		if cell.Width == 1 {
@@ -284,14 +306,16 @@ func (cmd *DecreaseColWidthCommand) Execute() {
 		cell.Width = cell.Width - 1
 		logger.Info(fmt.Sprintf("decreased column %d width to %d", dta.CurrentCol, cell.Width))
 	}
+	return nil
 }
 
-func (cmd *DecreaseColWidthCommand) Unexecute() {
+func (cmd *DecreaseColWidthCommand) Unexecute() error {
 	for rowIdx := range dta.GetCells() {
 		cell := dta.GetDataCell(rowIdx, cmd.col)
 		cell.Width = cell.Width + 1
 		logger.Info(fmt.Sprintf("increased column %d width to %d", dta.CurrentCol, cell.Width))
 	}
+	return nil
 }
 
 type IncreaseColWidthCommand struct {
@@ -302,15 +326,16 @@ func NewIncreaseColWidthCommand(col int) *IncreaseColWidthCommand {
 	return &IncreaseColWidthCommand{col: col}
 }
 
-func (cmd *IncreaseColWidthCommand) Execute() {
+func (cmd *IncreaseColWidthCommand) Execute() error {
 	for rowIdx := range dta.GetCells() {
 		cell := dta.GetDataCell(rowIdx, cmd.col)
 		cell.Width = cell.Width + 1
 		logger.Info(fmt.Sprintf("increased column %d width to %d", dta.CurrentCol, cell.Width))
 	}
+	return nil
 }
 
-func (cmd *IncreaseColWidthCommand) Unexecute() {
+func (cmd *IncreaseColWidthCommand) Unexecute() error {
 	for rowIdx := range dta.GetCells() {
 		cell := dta.GetDataCell(rowIdx, cmd.col)
 		if cell.Width == 1 {
@@ -319,6 +344,7 @@ func (cmd *IncreaseColWidthCommand) Unexecute() {
 		cell.Width = cell.Width - 1
 		logger.Info(fmt.Sprintf("decreased column %d width to %d", dta.CurrentCol, cell.Width))
 	}
+	return nil
 }
 
 type DeleteColumnCommand struct {
@@ -331,7 +357,7 @@ func NewDeleteColumnCommand(row int, col int) *DeleteColumnCommand {
 	return &DeleteColumnCommand{row: row, col: col}
 }
 
-func (cmd *DeleteColumnCommand) Execute() {
+func (cmd *DeleteColumnCommand) Execute() error {
 	// Capture the current column before deleting.
 	if cmd.deletedCol == nil {
 		for i := 0; i < dta.GetRowCount(); i++ {
@@ -345,9 +371,10 @@ func (cmd *DeleteColumnCommand) Execute() {
 		}
 	}
 	logger.Info(fmt.Sprintf("deleted column %d", cmd.col))
+	return nil
 }
 
-func (cmd *DeleteColumnCommand) Unexecute() {
+func (cmd *DeleteColumnCommand) Unexecute() error {
 	// This is last column (special case)
 	if cmd.col == dta.GetColumnCount() {
 		dta.InsertColumn(dta.GetColumnCount() - 1)
@@ -356,7 +383,7 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 			dta.SetDataCell(row, cmd.col, cmd.deletedCol[row])
 		}
 		table.Select(cmd.row, dta.GetColumnCount()-1)
-		return
+		return nil
 	}
 
 	dta.InsertColumn(cmd.col)
@@ -365,6 +392,7 @@ func (cmd *DeleteColumnCommand) Unexecute() {
 		dta.SetDataCell(row, cmd.col, cmd.deletedCol[row])
 	}
 	logger.Info(fmt.Sprintf("undo deleted column %d", cmd.col))
+	return nil
 }
 
 type DeleteRowsCommand struct {
@@ -376,17 +404,19 @@ func NewDeleteRowsCommand(s data.Selection) *DeleteRowsCommand {
 	return &DeleteRowsCommand{selectedCells: s}
 }
 
-func (cmd *DeleteRowsCommand) Execute() {
+func (cmd *DeleteRowsCommand) Execute() error {
 	cmd.cellSnapshot = dta.SnapShotCells()
 
 	dta.RemoveRows(cmd.selectedCells.GetTopRow(), cmd.selectedCells.GetBottomRow())
 
 	logger.Info(fmt.Sprintf("DeleteRowCommand: delete from row %d to row %d", cmd.selectedCells.GetTopRow(), cmd.selectedCells.GetBottomRow()))
+	return nil
 }
 
-func (cmd *DeleteRowsCommand) Unexecute() {
+func (cmd *DeleteRowsCommand) Unexecute() error {
 	dta.RestoreSnapshot(cmd.cellSnapshot)
 	logger.Info(fmt.Sprintf("undo deleted rows %v", cmd.selectedCells))
+	return nil
 }
 
 type ChangeCellValueCommand struct {
@@ -400,15 +430,17 @@ func NewChangeCellValueCommand(row int, col int, text string) *ChangeCellValueCo
 	return &ChangeCellValueCommand{row: row, col: col, newVal: text}
 }
 
-func (cmd *ChangeCellValueCommand) Execute() {
+func (cmd *ChangeCellValueCommand) Execute() error {
 	cmd.prevVal = dta.GetDataCell(cmd.row, cmd.col).Text
 	dta.GetDataCell(cmd.row, cmd.col).Text = cmd.newVal
 	logger.Info(fmt.Sprintf("%d:%d changed value from %s to %s", cmd.row, cmd.col, cmd.prevVal, cmd.newVal))
+	return nil
 }
 
-func (cmd *ChangeCellValueCommand) Unexecute() {
+func (cmd *ChangeCellValueCommand) Unexecute() error {
 	dta.GetDataCell(cmd.row, cmd.col).Text = cmd.prevVal
 	logger.Info(fmt.Sprintf("%d:%d undo value from %s to %s", cmd.row, cmd.col, cmd.newVal, cmd.prevVal))
+	return nil
 }
 
 type ReplaceTextCommand struct {
@@ -422,7 +454,7 @@ func NewReplaceTextCommand(selection *data.Selection, search string, replace str
 	return &ReplaceTextCommand{selection: selection, search: search, replace: replace}
 }
 
-func (cmd *ReplaceTextCommand) Execute() {
+func (cmd *ReplaceTextCommand) Execute() error {
 	// Clear cell selection first.
 	dta.ClearSelection()
 	selection.Clear()
@@ -441,6 +473,7 @@ func (cmd *ReplaceTextCommand) Execute() {
 			err := reprint.FromTo(&cell, &cmd.originalCells[row][col])
 			if err != nil {
 				logger.Error(err.Error())
+				return err
 			}
 			// Replace cell text.
 			newText := strings.ReplaceAll(cell.Text, cmd.search, cmd.replace)
@@ -452,12 +485,13 @@ func (cmd *ReplaceTextCommand) Execute() {
 	}
 
 	if !replaced {
-		logger.Info(fmt.Sprintf("did not replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection))
-		return
+		logger.Error(fmt.Sprintf("did not replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection))
+		return fmt.Errorf("did not replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection)
 	}
+	return nil
 }
 
-func (cmd *ReplaceTextCommand) Unexecute() {
+func (cmd *ReplaceTextCommand) Unexecute() error {
 	// Restore copied cells.
 	for row := cmd.selection.GetTopRow(); row <= cmd.selection.GetBottomRow(); row++ {
 		for col := cmd.selection.GetLeftCol(); col <= cmd.selection.GetRightCol(); col++ {
@@ -466,6 +500,7 @@ func (cmd *ReplaceTextCommand) Unexecute() {
 		}
 	}
 	logger.Info(fmt.Sprintf("undo replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection))
+	return nil
 }
 
 type WriteFileCommand struct {
@@ -477,10 +512,10 @@ func NewWriteFileCommand(filePath string) *WriteFileCommand {
 }
 
 // TODO: remove panics
-func (cmd *WriteFileCommand) Execute() {
+func (cmd *WriteFileCommand) Execute() error {
 	file, err := os.Create(cmd.filePath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	defer file.Close()
 
@@ -488,14 +523,16 @@ func (cmd *WriteFileCommand) Execute() {
 
 	err = encoder.Encode(dta)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	logger.Info(fmt.Sprintf("wrote to file %s", cmd.filePath))
+	return nil
 }
 
-func (cmd *WriteFileCommand) Unexecute() {
+func (cmd *WriteFileCommand) Unexecute() error {
 	logger.Info(fmt.Sprintf("[NOT IMPLEMENTED] undo wrote to file %s", cmd.filePath))
+	return nil
 }
 
 type LoadFileCommand struct {
@@ -506,23 +543,24 @@ func NewLoadFileCommand(filePath string) *LoadFileCommand {
 	return &LoadFileCommand{filePath: filePath}
 }
 
-// TODO: remove panics
-func (cmd *LoadFileCommand) Execute() {
+func (cmd *LoadFileCommand) Execute() error {
 	file, err := os.Open(cmd.filePath)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	decoder := json.NewDecoder(file)
 
 	err = decoder.Decode(dta)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	logger.Info(fmt.Sprintf("loaded file %s", cmd.filePath))
+	return nil
 }
 
-func (cmd *LoadFileCommand) Unexecute() {
+func (cmd *LoadFileCommand) Unexecute() error {
 	logger.Info(fmt.Sprintf("[NOT IMPLEMENTED] undo loaded file %s", cmd.filePath))
+	return nil
 }
