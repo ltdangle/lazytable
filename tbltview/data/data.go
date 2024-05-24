@@ -392,18 +392,30 @@ func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
 		return sorter(d.Cells[i+2][col], d.Cells[j+2][col])
 	})
 }
-func (d *Data) SnapShotCells() [][]*Cell {
-	var dest [][]*Cell
-	for _, rowOrig := range d.Cells {
-		var row []*Cell
-		row = append(row, rowOrig...)
-		dest = append(dest, row)
+func (d *Data) SnapShotCells() [][]Cell {
+	var dest [][]Cell
+	for _, row := range d.Cells {
+		var rowCopy []Cell
+		for _, cell := range row {
+			rowCopy = append(rowCopy, *cell)
+		}
+		dest = append(dest, rowCopy)
 	}
 	return dest
 }
 
-func (d *Data) RestoreSnapshot(snapshot [][]*Cell) {
-	d.Cells = snapshot
+func (d *Data) RestoreSnapshot(snapshot [][]Cell) {
+	// Initialize cells with the required capacity.
+	d.Cells = make([][]*Cell, len(snapshot))
+	// Copy snapshot.
+	for i, row := range snapshot {
+		rowCopy := make([]*Cell, len(row))
+		for j, cell := range row {
+			cellCopy := cell       // create a copy of the cell
+			rowCopy[j] = &cellCopy // assign the copy's address
+		}
+		d.Cells[i] = rowCopy // assign the row copy to the corresponding index in d.Cells
+	}
 	d.DrawXYCoordinates()
 }
 

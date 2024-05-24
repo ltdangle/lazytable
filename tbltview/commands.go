@@ -380,7 +380,7 @@ func (cmd *DeleteColumnCommand) Unexecute() error {
 }
 
 type DeleteRowsCommand struct {
-	cellSnapshot  [][]*data.Cell
+	cellSnapshot  [][]data.Cell
 	selectedCells data.Selection
 }
 
@@ -431,7 +431,7 @@ type ReplaceTextCommand struct {
 	selection    *data.Selection
 	search       string
 	replace      string
-	cellSnapshot [][]*data.Cell
+	cellSnapshot [][]data.Cell
 }
 
 func NewReplaceTextCommand(selection *data.Selection, search string, replace string) *ReplaceTextCommand {
