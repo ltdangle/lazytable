@@ -6,8 +6,6 @@ import (
 	"os"
 	"strings"
 	"tblview/data"
-
-	"github.com/qdm12/reprint"
 )
 
 // Undo / redo functionality.
@@ -430,10 +428,10 @@ func (cmd *ChangeCellValueCommand) Unexecute() error {
 }
 
 type ReplaceTextCommand struct {
-	selection     *data.Selection
-	search        string
-	replace       string
-	originalCells [][]*data.Cell
+	selection    *data.Selection
+	search       string
+	replace      string
+	cellSnapshot [][]*data.Cell
 }
 
 func NewReplaceTextCommand(selection *data.Selection, search string, replace string) *ReplaceTextCommand {
@@ -441,26 +439,13 @@ func NewReplaceTextCommand(selection *data.Selection, search string, replace str
 }
 
 func (cmd *ReplaceTextCommand) Execute() error {
-	// Clear cell selection first.
-	dta.ClearSelection()
-	selection.Clear()
-
-	// Mirror originalCells dimensions to data.
-	cmd.originalCells = make([][]*data.Cell, dta.GetRowCount())
-	for row := range cmd.originalCells {
-		cmd.originalCells[row] = make([]*data.Cell, dta.GetColumnCount())
-	}
+	// Create cell snapshot.
+	cmd.cellSnapshot = dta.SnapShotCells()
 
 	var replaced bool
 	for row := cmd.selection.GetTopRow(); row <= cmd.selection.GetBottomRow(); row++ {
 		for col := cmd.selection.GetLeftCol(); col <= cmd.selection.GetRightCol(); col++ {
 			cell := dta.GetDataCell(row, col)
-			// (Deep) copy cell (even unexported fields).
-			err := reprint.FromTo(&cell, &cmd.originalCells[row][col])
-			if err != nil {
-				logger.Error(err.Error())
-				return err
-			}
 			// Replace cell text.
 			newText := strings.ReplaceAll(cell.Text, cmd.search, cmd.replace)
 			cell.Text = newText
@@ -474,17 +459,17 @@ func (cmd *ReplaceTextCommand) Execute() error {
 		logger.Error(fmt.Sprintf("did not replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection))
 		return fmt.Errorf("did not replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection)
 	}
+
+	// Clear cell selection.
+	dta.ClearSelection()
+	selection.Clear()
+
 	return nil
 }
 
 func (cmd *ReplaceTextCommand) Unexecute() error {
 	// Restore copied cells.
-	for row := cmd.selection.GetTopRow(); row <= cmd.selection.GetBottomRow(); row++ {
-		for col := cmd.selection.GetLeftCol(); col <= cmd.selection.GetRightCol(); col++ {
-			cell := cmd.originalCells[row][col]
-			dta.SetDataCell(row, col, cell)
-		}
-	}
+	dta.RestoreSnapshot(cmd.cellSnapshot)
 	logger.Info(fmt.Sprintf("undo replace %s with %s in selection %v", cmd.search, cmd.replace, cmd.selection))
 	return nil
 }
