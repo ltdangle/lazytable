@@ -23,6 +23,7 @@ var app = tview.NewApplication()
 var cellInput = tview.NewInputField()
 var commandInput = tview.NewInputField()
 var pages = tview.NewPages()
+var flex = tview.NewFlex()
 var modal func(p tview.Primitive, width, height int) tview.Primitive
 var modalContents = tview.NewBox()
 var history = NewHistory()
@@ -71,27 +72,27 @@ func main() {
 	buildCommandInput()
 
 	// Configure layout.
-	flex := tview.NewFlex().
+	flex.
 		SetDirection(tview.FlexRow).
 		AddItem(cellInput, 1, 0, false).
 		AddItem(table, 0, 1, false).
 		AddItem(commandInput, 1, 0, false)
 
-	flex.SetInputCapture(
-		func(event *tcell.EventKey) *tcell.EventKey {
-			switch event.Rune() {
-	case 'm':
-		pages.ShowPage("modal")
-		modalContents.SetTitle("You pressed the m button!")
-	}
-	return event
-	})
+	// flex.SetInputCapture(
+	// 	func(event *tcell.EventKey) *tcell.EventKey {
+	// 		switch event.Rune() {
+	// 		case 'M':
+	// 			showModal("You pressed m button!")
+	// 		}
+	// 		return event
+	// 	})
 
 	pages.
 		AddPage("background", flex, true, true).
 		AddPage("modal", modal(modalContents, 40, 10), true, false)
 
 	dta.DrawXYCoordinates()
+
 	if err := app.SetRoot(pages, true).SetFocus(table).Run(); err != nil {
 		panic(err)
 	}
@@ -199,6 +200,11 @@ func buildModal() {
 				}
 				return event
 			})
+}
+
+func showModal(text string) {
+	pages.ShowPage("modal")
+	modalContents.SetTitle(text)
 }
 
 func readCsvFile(fileName string, dataTbl *data.Data) {

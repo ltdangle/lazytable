@@ -37,9 +37,11 @@ func (h *History) Do(cmd Command) {
 	// }()
 	err := cmd.Execute()
 	if err != nil {
-		pages.ShowPage("modal")
-		modalContents.SetTitle(err.Error())
-		app.SetFocus(table)
+		go func() {
+			app.QueueUpdateDraw(func() {
+				showModal(err.Error())
+			})
+		}()
 	}
 	h.UndoStack = append(h.UndoStack, cmd)
 	// Clear RedoStack because a new action has been taken
@@ -63,9 +65,11 @@ func (h *History) Undo() {
 	// }()
 	err := cmd.Unexecute()
 	if err != nil {
-		pages.ShowPage("modal")
-		modalContents.SetTitle(err.Error())
-		app.SetFocus(table)
+		go func() {
+			app.QueueUpdateDraw(func() {
+				showModal(err.Error())
+			})
+		}()
 	}
 	h.UndoStack = h.UndoStack[:last]
 	// Push the command onto RedoStack
