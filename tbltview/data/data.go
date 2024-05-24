@@ -394,12 +394,10 @@ func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
 }
 func (d *Data) SnapShotCells() [][]*Cell {
 	var dest [][]*Cell
-	for _, row := range d.Cells {
-		var rowCopy []*Cell
-		for _, cell := range row {
-			rowCopy = append(rowCopy, cell)
-		}
-		dest = append(dest, rowCopy)
+	for _, rowOrig := range d.Cells {
+		var row []*Cell
+		row = append(row, rowOrig...)
+		dest = append(dest, row)
 	}
 	return dest
 }
