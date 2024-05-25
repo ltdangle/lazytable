@@ -461,7 +461,6 @@ func (cmd *ReplaceTextCommand) Execute() error {
 	}
 
 	// Clear cell selection.
-	dta.ClearSelection()
 	dta.Selection.Clear()
 
 	return nil

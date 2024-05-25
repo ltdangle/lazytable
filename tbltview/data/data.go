@@ -21,9 +21,8 @@ const (
 )
 
 type Cell struct {
-	IsSelected bool   `json:"isSelected"`
-	IsInRange  bool   `json:"isInRange"`
-	Text       string `json:"text"`
+	IsInRange bool   `json:"isInRange"`
+	Text      string `json:"text"`
 
 	// tview.TableCell attributes
 	Attributes tcell.AttrMask `json:"attributes"`
@@ -239,17 +238,17 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		tblCell.SetText(displayedText)
 	}
 
-	// TODO: check if the cell is selected and format accordingly
-
 	if cell.IsInRange {
 		tblCell.SetTextColor(tcell.ColorGreen)
 	}
 	if cell.IsFormula() {
 		tblCell.SetTextColor(tcell.ColorGreen)
 	}
-	if cell.IsSelected {
+	// Check if the cell is selected and format accordingly.
+	if row >= d.Selection.topRow && row <= d.Selection.bottomRow && column >= d.Selection.leftCol && column <= d.Selection.rightCol {
 		tblCell.SetTextColor(tcell.ColorBlue)
 	}
+
 	if err != nil {
 		tblCell.SetTextColor(tcell.ColorRed)
 	}
@@ -273,26 +272,6 @@ func (d *Data) ClearFormulaRange(h *FormulaRange) {
 	for row := h.StartRow + 1; row <= h.EndRow+1; row++ {
 		for col := h.StartCol + 1; col <= h.EndCol+1; col++ {
 			d.GetDataCell(row, col).IsInRange = false
-		}
-	}
-}
-
-func (d *Data) SelectCells(s *Selection) {
-	d.logger.Info(fmt.Sprintf("Data.SelectCells: %v", s))
-	for row := s.topRow; row <= s.bottomRow; row++ {
-		for col := s.leftCol; col <= s.rightCol; col++ {
-			d.GetDataCell(row, col).IsSelected = true
-
-		}
-	}
-}
-
-// TODO: remove
-func (d *Data) ClearSelection() {
-	d.logger.Info("Data.ClearSelection: cleared selection")
-	for _, row := range d.Cells {
-		for _, cell := range row {
-			cell.IsSelected = false
 		}
 	}
 }

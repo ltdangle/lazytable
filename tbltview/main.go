@@ -333,17 +333,11 @@ func wrapSelectionChangedFunc() func(row, col int) {
 		}
 		switch mode {
 		case MODE_VISUAL:
-			dta.ClearSelection()
 			dta.Selection.Update(row, col)
-			dta.SelectCells(dta.Selection) // TODO: refactor
 		case MODE_VISUAL_LINE:
-			dta.ClearSelection()
 			dta.Selection.Update(row, dta.GetColumnCount()-1)
-			dta.SelectCells(dta.Selection) // TODO: refactor
 		case MODE_VISUAL_BLOCK:
-			dta.ClearSelection()
 			dta.Selection.Update(dta.GetRowCount()-1, col)
-			dta.SelectCells(dta.Selection) // TODO: refactor
 		}
 		dta.DrawXYCoordinates()
 	}
@@ -388,22 +382,18 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 		case "Rune[v]":
 			mode = MODE_VISUAL
 			dta.Selection.SetCoordintates(row, col, row, col)
-			dta.SelectCells(dta.Selection) // TODO: refactor
 			logger.Info("visual mode")
 		case "Rune[V]":
 			mode = MODE_VISUAL_LINE
 			dta.Selection.SetCoordintates(row, 1, row, dta.GetColumnCount()-1)
-			dta.SelectCells(dta.Selection) // TODO: refactor
 			logger.Info("visual line mode")
 		case "Ctrl+V":
 			mode = MODE_VISUAL_BLOCK
 			dta.Selection.SetCoordintates(1, col, dta.GetRowCount()-1, col)
-			dta.SelectCells(dta.Selection) // TODO: refactor
 			logger.Info("visual block mode")
 		case "Esc":
 			table.SetSelectable(true, true)
 			mode = MODE_NORMAL
-			dta.ClearSelection()
 			dta.Selection.Clear()
 			logger.Info("normal mode")
 		case "Rune[d]":
@@ -418,7 +408,6 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 
 					history.Do(NewDeleteRowsCommand(*dta.Selection))
 					mode = MODE_NORMAL
-					dta.ClearSelection()
 					dta.Selection.Clear()
 
 					// Move cursor if we deleted last row.
@@ -429,7 +418,6 @@ func wrapInputCapture() func(event *tcell.EventKey) *tcell.EventKey {
 			case MODE_VISUAL_BLOCK:
 				if dta.Selection.IsColumnSelected() {
 					history.Do(NewDeleteColumnCommand(row, col))
-					dta.ClearSelection()
 					dta.Selection.Clear()
 					mode = MODE_NORMAL
 				}
