@@ -481,7 +481,6 @@ func NewWriteFileCommand(filePath string) *WriteFileCommand {
 	return &WriteFileCommand{filePath: filePath}
 }
 
-// TODO: remove panics
 func (cmd *WriteFileCommand) Execute() error {
 	file, err := os.Create(cmd.filePath)
 	if err != nil {

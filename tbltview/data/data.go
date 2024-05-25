@@ -65,7 +65,6 @@ type Formula interface {
 	Calculate(data *Data, text string) (string, *FormulaRange, error)
 }
 
-// TODO: use getter and setter and check validity in setter
 type FormulaRange struct {
 	StartRow int
 	StartCol int
