@@ -51,7 +51,7 @@ type ReplaceClmCommand struct {
 }
 
 func NewReplaceClmCommand() *ReplaceClmCommand {
-	return &ReplaceClmCommand{selection: selection}
+	return &ReplaceClmCommand{selection: dta.Selection}
 }
 
 func (clm *ReplaceClmCommand) regex(text string) (ok bool, search string, replace string) {
@@ -81,14 +81,14 @@ func (clm *ReplaceClmCommand) Match(text string) (parsed bool, commandError erro
 		return
 	}
 
-	if selection == nil {
+	if dta.Selection == nil {
 		parsed = true
 		commandError = errors.New("no cells selected")
 		return
 	}
 
 	parsed = true
-	command = NewReplaceTextCommand(selection, search, replace)
+	command = NewReplaceTextCommand(dta.Selection, search, replace)
 	return
 }
 
@@ -108,6 +108,7 @@ func (clm *WriteFileClmCommand) Match(text string) (parsed bool, commandError er
 
 	return true, nil, NewWriteFileCommand(args[1])
 }
+
 type LoadFileClmCommand struct {
 }
 

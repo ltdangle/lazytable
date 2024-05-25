@@ -161,12 +161,14 @@ type Data struct {
 	CurrentCol int       `json:"currentCol"`
 	SortedCol  int       `json:"sortedCol"`
 	SortOrder  string    `json:"sortOrder"`
+	Selection  *Selection
 	logger     *logger.Logger
 }
 
 func NewData(frmls []Formula, logger *logger.Logger) *Data {
 	formulas = frmls
 	d = &Data{SortedCol: -1, SortOrder: "", logger: logger}
+	d.Selection = NewSelection(d)
 	return d
 }
 func (d *Data) GetCells() [][]*Cell {
@@ -237,6 +239,8 @@ func (d *Data) GetCell(row, column int) *tview.TableCell {
 		tblCell.SetText(displayedText)
 	}
 
+	// TODO: check if the cell is selected and format accordingly
+
 	if cell.IsInRange {
 		tblCell.SetTextColor(tcell.ColorGreen)
 	}
@@ -283,6 +287,7 @@ func (d *Data) SelectCells(s *Selection) {
 	}
 }
 
+// TODO: remove
 func (d *Data) ClearSelection() {
 	d.logger.Info("Data.ClearSelection: cleared selection")
 	for _, row := range d.Cells {
