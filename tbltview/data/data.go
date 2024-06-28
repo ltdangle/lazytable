@@ -175,9 +175,12 @@ func (d *Data) GetCells() [][]*Cell {
 func (d *Data) GetDataCell(row int, col int) *Cell {
 	return d.Cells[row][col]
 }
+
+// TODO: mutator
 func (d *Data) SetDataCell(row int, col int, cell *Cell) {
 	d.Cells[row][col] = cell
 }
+
 func (d *Data) CopyDataCell(row int, col int, cell *Cell) {
 	_ = copier.Copy(d.Cells[row][col], cell)
 }
@@ -191,9 +194,11 @@ func (d *Data) GetCol(column int) []*Cell {
 	}
 	return col
 }
+// TODO: mutator
 func (d *Data) Clear() {
 	d.Cells = nil
 }
+// TODO: mutator
 func (d *Data) InsertColumn(column int) {
 	for row := range d.Cells {
 		if column > len(d.Cells[row]) {
@@ -205,6 +210,7 @@ func (d *Data) InsertColumn(column int) {
 		d.DrawXYCoordinates()
 	}
 }
+// TODO: mutator
 func (d *Data) InsertRow(row int) {
 	if row > d.GetRowCount() {
 		return
@@ -216,6 +222,7 @@ func (d *Data) InsertRow(row int) {
 	d.DrawXYCoordinates()
 }
 
+// TODO: mutator
 func (d *Data) AddDataRow(dataRow []*Cell) {
 	d.Cells = append(d.Cells, dataRow)
 }
@@ -287,6 +294,7 @@ func (d *Data) GetColumnCount() int {
 	return len(d.Cells[0])
 }
 
+// TODO: mutator
 func (d *Data) RemoveRow(row int) {
 	if d.GetRowCount() == 2 {
 		return
@@ -298,6 +306,7 @@ func (d *Data) RemoveRow(row int) {
 	d.DrawXYCoordinates()
 }
 
+// TODO: mutator
 func (d *Data) RemoveRows(fromRow int, toRow int) {
 	if d.GetRowCount() == 2 {
 		return
@@ -309,6 +318,7 @@ func (d *Data) RemoveRows(fromRow int, toRow int) {
 	d.DrawXYCoordinates()
 }
 
+// TODO: mutator
 func (d *Data) RemoveColumn(col int) {
 	if d.GetColumnCount() == 2 {
 		return
@@ -322,6 +332,7 @@ func (d *Data) RemoveColumn(col int) {
 	d.DrawXYCoordinates()
 }
 
+// TODO: mutator
 func (d *Data) createRow() []*Cell {
 	var row []*Cell
 	for i := 0; i < d.GetColumnCount(); i++ {
@@ -343,7 +354,7 @@ func (d *Data) GetCurrentCell() *Cell {
 }
 
 // Sort column  string values.
-
+// TODO: mutator
 func (d *Data) SortColStrAsc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
 		aText, _, _ := a.Calculate()
@@ -355,6 +366,7 @@ func (d *Data) SortColStrAsc(col int) {
 	d.DrawXYCoordinates()
 }
 
+// TODO: mutator
 func (d *Data) SortColStrDesc(col int) {
 	d.sortColumn(col, func(a, b *Cell) bool {
 		aText, _, _ := a.Calculate()
@@ -368,6 +380,7 @@ func (d *Data) SortColStrDesc(col int) {
 
 // Sorts column. Accept column index and a sorter function that
 // takes slice of vertical column cells as an argument.
+// TODO: mutator
 func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
 	// Perform a stable sort to maintain the relative order of other elements.
 	// Account for cols row and header row (+2)
@@ -375,6 +388,7 @@ func (d *Data) sortColumn(col int, sorter func(a, b *Cell) bool) {
 		return sorter(d.Cells[i+2][col], d.Cells[j+2][col])
 	})
 }
+
 func (d *Data) SnapShotCells() [][]Cell {
 	var dest [][]Cell
 	for _, row := range d.Cells {
